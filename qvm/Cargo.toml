@@ -1,0 +1,18 @@
+[package]
+name = "qvm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ndarray = "0.15"          # Para manipular vetores quânticos
+num-complex = "0.4"       # Para números complexos (necessários para estados quânticos)
+rand = "0.8"              # Para simular medições aleatórias
+serde = { version = "1.0", features = ["derive"] }  # Para YAML futuramente
+serde_yaml = "0.9"        # Para configuração de circuitos via arquivo
+clap = { version = "4.0", features = ["derive"] }   # CLI para rodar QLang
+regex = "1"
+
+[lib]
+name = "qvm"
+path = "src/lib.rs"
+crate-type = ["cdylib"]  # Para gerar uma biblioteca compartilhada (que pode ser usada em outras linguagens)
