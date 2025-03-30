@@ -8,6 +8,7 @@ clap = { version = "4.0", features = ["derive"] }   # CLI para rodar QLang
 ndarray = "0.15"          # Para manipular vetores quânticos
 num-complex = "0.4"       # Para números complexos (necessários para estados quânticos)
 libc = "0.2"
+once_cell = "1.18.0" 
 rand = "0.8"              # Para simular medições aleatórias
 regex = "1"
 serde = { version = "1.0", features = ["derive"] }  # Para YAML futuramente

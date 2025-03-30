@@ -273,6 +273,7 @@ dependencies = [
  "libc",
  "ndarray",
  "num-complex",
+ "once_cell",
  "rand",
  "regex",
  "serde",
