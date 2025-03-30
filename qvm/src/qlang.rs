@@ -1,33 +1,49 @@
-use crate::qvm::QVM;  // Importando a QVM
 use std::fs;
 use regex::Regex;
+use crate::qvm::QVM;
 use crate::gates::{hadamard::Hadamard, pauli_x::PauliX, pauli_y::PauliY, pauli_z::PauliZ, cnot::CNOT};
 
 pub struct QLang {
-    pub qvm: QVM,  // A QVM será chamada pela QLang
+    pub qvm: QVM,  
+    func_regex: Regex,
 }
 
 impl QLang {
     /// Inicializa o interpretador QLang com um número de qubits
     pub fn new(num_qubits: usize) -> Self {
         let qvm: QVM = QVM::new(num_qubits);
-        Self { qvm }
+        let func_regex = Regex::new(r"(\w+)\((.*)\)").unwrap();
+        Self { qvm, func_regex }
     }
 
-    /// Executa um arquivo QLang e aplica as operações quânticas no QVM
-    pub fn run_qlang_from_file(&mut self, file_path: &str) {
-        let program: String = fs::read_to_string(file_path)
-            .expect("Erro ao ler o arquivo");
+    pub fn run_from_str(&mut self, code: &str) {
+        for line in code.lines() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() || trimmed.starts_with("//") {
+                continue;
+            }
+            self.run_qlang_from_line(trimmed); // Ou o equivalente interno
+        }
+    }
 
-        let lines: std::str::Lines<'_> = program.lines();
-        let func_regex: Regex = Regex::new(r"(\w+)\((.*)\)").unwrap(); // Regex para funções com parênteses
+    pub fn run_qlang_from_line(&mut self, line: &str) {
+        if let Some(caps) = self.func_regex.captures(line.trim()) {
+            let mut function_name = &caps[1];
+            let args: Vec<&str> = caps[2].split(',').map(|s| s.trim()).collect();
 
-        for line in lines {
-            if let Some(caps) = func_regex.captures(line.trim()) {
-                let function_name: &str = &caps[1];  // Nome da função (como 'create', 'hadamard', etc.)
-                let args: Vec<&str> = caps[2].split(',').map(|s| s.trim()).collect(); // Argumentos da função
+            // Mapeamento de atalhos
+            function_name = match function_name {
+                "h" => "hadamard",
+                "x" => "paulix",
+                "y" => "pauliy",
+                "z" => "pauliz",
+                "cx" => "cnot",
+                "m" => "measure_all",
+                "d" => "display",
+                _ => function_name,
+            };
 
-                match function_name {
+            match function_name {
                     "create" => {
                         let num_qubits: usize = args[0].parse().unwrap();
                         self.qvm.state = crate::state::quantum_state::QuantumState::new(num_qubits);
@@ -56,8 +72,7 @@ impl QLang {
                         let control_qubit: usize = args[0].parse().unwrap();
                         let target_qubit: usize = args[1].parse().unwrap();
                         let cnot_gate: CNOT = CNOT::new();
-                        self.qvm.apply_gate(&cnot_gate, control_qubit);  // Aplica o CNOT ao qubit de controle
-                        self.qvm.apply_gate(&cnot_gate, target_qubit);   // Aplica o CNOT ao qubit alvo
+                        self.qvm.apply_gate_2q(&cnot_gate, control_qubit, target_qubit);
                     }
                     "measure_all" => {
                         let result = self.qvm.measure_all();
@@ -68,7 +83,22 @@ impl QLang {
                     }
                     _ => println!("Comando desconhecido: {}", function_name),
                 }
-            }
         }
     }
+
+
+    /// Executa um arquivo QLang e aplica as operações quânticas no QVM
+    pub fn run_qlang_from_file(&mut self, file_path: &str) {
+        let program = fs::read_to_string(file_path)
+            .expect("Erro ao ler o arquivo");
+
+        for line in program.lines() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() || trimmed.starts_with("//") {
+                continue;
+            }
+            self.run_qlang_from_line(trimmed);
+        }
+    }
+
 }

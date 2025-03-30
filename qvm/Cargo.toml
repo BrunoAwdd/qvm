@@ -4,13 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clap = { version = "4.0", features = ["derive"] }   # CLI para rodar QLang
 ndarray = "0.15"          # Para manipular vetores quânticos
 num-complex = "0.4"       # Para números complexos (necessários para estados quânticos)
+libc = "0.2"
 rand = "0.8"              # Para simular medições aleatórias
+regex = "1"
 serde = { version = "1.0", features = ["derive"] }  # Para YAML futuramente
 serde_yaml = "0.9"        # Para configuração de circuitos via arquivo
-clap = { version = "4.0", features = ["derive"] }   # CLI para rodar QLang
-regex = "1"
+
 
 [lib]
 name = "qvm"

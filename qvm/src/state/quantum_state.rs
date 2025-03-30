@@ -39,6 +39,41 @@ impl QuantumState {
         self.state_vector = new_state;
     }
 
+    pub fn apply_gate_2q<T: QuantumGateAbstract>(&mut self, gate: &T, q1: usize, q2: usize) {
+        let n = self.num_qubits;
+        assert!(q1 < n && q2 < n && q1 != q2, "Qubits inválidos para porta de 2 qubits");
+
+        let dim = 1 << n; // 2^n
+        let mut new_state = Array1::<Complex<f64>>::zeros(dim);
+
+        let gate_matrix = gate.matrix(); // 4x4
+
+        for i in 0..dim {
+            let b1 = (i >> q1) & 1;
+            let b2 = (i >> q2) & 1;
+            let input_index = (b1 << 1) | b2;
+
+            for output_index in 0..4 {
+                let o1 = (output_index >> 1) & 1;
+                let o2 = output_index & 1;
+
+                let mut j = i;
+                j &= !(1 << q1); // limpa q1
+                j &= !(1 << q2); // limpa q2
+                j |= o1 << q1;   // insere novo bit q1
+                j |= o2 << q2;   // insere novo bit q2
+
+                let amp = gate_matrix[[output_index, input_index]];
+                new_state[j] += amp * self.state_vector[i];
+            }
+        }
+
+        self.state_vector = new_state;
+    }
+
+    
+
+
     pub fn measure(&mut self, qubit: usize) -> u8 {
         let dim = self.state_vector.len();
         let mut prob_0 = 0.0;

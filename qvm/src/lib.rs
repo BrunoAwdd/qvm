@@ -56,8 +56,7 @@ pub extern "C" fn apply_cnot(qvm_ptr: *mut QVM, control_qubit: usize, target_qub
     if !qvm_ptr.is_null() {
         let qvm = unsafe { &mut *qvm_ptr };
         let cnot_gate = CNOT::new();
-        qvm.apply_gate(&cnot_gate, control_qubit);
-        qvm.apply_gate(&cnot_gate, target_qubit);
+        qvm.apply_gate_2q(&cnot_gate, control_qubit, target_qubit);
     }
 }
 
@@ -82,8 +81,12 @@ pub extern "C" fn measure_all(qvm_ptr: *mut QVM) -> *mut u8 {
     result_ptr
 }
 
-
-
+#[no_mangle]
+pub extern "C" fn get_num_qubits(qvm_ptr: *mut QVM) -> usize {
+    if qvm_ptr.is_null() { return 0; }
+    let qvm = unsafe { &*qvm_ptr };
+    qvm.state.num_qubits
+}
 
 #[no_mangle]
 pub extern "C" fn display_qvm(qvm_ptr: *mut QVM) {
@@ -94,10 +97,31 @@ pub extern "C" fn display_qvm(qvm_ptr: *mut QVM) {
 }
 
 #[no_mangle]
+pub extern "C" fn run_qlang_inline(code: *const libc::c_char) {
+    use std::ffi::CStr;
+    if code.is_null() { return; }
+    let c_str = unsafe { CStr::from_ptr(code) };
+    if let Ok(code_str) = c_str.to_str() {
+        let mut qlang = crate::qlang::QLang::new(2);
+        qlang.run_from_str(code_str);
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn free_qvm(qvm_ptr: *mut QVM) {
     if !qvm_ptr.is_null() {
         unsafe {
-            Box::from_raw(qvm_ptr); // Libera a memória
+            drop(Box::from_raw(qvm_ptr)); 
         }
     }
 }
+
+#[no_mangle]
+pub extern "C" fn reset_qvm(qvm_ptr: *mut QVM) {
+    if !qvm_ptr.is_null() {
+        let qvm = unsafe { &mut *qvm_ptr };
+        let num = qvm.state.num_qubits;
+        qvm.state = crate::state::quantum_state::QuantumState::new(num);
+    }
+}
+
