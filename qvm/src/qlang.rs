@@ -1,19 +1,80 @@
-use std::fs;
-use regex::Regex;
 use crate::qvm::QVM;
 use crate::gates::{hadamard::Hadamard, pauli_x::PauliX, pauli_y::PauliY, pauli_z::PauliZ, cnot::CNOT};
+use regex::Regex;
+use std::fs;
+
+pub enum QLangCommand {
+    Create(usize),
+    ApplyGate(String, Vec<usize>),
+    MeasureAll,
+    Display,
+}
 
 pub struct QLang {
-    pub qvm: QVM,  
+    pub qvm: QVM,
+    pub ast: Vec<QLangCommand>,
+    pub collapsed: bool,
     func_regex: Regex,
 }
 
 impl QLang {
-    /// Inicializa o interpretador QLang com um número de qubits
     pub fn new(num_qubits: usize) -> Self {
-        let qvm: QVM = QVM::new(num_qubits);
+        let qvm = QVM::new(num_qubits);
         let func_regex = Regex::new(r"(\w+)\((.*)\)").unwrap();
-        Self { qvm, func_regex }
+        Self {
+            qvm,
+            ast: vec![QLangCommand::Create(num_qubits)],
+            collapsed: false,
+            func_regex,
+        }
+    }
+
+    pub fn append(&mut self, cmd: QLangCommand) {
+        if matches!(cmd, QLangCommand::MeasureAll) {
+            self.collapsed = true;
+        }
+        self.ast.push(cmd);
+    }
+
+    pub fn run(&mut self) {
+        for cmd in &self.ast {
+            match cmd {
+                QLangCommand::Create(n) => {
+                    self.qvm = QVM::new(*n);
+                }
+                QLangCommand::ApplyGate(name, args) => {
+                    match name.as_str() {
+                        "hadamard" | "h" => {
+                            let g = Hadamard::new();
+                            self.qvm.apply_gate(&g, args[0]);
+                        }
+                        "paulix" | "x" => {
+                            let g = PauliX::new();
+                            self.qvm.apply_gate(&g, args[0]);
+                        }
+                        "pauliy" | "y" => {
+                            let g = PauliY::new();
+                            self.qvm.apply_gate(&g, args[0]);
+                        }
+                        "pauliz" | "z" => {
+                            let g = PauliZ::new();
+                            self.qvm.apply_gate(&g, args[0]);
+                        }
+                        "cnot" | "cx" => {
+                            let g = CNOT::new();
+                            self.qvm.apply_gate_2q(&g, args[0], args[1]);
+                        }
+                        _ => println!("Gate desconhecido: {}", name),
+                    }
+                }
+                QLangCommand::Display => {
+                    self.qvm.display();
+                }
+                QLangCommand::MeasureAll => {
+                    self.qvm.measure_all();
+                }
+            }
+        }
     }
 
     pub fn run_from_str(&mut self, code: &str) {
@@ -22,17 +83,23 @@ impl QLang {
             if trimmed.is_empty() || trimmed.starts_with("//") {
                 continue;
             }
-            self.run_qlang_from_line(trimmed); // Ou o equivalente interno
+            self.run_qlang_from_line(trimmed);
         }
+
+        self.run(); 
     }
 
     pub fn run_qlang_from_line(&mut self, line: &str) {
         if let Some(caps) = self.func_regex.captures(line.trim()) {
-            let mut function_name = &caps[1];
-            let args: Vec<&str> = caps[2].split(',').map(|s| s.trim()).collect();
+            let raw = caps.get(1).unwrap().as_str();
+            let args_str = caps.get(2).unwrap().as_str();
+            let args: Vec<usize> = args_str
+                .split(',')
+                .filter(|s| !s.trim().is_empty())
+                .map(|s| s.trim().parse().expect("Argumento inválido"))
+                .collect();
 
-            // Mapeamento de atalhos
-            function_name = match function_name {
+            let canonical_name = match raw {
                 "h" => "hadamard",
                 "x" => "paulix",
                 "y" => "pauliy",
@@ -40,54 +107,30 @@ impl QLang {
                 "cx" => "cnot",
                 "m" => "measure_all",
                 "d" => "display",
-                _ => function_name,
+                other => other,
             };
 
-            match function_name {
-                    "create" => {
-                        let num_qubits: usize = args[0].parse().unwrap();
-                        self.qvm.state = crate::state::quantum_state::QuantumState::new(num_qubits);
-                    }
-                    "hadamard" => {
-                        let qubit: usize = args[0].parse().unwrap();
-                        let h_gate: Hadamard = Hadamard::new();
-                        self.qvm.apply_gate(&h_gate, qubit);  // Aplica o Hadamard ao qubit
-                    }
-                    "paulix" => {
-                        let qubit: usize = args[0].parse().unwrap();
-                        let p_x_gate: PauliX = PauliX::new();
-                        self.qvm.apply_gate(&p_x_gate, qubit);  // Aplica o PauliX ao qubit
-                    }
-                    "pauliy" => {
-                        let qubit: usize = args[0].parse().unwrap();
-                        let p_y_gate: PauliY = PauliY::new();
-                        self.qvm.apply_gate(&p_y_gate, qubit);  // Aplica o PauliY ao qubit
-                    }
-                    "pauliz" => {
-                        let qubit: usize = args[0].parse().unwrap();
-                        let p_z_gate: PauliZ = PauliZ::new();
-                        self.qvm.apply_gate(&p_z_gate, qubit);  // Aplica o PauliZ ao qubit
-                    }
-                    "cnot" => {
-                        let control_qubit: usize = args[0].parse().unwrap();
-                        let target_qubit: usize = args[1].parse().unwrap();
-                        let cnot_gate: CNOT = CNOT::new();
-                        self.qvm.apply_gate_2q(&cnot_gate, control_qubit, target_qubit);
-                    }
-                    "measure_all" => {
-                        let result = self.qvm.measure_all();
-                        println!("Resultado da medição: {:?}", result);
-                    }
-                    "display" => {
-                        self.qvm.display();
-                    }
-                    _ => println!("Comando desconhecido: {}", function_name),
+            match canonical_name {
+                "create" => {
+                    self.ast.push(QLangCommand::Create(args[0]));
                 }
+                "hadamard" | "paulix" | "pauliy" | "pauliz" => {
+                    self.ast.push(QLangCommand::ApplyGate(canonical_name.to_string(), vec![args[0]]));
+                }
+                "cnot" => {
+                    self.ast.push(QLangCommand::ApplyGate("cnot".to_string(), vec![args[0], args[1]]));
+                }
+                "measure_all" => {
+                    self.ast.push(QLangCommand::MeasureAll);
+                }
+                "display" => {
+                    self.ast.push(QLangCommand::Display);
+                }
+                _ => println!("Comando desconhecido: {}", canonical_name),
+            }
         }
     }
 
-
-    /// Executa um arquivo QLang e aplica as operações quânticas no QVM
     pub fn run_qlang_from_file(&mut self, file_path: &str) {
         let program = fs::read_to_string(file_path)
             .expect("Erro ao ler o arquivo");
@@ -101,4 +144,20 @@ impl QLang {
         }
     }
 
+    pub fn reset(&mut self) {
+        let qubits = self.qvm.state.num_qubits;
+        self.qvm = QVM::new(qubits);
+        self.ast.clear();
+        self.collapsed = false;
+    }
+
+    pub fn with_qvm(qvm: QVM) -> Self {
+        let func_regex = Regex::new(r"(\w+)\((.*)\)").unwrap();
+        Self {
+            qvm,
+            ast: vec![],
+            collapsed: false,
+            func_regex,
+        }
+    }
 }

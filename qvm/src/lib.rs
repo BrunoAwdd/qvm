@@ -7,103 +7,44 @@ pub mod gates;
 pub mod state;
 
 use crate::qvm::QVM;
-use crate::gates::{hadamard::Hadamard, pauli_x::PauliX, pauli_y::PauliY, pauli_z::PauliZ, cnot::CNOT};
+use crate::qlang::QLang;
+use libc::c_char;
+use std::sync::Mutex;
+use std::ffi::{CStr, CString};
+use once_cell::sync::OnceCell;
+
+static QLANG_INSTANCE: OnceCell<Mutex<QLang>> = OnceCell::new();
 
 #[no_mangle]
-pub extern "C" fn create_qvm(num_qubits: usize) -> *mut QVM {
-    let qvm = QVM::new(num_qubits);
-    Box::into_raw(Box::new(qvm))
+pub extern "C" fn create_qvm(num_qubits: usize) {
+    let qlang = QLang::new(num_qubits);
+    let _ = QLANG_INSTANCE.set(Mutex::new(qlang));
 }
 
 #[no_mangle]
-pub extern "C" fn apply_hadamard(qvm_ptr: *mut QVM, qubit: usize) {
-    if !qvm_ptr.is_null() {
-        let qvm = unsafe { &mut *qvm_ptr };
-        let h_gate = Hadamard::new();
-        qvm.apply_gate(&h_gate, qubit);
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn apply_pauli_x(qvm_ptr: *mut QVM, qubit: usize) {
-    if !qvm_ptr.is_null() {
-        let qvm = unsafe { &mut *qvm_ptr };
-        let p_x_gate = PauliX::new();
-        qvm.apply_gate(&p_x_gate, qubit);
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn apply_pauli_y(qvm_ptr: *mut QVM, qubit: usize) {
-    if !qvm_ptr.is_null() {
-        let qvm = unsafe { &mut *qvm_ptr };
-        let p_y_gate = PauliY::new();
-        qvm.apply_gate(&p_y_gate, qubit);
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn apply_pauli_z(qvm_ptr: *mut QVM, qubit: usize) {
-    if !qvm_ptr.is_null() {
-        let qvm = unsafe { &mut *qvm_ptr };
-        let p_z_gate = PauliZ::new();
-        qvm.apply_gate(&p_z_gate, qubit);
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn apply_cnot(qvm_ptr: *mut QVM, control_qubit: usize, target_qubit: usize) {
-    if !qvm_ptr.is_null() {
-        let qvm = unsafe { &mut *qvm_ptr };
-        let cnot_gate = CNOT::new();
-        qvm.apply_gate_2q(&cnot_gate, control_qubit, target_qubit);
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn measure_all(qvm_ptr: *mut QVM) -> *mut u8 {
-    if qvm_ptr.is_null() {
-        println!("Erro: Ponteiro nulo passado para measure_all");
-        return std::ptr::null_mut();
-    }
-
-    let qvm = unsafe { &mut *qvm_ptr };
-    let result = qvm.measure_all();
-    
-
-    // Clonamos o resultado e o transformamos em um Box<[u8]>
-    let mut result_box = result.into_boxed_slice();
-    let result_ptr = result_box.as_mut_ptr(); // Obtemos o ponteiro mutável para o array
-
-    // Evita que o Rust libere a memória automaticamente
-    std::mem::forget(result_box);
-    
-    result_ptr
-}
-
-#[no_mangle]
-pub extern "C" fn get_num_qubits(qvm_ptr: *mut QVM) -> usize {
-    if qvm_ptr.is_null() { return 0; }
-    let qvm = unsafe { &*qvm_ptr };
-    qvm.state.num_qubits
-}
-
-#[no_mangle]
-pub extern "C" fn display_qvm(qvm_ptr: *mut QVM) {
-    if !qvm_ptr.is_null() {
-        let qvm = unsafe { &mut *qvm_ptr };
-        qvm.display();
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn run_qlang_inline(code: *const libc::c_char) {
-    use std::ffi::CStr;
-    if code.is_null() { return; }
+pub extern "C" fn run_qlang_inline(code: *const c_char) {
     let c_str = unsafe { CStr::from_ptr(code) };
     if let Ok(code_str) = c_str.to_str() {
-        let mut qlang = crate::qlang::QLang::new(2);
-        qlang.run_from_str(code_str);
+        if let Some(mutex) = QLANG_INSTANCE.get() {
+            let mut qlang = mutex.lock().unwrap();
+            qlang.run_from_str(code_str);
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn run_qlang() {
+    if let Some(mutex) = QLANG_INSTANCE.get() {
+        let mut qlang = mutex.lock().unwrap();
+        qlang.run();
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn reset_qvm() {
+    if let Some(mutex) = QLANG_INSTANCE.get() {
+        let mut qlang = mutex.lock().unwrap();
+        qlang.reset();
     }
 }
 
@@ -111,17 +52,56 @@ pub extern "C" fn run_qlang_inline(code: *const libc::c_char) {
 pub extern "C" fn free_qvm(qvm_ptr: *mut QVM) {
     if !qvm_ptr.is_null() {
         unsafe {
-            drop(Box::from_raw(qvm_ptr)); 
+            let _ = Box::from_raw(qvm_ptr);
         }
     }
 }
 
 #[no_mangle]
-pub extern "C" fn reset_qvm(qvm_ptr: *mut QVM) {
-    if !qvm_ptr.is_null() {
-        let qvm = unsafe { &mut *qvm_ptr };
-        let num = qvm.state.num_qubits;
-        qvm.state = crate::state::quantum_state::QuantumState::new(num);
+pub extern "C" fn display_qvm() -> *mut c_char {
+    if let Some(mutex) = QLANG_INSTANCE.get() {
+        let qlang = mutex.lock().unwrap();
+        let output = format!("{}", qlang.qvm.state);
+        let c_str = CString::new(output).unwrap();
+        return c_str.into_raw();
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
+pub extern "C" fn measure_all() -> *const u8 {
+    if let Some(mutex) = QLANG_INSTANCE.get() {
+        let mut qlang = mutex.lock().unwrap();
+        let result = qlang.qvm.state.measure_all();
+        return Box::into_raw(result.into_boxed_slice()) as *const u8;
+    }
+    
+    std::ptr::null()
+}
+
+#[no_mangle]
+pub extern "C" fn free_measurement(ptr: *mut u8, len: usize) {
+    if !ptr.is_null() {
+        unsafe {
+            let _ = Vec::from_raw_parts(ptr, len, len);
+        }
     }
 }
 
+#[no_mangle]
+pub extern "C" fn free_c_string(ptr: *mut c_char) {
+    if !ptr.is_null() {
+        unsafe {
+            let _ = CString::from_raw(ptr);
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn get_num_qubits() -> usize {
+    if let Some(mutex) = QLANG_INSTANCE.get() {
+        let qlang = mutex.lock().unwrap();
+        return qlang.qvm.state.num_qubits;
+    }
+    0
+}
