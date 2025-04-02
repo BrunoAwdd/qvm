@@ -12,86 +12,99 @@ class QLangScript:
         self.lib = ctypes.CDLL(lib_path)
         self.code_lines = []
 
-        # Define protótipos
+        # Protótipos
         self.lib.run_qlang_inline.argtypes = [ctypes.c_char_p]
         self.lib.run_qlang_inline.restype = None
-
         self.lib.reset_qvm.restype = None
         self.lib.run_qlang.restype = None
         self.lib.measure_all.restype = ctypes.POINTER(ctypes.c_uint8)
         self.lib.display_qvm.restype = ctypes.POINTER(ctypes.c_char)
+        self.lib.get_num_qubits.restype = ctypes.c_size_t
 
-    def line(self, s):
-        self.code_lines.append(s)
+    # Utils
+    def line(self, s): self.code_lines.append(s)
+    def reset(self): self.code_lines = []; self.lib.reset_qvm()
+    def run(self):
+        code = "\n".join(self.code_lines).encode("utf-8")
+        self.lib.run_qlang_inline(ctypes.c_char_p(code))
+    def get_num_qubits(self): return self.lib.get_num_qubits()
 
+    def assert_qubit_range(self, *qs):
+        n = self.get_num_qubits()
+        for q in qs:
+            if q >= n:
+                raise ValueError(f"Qubit fora do range (0..{n-1}): {q}")
+
+    # QVM Setup
     def create(self, n):
         self.lib.create_qvm.argtypes = [ctypes.c_size_t]
-        self.lib.create_qvm.restype = None
         self.lib.create_qvm(n)
 
-    def hadamard(self, q): self.line(f"hadamard({q})")
+    # Gates de 1 qubit
+    def hadamard(self, q): self.assert_qubit_range(q); self.line(f"hadamard({q})")
+    def pauli_x(self, q):  self.assert_qubit_range(q); self.line(f"paulix({q})")
+    def pauli_y(self, q):  self.assert_qubit_range(q); self.line(f"pauliy({q})")
+    def pauli_z(self, q):  self.assert_qubit_range(q); self.line(f"pauliz({q})")
+    def s(self, q):        self.assert_qubit_range(q); self.line(f"s({q})")
+    def t(self, q):        self.assert_qubit_range(q); self.line(f"t({q})")
+
+    # Aliases
     def h(self, q): self.hadamard(q)
-
-    def pauli_x(self, q): self.line(f"paulix({q})")
     def x(self, q): self.pauli_x(q)
-
-    def pauli_y(self, q): self.line(f"pauliy({q})")
     def y(self, q): self.pauli_y(q)
-
-    def pauli_z(self, q): self.line(f"pauliz({q})")
     def z(self, q): self.pauli_z(q)
-
-    def cnot(self, c, t): self.line(f"cnot({c},{t})")
+    def m(self):    self.measure_all()
+    def d(self):    self.display()
     def cx(self, c, t): self.cnot(c, t)
 
-    def rx(self, q, theta): self.line(f"rx({q},{theta})")
-    def ry(self, q, theta): self.line(f"ry({q},{theta})")
-    def rz(self, q, theta): self.line(f"rz({q},{theta})")
+    # Gates de 2 qubits
+    def cnot(self, c, t):
+        self.assert_qubit_range(c, t)
+        if c == t:
+            raise ValueError(f"CNOT requer qubits distintos: {c} == {t}")
+        self.line(f"cnot({c},{t})")
 
-    def s(self, q): self.line(f"s({q})")
-    def t(self, q): self.line(f"t({q})")
+    def swap(self, c, t):
+        self.assert_qubit_range(c, t)
+        if c == t:
+            raise ValueError(f"SWAP requer qubits distintos: {c} == {t}")
+        self.line(f"swap({c},{t})")
 
+    # Gates de rotação
+    def rx(self, q, theta): self.assert_qubit_range(q); self.line(f"rx({q},{theta})")
+    def ry(self, q, theta): self.assert_qubit_range(q); self.line(f"ry({q},{theta})")
+    def rz(self, q, theta): self.assert_qubit_range(q); self.line(f"rz({q},{theta})")
+
+    # Ações
     def measure_all(self): self.line("measure_all()")
-    def m(self): self.measure_all()
-
     def display(self): self.line("display()")
-    def d(self): self.display()
 
-    def run(self):
-        code = "\n".join(self.code_lines)
-        code_bytes = code.encode("utf-8")
-        self.lib.run_qlang_inline(ctypes.c_char_p(code_bytes))
-
-    def reset(self):
-        self.code_lines = []
-        self.lib.reset_qvm()
-
+    # Resultados
     def get_measurement_result(self):
-        result_ptr = self.lib.measure_all()
-        if result_ptr:
-            result = ctypes.cast(result_ptr, ctypes.POINTER(ctypes.c_uint8))
-            return [result[i] for i in range(0, self.get_num_qubits())]
-        return []
+        ptr = self.lib.measure_all()
+        return [ptr[i] for i in range(self.get_num_qubits())] if ptr else []
 
     def get_qvm_state(self):
-        result_ptr = self.lib.display_qvm()
-        if result_ptr:
-            state_str = ctypes.cast(result_ptr, ctypes.c_char_p).value.decode("utf-8")
-            return state_str
-        return ""
+        ptr = self.lib.display_qvm()
+        return ctypes.cast(ptr, ctypes.c_char_p).value.decode("utf-8") if ptr else ""
 
-    def get_num_qubits(self):
-        self.lib.get_num_qubits.restype = ctypes.c_size_t
-        return self.lib.get_num_qubits()
 
 
 if __name__ == "__main__":
-    q = QLangScript()
-    q.create(1)
-
-    for i in range(10):
-        q.reset()
-        q.h(0)
-        q.m()
-        q.run()
-        print(f"Resultado da medição [{i}]:", q.get_measurement_result())
+    q = QLangScript("cuda")
+    q.create(2)
+    q.reset()
+    q.h(0)
+    q.cnot(0,1) 
+    q.swap(0,1)  
+    q.rx(0,0.5) 
+    q.ry(0,0.5)  
+    q.rz(0,0.5)  
+    q.s(0)
+    q.t(0)
+    q.x(0)
+    q.y(0)
+    q.z(0)
+    q.m()
+    q.run()
+    print(f"Resultado da medição [{1}]:", q.get_measurement_result())
