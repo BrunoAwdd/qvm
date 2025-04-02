@@ -42,7 +42,11 @@ impl QuantumBackend for CpuBackend {
 
     fn apply_gate_2q(&mut self, gate: &dyn QuantumGateAbstract, q1: usize, q2: usize) {
         let n = self.state.num_qubits;
-        assert!(q1 < n && q2 < n && q1 != q2);
+        assert!(
+            q1 < self.num_qubits() && q2 < self.num_qubits() && q1 != q2,
+            "Gate de 2 qubits requer índices distintos e válidos (0..{}). Recebido: {}, {}",
+            self.num_qubits(), q1, q2
+        );
 
         let dim = 1 << n;
         let mut new_state = Array1::<CudaComplex>::zeros(dim);
@@ -56,7 +60,7 @@ impl QuantumBackend for CpuBackend {
             for output_index in 0..4 {
                 let o1 = (output_index >> 1) & 1;
                 let o2 = output_index & 1;
-
+ 
                 let mut j = i;
                 j &= !(1 << q1);
                 j &= !(1 << q2);
