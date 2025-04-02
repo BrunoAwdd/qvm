@@ -70,6 +70,18 @@ class QLangScript:
             raise ValueError(f"SWAP requer qubits distintos: {c} == {t}")
         self.line(f"swap({c},{t})")
 
+    def toffoli(self, c, t1, t2):
+        self.assert_qubit_range(c, t1, t2)
+        if c == t1 or c == t2:
+            raise ValueError(f"Toffoli requer qubits distintos: {c} == {t1} ou {c} == {t2}")
+        self.line(f"toffoli({c},{t1},{t2})")
+
+    def fredkin(self, c, t1, t2):
+        self.assert_qubit_range(c, t1, t2)
+        if c == t1 or c == t2:
+            raise ValueError(f"Fredkin requer qubits distintos: {c} == {t1} ou {c} == {t2}")
+        self.line(f"fredkin({c},{t1},{t2})")
+
     # Gates de rotação
     def rx(self, q, theta): self.assert_qubit_range(q); self.line(f"rx({q},{theta})")
     def ry(self, q, theta): self.assert_qubit_range(q); self.line(f"ry({q},{theta})")
@@ -92,7 +104,7 @@ class QLangScript:
 
 if __name__ == "__main__":
     q = QLangScript("cuda")
-    q.create(2)
+    q.create(3)
     q.reset()
     q.h(0)
     q.cnot(0,1) 
@@ -100,6 +112,8 @@ if __name__ == "__main__":
     q.rx(0,0.5) 
     q.ry(0,0.5)  
     q.rz(0,0.5)  
+    q.toffoli(0,1,2)
+    q.fredkin(0,1,2)
     q.s(0)
     q.t(0)
     q.x(0)
