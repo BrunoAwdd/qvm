@@ -23,9 +23,9 @@ Comparação entre sua QVM + QLang e os principais simuladores (Qiskit, Cirq, qs
 | **Medição (individual/all)**         | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
 | **Gates de rotação (RZ, RX, RY)**    | ✅ Sim         | ✅ Sim                | 🔜 **Adicionar `rz` primeiro**         |
 | **Portas de fase (S, T)**            | ✅ Sim         | ✅ Sim                | 🔜 Depois do `rz`, são simples         |
-| **SWAP**                             | ❌ Ainda não   | ✅ Sim                | 🔜 Implementar com 3 CNOTs             |
-| **Toffoli (CCNOT)**                  | ❌ Ainda não   | ✅ Sim                | 🔜 Matriz 8x8 com suporte de 3 qubits  |
-| **Fredkin (CSWAP)**                  | ❌ Ainda não   | ✅ Sim                | 🔜 Implementar via matriz ou controle  |
+| **SWAP**                             | ✅ Sim         | ✅ Sim                | 🔜 Implementar com 3 CNOTs             |
+| **Toffoli (CCNOT)**                  | ✅ Sim         | ✅ Sim                | 🔜 Matriz 8x8 com suporte de 3 qubits  |
+| **Fredkin (CSWAP)**                  | ✅ Sim         | ✅ Sim                | 🔜 Implementar via matriz ou controle  |
 | **Gate arbitrário unitário (U3)**    | ❌ Ainda não   | ✅ Sim                | ⚠️ Pode vir depois                     |
 | **Ruído / Decoerência**              | ❌ Ainda não   | ✅ Sim                | 🚧 Avançado, deixar para versão futura |
 | **Otimização de circuitos**          | ❌ Ainda não   | ✅ Sim                | 🧠 Fase 2 (análise e reordenação)      |
@@ -48,23 +48,15 @@ Comparação entre sua QVM + QLang e os principais simuladores (Qiskit, Cirq, qs
 - [x] QLang + CLI
 - [x] API via `lib.rs` (C/Python)
 
-### 🔜 Versão 0.2 (em andamento):
-
-- [x] `rz(qubit, θ)`
-- [x] `s`, `t` gates
-- [ ] `swap(q1, q2)`
-- [ ] `toffoli(a,b,c)`
-- [ ] `fredkin(a,b,c)`
-
 ### 🔜 Versão 0.2 (meta atual):
 
 | Ordem | Recurso / Gate   | Descrição                                   |
 | ----- | ---------------- | ------------------------------------------- |
-| 1️⃣    | `rz(qubit, θ)`   | Rotação arbitrária no eixo Z (2x2 unitário) |
-| 2️⃣    | `s`, `t` gates   | Portas de fase (S = Rz(π/2), T = Rz(π/4))   |
-| 3️⃣    | `swap(q1, q2)`   | Implementado via 3 CNOTs                    |
-| 4️⃣    | `toffoli(a,b,c)` | Porta CCNOT (controle duplo) - 8x8 matriz   |
-| 5️⃣    | `fredkin(a,b,c)` | Porta CSWAP (troca controlada)              |
+| [x]   | `rz(qubit, θ)`   | Rotação arbitrária no eixo Z (2x2 unitário) |
+| [x]   | `s`, `t` gates   | Portas de fase (S = Rz(π/2), T = Rz(π/4))   |
+| [x]   | `swap(q1, q2)`   | Implementado via 3 CNOTs                    |
+| [x]   | `toffoli(a,b,c)` | Porta CCNOT (controle duplo) - 8x8 matriz   |
+| [x]   | `fredkin(a,b,c)` | Porta CSWAP (troca controlada)              |
 
 ---
 
