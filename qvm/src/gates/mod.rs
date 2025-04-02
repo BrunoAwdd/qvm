@@ -8,6 +8,7 @@ pub mod rx;
 pub mod ry;
 pub mod rz;
 pub mod s;
+pub mod swap;
 pub mod t;
 
 

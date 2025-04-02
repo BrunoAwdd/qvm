@@ -47,6 +47,7 @@ pub fn get_cuda_gate_kernel(gate_name: &str) -> Option<GateKernel> {
         "PauliY"   => Some(GateKernel { kernel_name: "pauli_y_kernel",  ptx_file: "pauli_y.ptx", use_theta: false }),
         "PauliZ"   => Some(GateKernel { kernel_name: "pauli_z_kernel",  ptx_file: "pauli_z.ptx", use_theta: false }),
         "S"        => Some(GateKernel { kernel_name: "s_kernel",        ptx_file: "s.ptx", use_theta: false }),
+        "Swap"     => Some(GateKernel { kernel_name: "swap_kernel",     ptx_file: "swap.ptx", use_theta: false }),
         "T"        => Some(GateKernel { kernel_name: "t_kernel",        ptx_file: "t.ptx", use_theta: false }),
         _ => None,
     }

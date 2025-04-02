@@ -8,5 +8,6 @@ mod gates {
     mod ry_test;
     mod rz_test;
     mod s_test;
+    mod swap_test;
     mod t_test;
 }
