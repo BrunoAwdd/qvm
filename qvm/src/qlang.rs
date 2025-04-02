@@ -8,7 +8,8 @@ use crate::gates::{
     rx::RX, 
     ry::RY, 
     rz::RZ, 
-    s::S, 
+    s::S,
+    swap::Swap, 
     t::T
 };
 use regex::Regex;
@@ -107,6 +108,12 @@ impl QLang {
                             let qubit = args[0].parse::<usize>().unwrap();
                             self.qvm.apply_gate(&g, qubit);
                         }
+                        "swap" => {
+                            let g = Swap::new();
+                            let q0 = args[0].parse::<usize>().unwrap();
+                            let q1 = args[1].parse::<usize>().unwrap();
+                            self.qvm.apply_gate_2q(&g, q0, q1);
+                        }
                         "t" => {
                             let g = T::new();
                             let qubit = args[0].parse::<usize>().unwrap();
@@ -163,11 +170,32 @@ impl QLang {
                     let qubit = args[0].parse::<usize>().unwrap();
                     self.ast.push(QLangCommand::Create(qubit));
                 }
-                "hadamard" | "paulix" | "pauliy" | "pauliz" | "rx" | "ry" | "rz" | "s" | "t" => {
-                    self.ast.push(QLangCommand::ApplyGate(canonical_name.to_string(), vec![args[0].clone()]));
+                "hadamard" | "paulix" | "pauliy" | "pauliz" | "s" | "t" => {
+                    self.ast.push(QLangCommand::ApplyGate(
+                        canonical_name.to_string(), 
+                        vec![args[0].clone()]
+                    ));
                 }
-                "cnot" => {
-                    self.ast.push(QLangCommand::ApplyGate("cnot".to_string(), vec![args[0].clone(), args[1].clone()]));
+                "rx" | "ry" | "rz" => {
+                    let q = args[0].parse::<usize>().unwrap();
+                    let theta = args[1].parse::<f64>().unwrap();
+                    self.ast.push(QLangCommand::ApplyGate(
+                        canonical_name.to_string(),
+                        vec![q.to_string(), theta.to_string()],
+                    ));
+                }
+                "cnot" | "swap" => {
+                    let q0 = args[0].parse::<usize>().unwrap();
+                    let q1 = args[1].parse::<usize>().unwrap();
+
+                    if q0 == q1 {
+                        panic!("Os qubits usados no '{}' devem ser diferentes. Recebido: {}, {}", canonical_name, q0, q1);
+                    }
+
+                    self.ast.push(QLangCommand::ApplyGate(
+                        canonical_name.to_string(),
+                        vec![q0.to_string(), q1.to_string()],
+                    ));
                 }
                 "measure_all" => {
                     self.ast.push(QLangCommand::MeasureAll);
