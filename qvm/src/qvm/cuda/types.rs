@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 use num_traits::Zero;
-use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, Div, MulAssign, DivAssign};
+use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, Div, MulAssign, DivAssign, Neg};
 use ndarray::ScalarOperand;
 use num_traits::One;
 
@@ -23,6 +23,13 @@ impl CudaComplex {
     pub fn arg(&self) -> f64 {
         self.im.atan2(self.re)
     }
+
+    pub fn from_polar(r: f64, theta: f64) -> Self {
+        Self {
+            re: r * theta.cos(),
+            im: r * theta.sin(),
+        }
+    }
 }
 
 impl From<Complex64> for CudaComplex {
@@ -44,6 +51,17 @@ pub fn to_complex_vec(src: &[CudaComplex]) -> Vec<Complex64> {
 
 #[cfg(feature = "cuda")]
 unsafe impl cust::memory::DeviceCopy for CudaComplex {}
+
+impl Neg for CudaComplex {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            re: -self.re,
+            im: -self.im,
+        }
+    }
+}
 
 
 impl Zero for CudaComplex {
@@ -81,6 +99,28 @@ impl SubAssign for CudaComplex {
     fn sub_assign(&mut self, rhs: Self) {
         self.re -= rhs.re;
         self.im -= rhs.im;
+    }
+}
+
+impl Mul<f64> for CudaComplex {
+    type Output = CudaComplex;
+
+    fn mul(self, rhs: f64) -> CudaComplex {
+        CudaComplex {
+            re: self.re * rhs,
+            im: self.im * rhs,
+        }
+    }
+}
+
+impl Mul<CudaComplex> for f64 {
+    type Output = CudaComplex;
+
+    fn mul(self, rhs: CudaComplex) -> CudaComplex {
+        CudaComplex {
+            re: rhs.re * self,
+            im: rhs.im * self,
+        }
     }
 }
 
