@@ -1,19 +1,16 @@
-# Criar gates
+# 🧠 QLang — Simulador Quântico em Rust com Backend CPU/GPU
 
-## Swap
+Um comparativo estratégico com os principais simuladores quânticos do mercado.
 
-## Toffoli
-
-## Fredkin
-
-Recurso Você tem? Top Simuladores
-Hadamard, Pauli, CNOT Sim Sim
-Medição ? Sim
-Rotações arbitrárias Não Sim
-Portas de fase (S, T, etc) Não Sim
-Ruído / Decoerência Não Sim
-Otimização de circuitos Não Sim
-Suporte a muitos qubits (>30) Depende Sim (qsim, etc)
+| Recurso                       | QLang (Você) | Simuladores Top  |
+| ----------------------------- | ------------ | ---------------- |
+| Hadamard, Pauli, CNOT         | ✅ Sim       | ✅ Sim           |
+| Medição                       | ✅ Sim       | ✅ Sim           |
+| Rotações arbitrárias          | ✅ Sim       | ✅ Sim           |
+| Portas de fase (S, T, etc)    | ✅ Sim       | ✅ Sim           |
+| Ruído / Decoerência           | ❌ Não       | ✅ Sim           |
+| Otimização de circuitos       | ❌ Não       | ✅ Sim           |
+| Suporte a muitos qubits (>30) | ✅ Sim       | ✅ Sim (qsim...) |
 
 # 🗺️ Mapa de Recursos — QLang vs Simuladores Quânticos
 
@@ -24,8 +21,8 @@ Comparação entre sua QVM + QLang e os principais simuladores (Qiskit, Cirq, qs
 | **Gates básicos (Hadamard, Pauli)**  | ✅ Sim         | ✅ Sim                | ✔️ Já está no mesmo nível              |
 | **CNOT**                             | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
 | **Medição (individual/all)**         | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
-| **Gates de rotação (RZ, RX, RY)**    | ❌ Ainda não   | ✅ Sim                | 🔜 **Adicionar `rz` primeiro**         |
-| **Portas de fase (S, T)**            | ❌ Ainda não   | ✅ Sim                | 🔜 Depois do `rz`, são simples         |
+| **Gates de rotação (RZ, RX, RY)**    | ✅ Sim         | ✅ Sim                | 🔜 **Adicionar `rz` primeiro**         |
+| **Portas de fase (S, T)**            | ✅ Sim         | ✅ Sim                | 🔜 Depois do `rz`, são simples         |
 | **SWAP**                             | ❌ Ainda não   | ✅ Sim                | 🔜 Implementar com 3 CNOTs             |
 | **Toffoli (CCNOT)**                  | ❌ Ainda não   | ✅ Sim                | 🔜 Matriz 8x8 com suporte de 3 qubits  |
 | **Fredkin (CSWAP)**                  | ❌ Ainda não   | ✅ Sim                | 🔜 Implementar via matriz ou controle  |
@@ -45,11 +42,19 @@ Comparação entre sua QVM + QLang e os principais simuladores (Qiskit, Cirq, qs
 
 ### ✅ Já implementado:
 
-- Hadamard, Pauli (X, Y, Z)
-- CNOT
-- Medição
-- QLang + CLI
-- API via `lib.rs` (C/Python)
+- [x] Hadamard, Pauli (X, Y, Z)
+- [x] CNOT
+- [x] Medição
+- [x] QLang + CLI
+- [x] API via `lib.rs` (C/Python)
+
+### 🔜 Versão 0.2 (em andamento):
+
+- [x] `rz(qubit, θ)`
+- [x] `s`, `t` gates
+- [ ] `swap(q1, q2)`
+- [ ] `toffoli(a,b,c)`
+- [ ] `fredkin(a,b,c)`
 
 ### 🔜 Versão 0.2 (meta atual):
 
@@ -92,3 +97,28 @@ enum QVMBinding {
     GPU_WGPU,
 }
 ```
+
+- [ ] **Paralelismo com `rayon` no backend CPU**  
+       Use processamento multi-thread para acelerar multiplicações de matriz-vetor.  
+       👉 Ideal para simular até 24–26 qubits com boa performance em CPUs modernas.
+
+- [ ] **Suporte a circuito em batch (gate fusion)**  
+       Otimize várias portas aplicadas em sequência no mesmo qubit.  
+       👉 Reduz operações redundantes e melhora desempenho computacional.
+
+- [ ] **Noise Modeling (modelo de ruído simples)**  
+       Adicione ruído de depolarização, bit-flip, phase-flip etc.  
+       👉 Essencial para simular circuitos realistas e avaliar tolerância a erros.
+
+- [ ] **Exportação para QASM ou integração com Qiskit**  
+       Gere `.qasm` ou permita importação/exportação direta para Qiskit.  
+       👉 Permite rodar circuitos reais ou integrá-los a pipelines existentes.
+
+---
+
+## 🤝 Contribua ou acompanhe
+
+Quer contribuir, sugerir uma feature ou usar QLang no seu projeto acadêmico ou empresarial?  
+Sinta-se livre para abrir uma issue, mandar PR ou entrar em contato comigo.
+
+---
