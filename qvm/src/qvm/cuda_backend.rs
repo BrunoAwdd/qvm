@@ -9,7 +9,6 @@ use crate::qvm::backend::QuantumBackend;
 use crate::qvm::util::{infer_theta_from_matrix, get_cuda_gate_kernel};
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
 
-
 pub struct CudaBackend {
     context: Context,
     _device: Device,
@@ -74,10 +73,21 @@ impl QuantumBackend for CudaBackend {
             ];
 
             if kernel.use_theta {
-                // usa a matriz para extrair o theta
-                let matrix = gate.matrix();
-                let theta = infer_theta_from_matrix(&matrix); // você pode definir essa lógica
-                args.push(KernelArg::F64(theta));
+                if name == "U3" {
+                    // extração direta dos parâmetros U3
+                    if let Some((theta, phi, lambda)) = gate.as_u3_params() {
+                        args.push(KernelArg::F64(theta));
+                        args.push(KernelArg::F64(phi));
+                        args.push(KernelArg::F64(lambda));
+                    } else {
+                        panic!("Gate U3 não implementa as_u3_params corretamente.");
+                    }
+                } else {
+                    // fallback genérico pra RX, RY, RZ etc.
+                    let matrix = gate.matrix();
+                    let theta = infer_theta_from_matrix(&matrix);
+                    args.push(KernelArg::F64(theta));
+                }
             }
 
             launch_cuda_gate_kernel(
@@ -91,7 +101,7 @@ impl QuantumBackend for CudaBackend {
             return;
         }
 
-        // Fallback: CPU
+        // --- Fallback CPU ---
         let mut host = vec![CudaComplex::default(); self.state.len()];
         self.state.copy_to(&mut host).unwrap();
 
@@ -113,6 +123,8 @@ impl QuantumBackend for CudaBackend {
 
         self.state.copy_from(&new_state).unwrap();
     }
+
+
 
     fn apply_gate_2q(&mut self, gate: &dyn QuantumGateAbstract, q1: usize, q2: usize) {
         let mut host = vec![CudaComplex::default(); self.state.len()];
