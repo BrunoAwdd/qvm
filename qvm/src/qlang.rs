@@ -12,7 +12,8 @@ use crate::gates::{
     swap::Swap, 
     t::T,
     toffoli::Toffoli,
-    fredkin::Fredkin
+    fredkin::Fredkin,
+    u3::U3
 };
 use regex::Regex;
 use std::fs;
@@ -128,13 +129,20 @@ impl QLang {
                             let target = args[2].parse::<usize>().unwrap();
                             self.qvm.apply_gate_3q(&g, c1, c2, target);
                         }
-
                         "fredkin" => {
                             let g = Fredkin::new();
                             let ctrl = args[0].parse::<usize>().unwrap();
                             let t1 = args[1].parse::<usize>().unwrap();
                             let t2 = args[2].parse::<usize>().unwrap();
                             self.qvm.apply_gate_3q(&g, ctrl, t1, t2);
+                        }
+                        "u3" => {
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            let theta = args[1].parse::<f64>().unwrap();
+                            let phi = args[2].parse::<f64>().unwrap();
+                            let lambda = args[3].parse::<f64>().unwrap();
+                            let g = U3::new(theta, phi, lambda);
+                            self.qvm.apply_gate(&g, qubit);
                         }
 
                         _ => println!("Gate desconhecido: {}", name),
@@ -221,7 +229,14 @@ impl QLang {
                         vec![args[0].clone(), args[1].clone(), args[2].clone()],
                     ));
                 }
-
+                "u3" => {
+                    self.ast.push(QLangCommand::ApplyGate(
+                        "u3".to_string(),
+                        vec![
+                            args[0].clone(), args[1].clone(), args[2].clone(), args[3].clone()
+                        ],
+                    ));
+                }
                 "measure_all" => {
                     self.ast.push(QLangCommand::MeasureAll);
                 }

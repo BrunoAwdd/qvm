@@ -12,6 +12,7 @@ pub mod s;
 pub mod swap;
 pub mod t;
 pub mod toffoli;
+pub mod u3;
 
 
 

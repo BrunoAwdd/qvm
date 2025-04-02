@@ -25,6 +25,7 @@ pub fn launch_cuda_gate_kernel(
     stream: &Stream,
     _context: &Context,
 ) {
+
     let ptx_code = match ptx_filename {
         "cnot.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/cnot.ptx")),
         "fredkin.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/fredkin.ptx")),
@@ -39,6 +40,7 @@ pub fn launch_cuda_gate_kernel(
         "swap.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/swap.ptx")),
         "t.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/t.ptx")),
         "toffoli.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/toffoli.ptx")),
+        "u3.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/u3.ptx")),
         _ => panic!("PTX desconhecido: {}", ptx_filename),
     };
 
@@ -58,6 +60,7 @@ pub fn launch_cuda_gate_kernel(
 
     unsafe {
         match args {
+            // Ex: CNOT, SWAP, etc.
             [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b)] => {
                 cust::launch!(
                     function<<<grid_size, block_size, 0, stream>>>(
@@ -65,6 +68,8 @@ pub fn launch_cuda_gate_kernel(
                     )
                 ).expect("Falha ao lançar kernel com 3 argumentos");
             }
+
+            // Ex: RX, RY, RZ
             [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b), KernelArg::F64(theta)] => {
                 cust::launch!(
                     function<<<grid_size, block_size, 0, stream>>>(
@@ -72,16 +77,29 @@ pub fn launch_cuda_gate_kernel(
                     )
                 ).expect("Falha ao lançar kernel com 4 argumentos");
             }
+
+            // Ex: Toffoli
             [KernelArg::Ptr(ptr), KernelArg::I32(q0), KernelArg::I32(q1), KernelArg::I32(q2), KernelArg::I32(n)] => {
                 cust::launch!(
                     function<<<grid_size, block_size, 0, stream>>>(
                         *ptr, *q0, *q1, *q2, *n
                     )
-                ).expect("Falha ao lançar toffoli_kernel com 5 argumentos");
+                ).expect("Falha ao lançar kernel com 5 argumentos");
             }
+
+            // ✅ Novo caso: U3
+            [KernelArg::Ptr(ptr), KernelArg::I32(qubit), KernelArg::I32(n), KernelArg::F64(theta), KernelArg::F64(phi), KernelArg::F64(lambda)] => {
+                cust::launch!(
+                    function<<<grid_size, block_size, 0, stream>>>(
+                        *ptr, *qubit, *n, *theta, *phi, *lambda
+                    )
+                ).expect("Falha ao lançar kernel com 6 argumentos (U3)");
+            }
+
             _ => panic!("Número de argumentos não suportado para kernel {}", kernel_name),
         }
     }
+
 
     stream.synchronize().unwrap();
 }

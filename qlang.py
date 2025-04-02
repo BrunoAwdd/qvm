@@ -48,6 +48,10 @@ class QLangScript:
     def s(self, q):        self.assert_qubit_range(q); self.line(f"s({q})")
     def t(self, q):        self.assert_qubit_range(q); self.line(f"t({q})")
 
+    def u3(self, q, theta, phi, lambda_): 
+        self.assert_qubit_range(q); 
+        self.line(f"u3({q},{theta},{phi},{lambda_})")
+
     # Aliases
     def h(self, q): self.hadamard(q)
     def x(self, q): self.pauli_x(q)
@@ -99,26 +103,3 @@ class QLangScript:
     def get_qvm_state(self):
         ptr = self.lib.display_qvm()
         return ctypes.cast(ptr, ctypes.c_char_p).value.decode("utf-8") if ptr else ""
-
-
-
-if __name__ == "__main__":
-    q = QLangScript("cuda")
-    q.create(3)
-    q.reset()
-    q.h(0)
-    q.cnot(0,1) 
-    q.swap(0,1)  
-    q.rx(0,0.5) 
-    q.ry(0,0.5)  
-    q.rz(0,0.5)  
-    q.toffoli(0,1,2)
-    q.fredkin(0,1,2)
-    q.s(0)
-    q.t(0)
-    q.x(0)
-    q.y(0)
-    q.z(0)
-    q.m()
-    q.run()
-    print(f"Resultado da medição [{1}]:", q.get_measurement_result())
