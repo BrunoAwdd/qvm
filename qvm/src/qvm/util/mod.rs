@@ -39,6 +39,8 @@ pub fn infer_theta_from_matrix(matrix: &Array2<CudaComplex>) -> f64 {
 
 pub fn get_cuda_gate_kernel(gate_name: &str) -> Option<GateKernel> {
     match gate_name {
+        "Cnot"     => Some(GateKernel { kernel_name: "cnot_kernel",     ptx_file: "cnot.ptx", use_theta: false }),
+        "Fredkin"  => Some(GateKernel { kernel_name: "fredkin_kernel",  ptx_file: "fredkin.ptx", use_theta: false }),
         "Hadamard" => Some(GateKernel { kernel_name: "hadamard_kernel", ptx_file: "hadamard.ptx", use_theta: false }),
         "RX"       => Some(GateKernel { kernel_name: "rx_kernel",       ptx_file: "rx.ptx", use_theta: true  }),
         "RY"       => Some(GateKernel { kernel_name: "ry_kernel",       ptx_file: "ry.ptx", use_theta: true  }),
@@ -49,6 +51,7 @@ pub fn get_cuda_gate_kernel(gate_name: &str) -> Option<GateKernel> {
         "S"        => Some(GateKernel { kernel_name: "s_kernel",        ptx_file: "s.ptx", use_theta: false }),
         "Swap"     => Some(GateKernel { kernel_name: "swap_kernel",     ptx_file: "swap.ptx", use_theta: false }),
         "T"        => Some(GateKernel { kernel_name: "t_kernel",        ptx_file: "t.ptx", use_theta: false }),
+        "Toffoli"  => Some(GateKernel { kernel_name: "toffoli_kernel",  ptx_file: "toffoli.ptx", use_theta: false }),
         _ => None,
     }
 }

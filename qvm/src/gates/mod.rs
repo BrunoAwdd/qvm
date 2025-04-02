@@ -1,4 +1,5 @@
 pub mod cnot;
+pub mod fredkin;
 pub mod hadamard;
 pub mod pauli_x;
 pub mod pauli_y;
@@ -10,6 +11,7 @@ pub mod rz;
 pub mod s;
 pub mod swap;
 pub mod t;
+pub mod toffoli;
 
 
 

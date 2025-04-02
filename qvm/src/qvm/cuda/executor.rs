@@ -26,6 +26,8 @@ pub fn launch_cuda_gate_kernel(
     _context: &Context,
 ) {
     let ptx_code = match ptx_filename {
+        "cnot.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/cnot.ptx")),
+        "fredkin.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/fredkin.ptx")),
         "hadamard.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/hadamard.ptx")),
         "rx.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/rx.ptx")),
         "ry.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/ry.ptx")),
@@ -36,7 +38,7 @@ pub fn launch_cuda_gate_kernel(
         "s.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/s.ptx")),
         "swap.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/swap.ptx")),
         "t.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/t.ptx")),
-        "cnot.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/cnot.ptx")),
+        "toffoli.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/toffoli.ptx")),
         _ => panic!("PTX desconhecido: {}", ptx_filename),
     };
 
@@ -69,6 +71,13 @@ pub fn launch_cuda_gate_kernel(
                         *ptr, *a, *b, *theta
                     )
                 ).expect("Falha ao lançar kernel com 4 argumentos");
+            }
+            [KernelArg::Ptr(ptr), KernelArg::I32(q0), KernelArg::I32(q1), KernelArg::I32(q2), KernelArg::I32(n)] => {
+                cust::launch!(
+                    function<<<grid_size, block_size, 0, stream>>>(
+                        *ptr, *q0, *q1, *q2, *n
+                    )
+                ).expect("Falha ao lançar toffoli_kernel com 5 argumentos");
             }
             _ => panic!("Número de argumentos não suportado para kernel {}", kernel_name),
         }

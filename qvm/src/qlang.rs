@@ -10,7 +10,9 @@ use crate::gates::{
     rz::RZ, 
     s::S,
     swap::Swap, 
-    t::T
+    t::T,
+    toffoli::Toffoli,
+    fredkin::Fredkin
 };
 use regex::Regex;
 use std::fs;
@@ -79,12 +81,6 @@ impl QLang {
                             let qubit = args[0].parse::<usize>().unwrap();
                             self.qvm.apply_gate(&g, qubit);
                         }
-                        "cnot" | "cx" => {
-                            let g = CNOT::new();
-                            let q0 = args[0].parse::<usize>().unwrap();
-                            let q1 = args[1].parse::<usize>().unwrap();
-                            self.qvm.apply_gate_2q(&g, q0, q1);
-                        }
                         "rx" => {
                             let qubit = args[0].parse::<usize>().unwrap();
                             let theta = args[1].parse::<f64>().unwrap();
@@ -108,17 +104,39 @@ impl QLang {
                             let qubit = args[0].parse::<usize>().unwrap();
                             self.qvm.apply_gate(&g, qubit);
                         }
+                        "t" => {
+                            let g = T::new();
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            self.qvm.apply_gate(&g, qubit);
+                        }
+                        "cnot" | "cx" => {
+                            let g = CNOT::new();
+                            let q0 = args[0].parse::<usize>().unwrap();
+                            let q1 = args[1].parse::<usize>().unwrap();
+                            self.qvm.apply_gate_2q(&g, q0, q1);
+                        }
                         "swap" => {
                             let g = Swap::new();
                             let q0 = args[0].parse::<usize>().unwrap();
                             let q1 = args[1].parse::<usize>().unwrap();
                             self.qvm.apply_gate_2q(&g, q0, q1);
                         }
-                        "t" => {
-                            let g = T::new();
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            self.qvm.apply_gate(&g, qubit);
+                        "toffoli" => {
+                            let g = Toffoli::new();
+                            let c1 = args[0].parse::<usize>().unwrap();
+                            let c2 = args[1].parse::<usize>().unwrap();
+                            let target = args[2].parse::<usize>().unwrap();
+                            self.qvm.apply_gate_3q(&g, c1, c2, target);
                         }
+
+                        "fredkin" => {
+                            let g = Fredkin::new();
+                            let ctrl = args[0].parse::<usize>().unwrap();
+                            let t1 = args[1].parse::<usize>().unwrap();
+                            let t2 = args[2].parse::<usize>().unwrap();
+                            self.qvm.apply_gate_3q(&g, ctrl, t1, t2);
+                        }
+
                         _ => println!("Gate desconhecido: {}", name),
                     }
                 }
@@ -197,6 +215,13 @@ impl QLang {
                         vec![q0.to_string(), q1.to_string()],
                     ));
                 }
+                "toffoli" | "fredkin" => {
+                    self.ast.push(QLangCommand::ApplyGate(
+                        canonical_name.to_string(),
+                        vec![args[0].clone(), args[1].clone(), args[2].clone()],
+                    ));
+                }
+
                 "measure_all" => {
                     self.ast.push(QLangCommand::MeasureAll);
                 }
