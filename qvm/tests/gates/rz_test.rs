@@ -1,0 +1,16 @@
+use qlang::gates::rz::RZ;
+use qlang::qvm::cuda::types::CudaComplex;
+use std::f64::consts::PI;
+use ndarray::array;
+
+#[test]
+fn test_rz_pi() {
+    let rz = RZ::new(PI);
+    let matrix = rz.matrix;
+    let expected = array![
+        [CudaComplex::new(0.0, -1.0), CudaComplex::new(0.0, 0.0)],
+        [CudaComplex::new(0.0, 0.0), CudaComplex::new(0.0, 1.0)],
+    ];
+    assert_eq!(matrix[[0, 0]], expected[[0, 0]]);
+    assert_eq!(matrix[[1, 1]], expected[[1, 1]]);
+}

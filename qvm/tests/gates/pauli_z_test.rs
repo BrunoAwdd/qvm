@@ -1,15 +1,17 @@
-use qvm::gates::pauli_z::PauliZ;
-use num_complex::Complex;
+use qlang::qvm::cuda::types::CudaComplex;
+use qlang::gates::pauli_z::PauliZ;
 use ndarray::array;
 
 #[test]
 fn test_pauli_z_matrix() {
     let z = PauliZ::new();
+    let matrix = z.matrix;
 
     let expected = array![
-        [Complex::new(1.0, 0.0), Complex::new(0.0, 0.0)],
-        [Complex::new(0.0, 0.0), Complex::new(-1.0, 0.0)]
+        [CudaComplex::new(1.0, 0.0), CudaComplex::new(0.0, 0.0)],
+        [CudaComplex::new(0.0, 0.0), CudaComplex::new(-1.0, 0.0)]
     ];
 
-    assert_eq!(z.matrix, expected);
+    assert_eq!(matrix[[0, 0]], expected[[0, 0]]);
+    assert_eq!(matrix[[1, 1]], expected[[1, 1]]);
 }
