@@ -1,17 +1,25 @@
 import ctypes
+import os
 
 class QLangScript:
-    def __init__(self, lib_path="./qvm/target/release/libqvm.so"):
+    def __init__(self, backend="cpu"):
+        backend = backend.lower()
+        if backend not in ["cpu", "cuda"]:
+            raise ValueError("Backend deve ser 'cpu' ou 'cuda'")
+        
+        lib_name = f"libqlang_{backend}.so"
+        lib_path = os.path.abspath(f"./qvm/target/release/{lib_name}")
         self.lib = ctypes.CDLL(lib_path)
         self.code_lines = []
 
+        # Define protótipos
         self.lib.run_qlang_inline.argtypes = [ctypes.c_char_p]
         self.lib.run_qlang_inline.restype = None
 
         self.lib.reset_qvm.restype = None
         self.lib.run_qlang.restype = None
-        self.lib.measure_all.restype = ctypes.POINTER(ctypes.c_uint8)  # Expecta-se um ponteiro para array de bytes
-        self.lib.display_qvm.restype = ctypes.POINTER(ctypes.c_char)  # Expecta-se um ponteiro para a string
+        self.lib.measure_all.restype = ctypes.POINTER(ctypes.c_uint8)
+        self.lib.display_qvm.restype = ctypes.POINTER(ctypes.c_char)
 
     def line(self, s):
         self.code_lines.append(s)
@@ -36,6 +44,13 @@ class QLangScript:
     def cnot(self, c, t): self.line(f"cnot({c},{t})")
     def cx(self, c, t): self.cnot(c, t)
 
+    def rx(self, q, theta): self.line(f"rx({q},{theta})")
+    def ry(self, q, theta): self.line(f"ry({q},{theta})")
+    def rz(self, q, theta): self.line(f"rz({q},{theta})")
+
+    def s(self, q): self.line(f"s({q})")
+    def t(self, q): self.line(f"t({q})")
+
     def measure_all(self): self.line("measure_all()")
     def m(self): self.measure_all()
 
@@ -52,7 +67,6 @@ class QLangScript:
         self.lib.reset_qvm()
 
     def get_measurement_result(self):
-        """Chama measure_all e retorna o resultado"""
         result_ptr = self.lib.measure_all()
         if result_ptr:
             result = ctypes.cast(result_ptr, ctypes.POINTER(ctypes.c_uint8))
@@ -60,7 +74,6 @@ class QLangScript:
         return []
 
     def get_qvm_state(self):
-        """Chama display_qvm e retorna o estado do QVM"""
         result_ptr = self.lib.display_qvm()
         if result_ptr:
             state_str = ctypes.cast(result_ptr, ctypes.c_char_p).value.decode("utf-8")
@@ -68,10 +81,9 @@ class QLangScript:
         return ""
 
     def get_num_qubits(self):
-        """Obtém o número de qubits"""
         self.lib.get_num_qubits.restype = ctypes.c_size_t
         return self.lib.get_num_qubits()
-    
+
 
 if __name__ == "__main__":
     q = QLangScript()
