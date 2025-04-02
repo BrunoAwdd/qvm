@@ -21,11 +21,11 @@ Comparação entre sua QVM + QLang e os principais simuladores (Qiskit, Cirq, qs
 | **Gates básicos (Hadamard, Pauli)**  | ✅ Sim         | ✅ Sim                | ✔️ Já está no mesmo nível              |
 | **CNOT**                             | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
 | **Medição (individual/all)**         | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
-| **Gates de rotação (RZ, RX, RY)**    | ✅ Sim         | ✅ Sim                | 🔜 **Adicionar `rz` primeiro**         |
-| **Portas de fase (S, T)**            | ✅ Sim         | ✅ Sim                | 🔜 Depois do `rz`, são simples         |
-| **SWAP**                             | ✅ Sim         | ✅ Sim                | 🔜 Implementar com 3 CNOTs             |
-| **Toffoli (CCNOT)**                  | ✅ Sim         | ✅ Sim                | 🔜 Matriz 8x8 com suporte de 3 qubits  |
-| **Fredkin (CSWAP)**                  | ✅ Sim         | ✅ Sim                | 🔜 Implementar via matriz ou controle  |
+| **Gates de rotação (RZ, RX, RY)**    | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
+| **Portas de fase (S, T)**            | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
+| **SWAP**                             | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
+| **Toffoli (CCNOT)**                  | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
+| **Fredkin (CSWAP)**                  | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
 | **Gate arbitrário unitário (U3)**    | ❌ Ainda não   | ✅ Sim                | ⚠️ Pode vir depois                     |
 | **Ruído / Decoerência**              | ❌ Ainda não   | ✅ Sim                | 🚧 Avançado, deixar para versão futura |
 | **Otimização de circuitos**          | ❌ Ainda não   | ✅ Sim                | 🧠 Fase 2 (análise e reordenação)      |
