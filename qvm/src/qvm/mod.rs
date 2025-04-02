@@ -40,6 +40,10 @@ impl QVM {
         self.backend.apply_gate_2q( gate, q1, q2); // Aplica o gate ao backend
     }
 
+    pub fn apply_gate_3q(&mut self, gate: &impl QuantumGateAbstract, q0: usize, q1: usize, q2: usize) {
+        self.backend.apply_gate_3q(gate, q0, q1, q2);
+    }
+
     /// Mede o estado de todos os qubits
     pub fn measure_all(&mut self) -> Vec<u8> {
         self.backend.measure_all() // Mede todos os qubits no backend
