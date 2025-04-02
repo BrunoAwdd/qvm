@@ -18,9 +18,6 @@ pub struct CudaBackend {
     num_qubits: usize,
 }
 
-
-
-
 impl CudaBackend {
     pub fn new(num_qubits: usize) -> Self {
         // Inicializa o CUDA
@@ -144,13 +141,11 @@ impl QuantumBackend for CudaBackend {
 
                 let amp = gate_matrix[(output_index, input_index)];
                 new_state[j] = new_state[j] + CudaComplex::from(amp) * host[i];
-
             }
         }
 
         self.state.copy_from(&new_state).unwrap();
     }
-
 
     fn measure_all(&mut self) -> Vec<u8> {
         let mut results = vec![0; self.num_qubits];
