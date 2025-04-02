@@ -1,6 +1,7 @@
 use ndarray::Array2;
-use num_complex::Complex;
+use crate::qvm::cuda::types::CudaComplex;
 
 pub trait QuantumGateAbstract {
-    fn matrix(&self) -> Array2<Complex<f64>>;
+    fn matrix(&self) -> Array2<CudaComplex>;
+    fn name(&self) -> &'static str;
 }
