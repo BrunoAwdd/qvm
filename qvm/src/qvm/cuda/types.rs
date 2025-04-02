@@ -2,7 +2,7 @@ use num_complex::Complex64;
 use num_traits::Zero;
 use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, Div, MulAssign, DivAssign};
 use ndarray::ScalarOperand;
-
+use num_traits::One;
 
 #[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]
@@ -129,6 +129,16 @@ impl Mul<CudaComplex> for Complex64 {
 impl PartialEq for CudaComplex {
     fn eq(&self, other: &Self) -> bool {
         (self.re - other.re).abs() < 1e-10 && (self.im - other.im).abs() < 1e-10
+    }
+}
+
+impl One for CudaComplex {
+    fn one() -> Self {
+        CudaComplex::new(1.0, 0.0)
+    }
+
+    fn is_one(&self) -> bool {
+        self.re == 1.0 && self.im == 0.0
     }
 }
 
