@@ -1,11 +1,25 @@
 use crate::qvm::QVM;
-use crate::gates::{hadamard::Hadamard, pauli_x::PauliX, pauli_y::PauliY, pauli_z::PauliZ, cnot::CNOT};
+use crate::gates::{
+    hadamard::Hadamard, 
+    pauli_x::PauliX, 
+    pauli_y::PauliY, 
+    pauli_z::PauliZ, 
+    cnot::CNOT, 
+    rx::RX, 
+    ry::RY, 
+    rz::RZ, 
+    s::S, 
+    t::T
+};
 use regex::Regex;
 use std::fs;
 
+use crate::qvm::backend::QuantumBackend;
+
+
 pub enum QLangCommand {
     Create(usize),
-    ApplyGate(String, Vec<usize>),
+    ApplyGate(String, Vec<String>),
     MeasureAll,
     Display,
 }
@@ -46,23 +60,57 @@ impl QLang {
                     match name.as_str() {
                         "hadamard" | "h" => {
                             let g = Hadamard::new();
-                            self.qvm.apply_gate(&g, args[0]);
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            self.qvm.apply_gate(&g, qubit);
                         }
                         "paulix" | "x" => {
                             let g = PauliX::new();
-                            self.qvm.apply_gate(&g, args[0]);
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            self.qvm.apply_gate(&g, qubit);
                         }
                         "pauliy" | "y" => {
                             let g = PauliY::new();
-                            self.qvm.apply_gate(&g, args[0]);
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            self.qvm.apply_gate(&g, qubit);
                         }
                         "pauliz" | "z" => {
                             let g = PauliZ::new();
-                            self.qvm.apply_gate(&g, args[0]);
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            self.qvm.apply_gate(&g, qubit);
                         }
                         "cnot" | "cx" => {
                             let g = CNOT::new();
-                            self.qvm.apply_gate_2q(&g, args[0], args[1]);
+                            let q0 = args[0].parse::<usize>().unwrap();
+                            let q1 = args[1].parse::<usize>().unwrap();
+                            self.qvm.apply_gate_2q(&g, q0, q1);
+                        }
+                        "rx" => {
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            let theta = args[1].parse::<f64>().unwrap();
+                            let g = RX::new(theta);
+                            self.qvm.apply_gate(&g, qubit);
+                        }
+                        "ry" => {
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            let theta = args[1].parse::<f64>().unwrap();
+                            let g = RY::new(theta);
+                            self.qvm.apply_gate(&g, qubit);
+                        }
+                        "rz" => {
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            let theta = args[1].parse::<f64>().unwrap();
+                            let g = RZ::new(theta);
+                            self.qvm.apply_gate(&g, qubit);
+                        }
+                        "s" => {
+                            let g = S::new();
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            self.qvm.apply_gate(&g, qubit);
+                        }
+                        "t" => {
+                            let g = T::new();
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            self.qvm.apply_gate(&g, qubit);
                         }
                         _ => println!("Gate desconhecido: {}", name),
                     }
@@ -93,10 +141,10 @@ impl QLang {
         if let Some(caps) = self.func_regex.captures(line.trim()) {
             let raw = caps.get(1).unwrap().as_str();
             let args_str = caps.get(2).unwrap().as_str();
-            let args: Vec<usize> = args_str
+            let args: Vec<String> = args_str
                 .split(',')
                 .filter(|s| !s.trim().is_empty())
-                .map(|s| s.trim().parse().expect("Argumento inválido"))
+                .map(|s| s.trim().to_string())
                 .collect();
 
             let canonical_name = match raw {
@@ -112,13 +160,14 @@ impl QLang {
 
             match canonical_name {
                 "create" => {
-                    self.ast.push(QLangCommand::Create(args[0]));
+                    let qubit = args[0].parse::<usize>().unwrap();
+                    self.ast.push(QLangCommand::Create(qubit));
                 }
-                "hadamard" | "paulix" | "pauliy" | "pauliz" => {
-                    self.ast.push(QLangCommand::ApplyGate(canonical_name.to_string(), vec![args[0]]));
+                "hadamard" | "paulix" | "pauliy" | "pauliz" | "rx" | "ry" | "rz" | "s" | "t" => {
+                    self.ast.push(QLangCommand::ApplyGate(canonical_name.to_string(), vec![args[0].clone()]));
                 }
                 "cnot" => {
-                    self.ast.push(QLangCommand::ApplyGate("cnot".to_string(), vec![args[0], args[1]]));
+                    self.ast.push(QLangCommand::ApplyGate("cnot".to_string(), vec![args[0].clone(), args[1].clone()]));
                 }
                 "measure_all" => {
                     self.ast.push(QLangCommand::MeasureAll);
@@ -145,7 +194,7 @@ impl QLang {
     }
 
     pub fn reset(&mut self) {
-        let qubits = self.qvm.state.num_qubits;
+        let qubits = self.qvm.backend.num_qubits();
         self.qvm = QVM::new(qubits);
         self.ast.clear();
         self.collapsed = false;
