@@ -1,6 +1,7 @@
 pub mod cnot;
 pub mod fredkin;
 pub mod hadamard;
+pub mod identity;
 pub mod pauli_x;
 pub mod pauli_y;
 pub mod pauli_z;

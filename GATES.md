@@ -16,7 +16,7 @@ Este documento lista todas as portas quânticas suportadas (ou planejadas) na li
 | S-dagger   | sdg(q) | Inversa da S                   | ✅ Implementado |
 | T          | t(q)   | Aplica fase de π/4             | ✅ Implementado |
 | T-dagger   | tdg(q) | Inversa da T                   | ✅ Implementado |
-| Identidade | id(q)  | Não faz nada                   | ⬜ Planejado    |
+| Identidade | id(q)  | Não faz nada                   | ✅ Implementado |
 
 ---
 

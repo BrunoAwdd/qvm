@@ -1,5 +1,6 @@
 use crate::qvm::QVM;
 use crate::gates::{
+    identity::Identity,
     hadamard::Hadamard, 
     pauli_x::PauliX, 
     pauli_y::PauliY, 
@@ -82,6 +83,12 @@ impl QLang {
                             let qubit = args[0].parse::<usize>().unwrap();
                             self.qvm.apply_gate(&g, qubit);
                         }
+                        "identity" | "id" => {
+                            let g = Identity::new();
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            self.qvm.apply_gate(&g, qubit);
+                        }
+
                         "paulix" | "x" => {
                             let g = PauliX::new();
                             let qubit = args[0].parse::<usize>().unwrap();
@@ -216,6 +223,7 @@ impl QLang {
                 "d" => "display",
                 "sdg" => "sdagger",
                 "tdg" => "tdagger",
+                "id" => "identity",
                 other => other,
             };
 
@@ -225,6 +233,12 @@ impl QLang {
                     self.ast.push(QLangCommand::Create(qubit));
                 }
                 "hadamard" | "paulix" | "pauliy" | "pauliz" | "s" | "t" | "sdagger" | "tdagger"=> {
+                    self.ast.push(QLangCommand::ApplyGate(
+                        canonical_name.to_string(), 
+                        vec![args[0].clone()]
+                    ));
+                }
+                "identity" => {
                     self.ast.push(QLangCommand::ApplyGate(
                         canonical_name.to_string(), 
                         vec![args[0].clone()]

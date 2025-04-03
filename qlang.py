@@ -43,6 +43,7 @@ class QLangScript:
         self.line(f"create({n})")
 
     # Gates de 1 qubit
+    def identity(self, q): self.assert_qubit_range(q); self.line(f"id({q})")
     def hadamard(self, q): self.assert_qubit_range(q); self.line(f"hadamard({q})")
     def pauli_x(self, q):  self.assert_qubit_range(q); self.line(f"paulix({q})")
     def pauli_y(self, q):  self.assert_qubit_range(q); self.line(f"pauliy({q})")
@@ -57,6 +58,7 @@ class QLangScript:
         self.line(f"u3({q},{theta},{phi},{lambda_})")
 
     # Aliases
+    def id(self, q): self.identity(q)
     def h(self, q): self.hadamard(q)
     def x(self, q): self.pauli_x(q)
     def y(self, q): self.pauli_y(q)
