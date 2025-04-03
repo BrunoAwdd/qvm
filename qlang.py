@@ -11,6 +11,7 @@ class QLangScript:
         lib_path = os.path.abspath(f"./qvm/target/release/{lib_name}")
         self.lib = ctypes.CDLL(lib_path)
         self.code_lines = []
+        self.backend = backend
 
         # Protótipos
         self.lib.run_qlang_inline.argtypes = [ctypes.c_char_p]
@@ -39,6 +40,7 @@ class QLangScript:
     def create(self, n):
         self.lib.create_qvm.argtypes = [ctypes.c_size_t]
         self.lib.create_qvm(n)
+        self.line(f"create({n})")
 
     # Gates de 1 qubit
     def hadamard(self, q): self.assert_qubit_range(q); self.line(f"hadamard({q})")
@@ -103,3 +105,13 @@ class QLangScript:
     def get_qvm_state(self):
         ptr = self.lib.display_qvm()
         return ctypes.cast(ptr, ctypes.c_char_p).value.decode("utf-8") if ptr else ""
+
+    def print(self):
+        print("\n".join(self.code_lines))
+    
+    def save(self, filename):
+        with open(filename, "w") as f:
+            f.write(str(self))
+
+    def __str__(self):
+        return ctypes.cast(self.lib.get_qlang_source(), ctypes.c_char_p).value.decode("utf-8")
