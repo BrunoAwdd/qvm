@@ -1,77 +1,91 @@
-# Portas Suportadas no Qlang/QVM
+# 🌀 Supported Gates in QLang/QVM
 
-Este documento lista todas as portas quânticas suportadas (ou planejadas) na linguagem Qlang e no simulador QVM, com explicações rápidas e status de implementação.
-
----
-
-## 1. Portas de 1 Qubit
-
-| Nome       | Código | Função                         | Status          |
-| ---------- | ------ | ------------------------------ | --------------- |
-| Pauli-X    | x(q)   | Inverte o estado: 0⟩ ↔ 1⟩      | ✅ Implementado |
-| Pauli-Y    | y(q)   | Rotação com fase imaginária    | ✅ Implementado |
-| Pauli-Z    | z(q)   | Aplica fase -1 ao 1⟩           | ✅ Implementado |
-| Hadamard   | h(q)   | Cria superposição: (0⟩ +1⟩)/√2 | ✅ Implementado |
-| S          | s(q)   | Aplica fase de π/2             | ✅ Implementado |
-| S-dagger   | sdg(q) | Inversa da S                   | ✅ Implementado |
-| T          | t(q)   | Aplica fase de π/4             | ✅ Implementado |
-| T-dagger   | tdg(q) | Inversa da T                   | ✅ Implementado |
-| Identidade | id(q)  | Não faz nada                   | ✅ Implementado |
+This document lists all quantum gates available (or planned) in the **QLang** language and the **QVM** simulator, with quick explanations, backend coverage (CPU / CUDA), and implementation status.
 
 ---
 
-## 2. Portas de Rotação
+### 📊 **Summary**
 
-| Nome  | Código         | Função                     | Status          |
-| ----- | -------------- | -------------------------- | --------------- |
-| Rx    | rx(θ, q)       | Rotação no eixo X          | ✅ Implementado |
-| Ry    | ry(θ, q)       | Rotação no eixo Y          | ✅ Implementado |
-| Rz    | rz(θ, q)       | Rotação no eixo Z          | ✅ Implementado |
-| U3    | u3(θ, φ, λ, q) | Porta universal 1-qubit    | ✅ Implementado |
-| U2    | u2(φ, λ, q)    | Intermediário entre H e U3 | ⬜ Planejado    |
-| U1    | u1(λ, q)       | Rz com fator de escala     | ⬜ Planejado    |
-| Phase | phase(θ, q)    | Aplica fase arbitrária     | ⬜ Planejado    |
+- **Implemented Gates:** `21`
+- **Planned Gates:** `6`
+- **Total Planned:** `27`
+- **Backends:** `✅ CPU` — `✅ CUDA`
 
 ---
 
-## 3. Portas de 2 Qubits (Controladas)
+## 🔹 1. Single-Qubit Gates
 
-| Nome  | Código      | Função                               | Status          |
-| ----- | ----------- | ------------------------------------ | --------------- |
-| CNOT  | cnot(c, t)  | Controla X no alvo se controle for 1 | ✅ Implementado |
-| CZ    | cz(c, t)    | Controla Z no alvo se controle for 1 | ⬜ Planejado    |
-| CY    | cy(c, t)    | Controla Y no alvo se controle for 1 | ⬜ Planejado    |
-| SWAP  | swap(a, b)  | Troca os estados de dois qubits      | ✅ Implementado |
-| iSWAP | iswap(a, b) | Troca com fase imaginária            | ⬜ Planejado    |
-
----
-
-## 4. Portas de 3 Qubits
-
-| Nome    | Código             | Função                                 | Status          |
-| ------- | ------------------ | -------------------------------------- | --------------- |
-| Toffoli | toffoli(c1, c2, t) | Aplica X se ambos os controles forem 1 | ✅ Implementado |
-| Fredkin | fredkin(c, q1, q2) | Troca dois alvos se controle for 1     | ✅ Implementado |
+| Name     | Code   | Function                      | Status | CPU    | CUDA |
+| -------- | ------ | ----------------------------- | ------ | ------ | ---- | --- | --- |
+| Pauli-X  | x(q)   | Flips the state: 0⟩ ↔ 1⟩      | ✅     | ✅     | ✅   |
+| Pauli-Y  | y(q)   | Rotation with imaginary phase | ✅     | ✅     | ✅   |
+| Pauli-Z  | z(q)   | Applies -1 phase to           | 1⟩     | ✅     | ✅   | ✅  |
+| Hadamard | h(q)   | Superposition (               | 0⟩ +   | 1⟩)/√2 | ✅   | ✅  | ✅  |
+| S        | s(q)   | Applies phase of π/2          | ✅     | ✅     | ✅   |
+| S-dagger | sdg(q) | Inverse of S                  | ✅     | ✅     | ✅   |
+| T        | t(q)   | Applies phase of π/4          | ✅     | ✅     | ✅   |
+| T-dagger | tdg(q) | Inverse of T                  | ✅     | ✅     | ✅   |
+| Identity | id(q)  | Does nothing                  | ✅     | ✅     | ✅   |
 
 ---
 
-## 5. Medidas
+## 🔸 2. Rotation Gates
 
-| Nome     | Código    | Função                         | Status                           |
-| -------- | --------- | ------------------------------ | -------------------------------- |
-| Medida Z | m(q) / mz | Mede na base computacional (Z) | ✅ Implementado                  |
-| Medida X | mx(q)     | Aplica H e mede (base X)       | ⬜ Planejado (via Python helper) |
-| Medida Y | my(q)     | Aplica S† + H e mede (base Y)  | ⬜ Planejado (via Python helper) |
-
----
-
-## Legenda
-
-- ✅ _Implementado_: Disponível na linguagem e no simulador
-- ⬜ _Planejado_: Recurso previsto ou em desenvolvimento
+| Name  | Code           | Function                    | Status | CPU | CUDA |
+| ----- | -------------- | --------------------------- | ------ | --- | ---- |
+| Rx    | rx(θ, q)       | Rotation on X-axis          | ✅     | ✅  | ✅   |
+| Ry    | ry(θ, q)       | Rotation on Y-axis          | ✅     | ✅  | ✅   |
+| Rz    | rz(θ, q)       | Rotation on Z-axis          | ✅     | ✅  | ✅   |
+| U3    | u3(θ, φ, λ, q) | Universal single-qubit gate | ✅     | ✅  | ✅   |
+| U2    | u2(φ, λ, q)    | Midpoint between H and U3   | ✅     | ✅  | ✅   |
+| U1    | u1(λ, q)       | Scaled Rz gate              | ⬜     | ⬜  | ⬜   |
+| Phase | phase(θ, q)    | Applies arbitrary phase     | ⬜     | ⬜  | ⬜   |
 
 ---
 
-## Contribuições
+## 🔻 3. Two-Qubit Gates (Controlled)
 
-Se quiser contribuir com novas portas, otimizações ou melhorias, veja o arquivo CONTRIBUTING.md ou abra uma issue no repositório.
+| Name  | Code       | Function                          | Status | CPU | CUDA |
+| ----- | ---------- | --------------------------------- | ------ | --- | ---- | --- |
+| CNOT  | cnot(c, t) | Applies X on target if control is | 1⟩     | ✅  | ✅   | ✅  |
+| CZ    | cz(c, t)   | Applies Z on target if control is | 1⟩     | ⬜  | ⬜   | ⬜  |
+| CY    | cy(c, t)   | Applies Y on target if control is | 1⟩     | ⬜  | ⬜   | ⬜  |
+| SWAP  | swap(a, b) | Swaps the states of two qubits    | ✅     | ✅  | ✅   |
+| iSWAP | iswap(a,b) | Swap with imaginary phase         | ⬜     | ⬜  | ⬜   |
+
+---
+
+## 🔺 4. Three-Qubit Gates
+
+| Name    | Code             | Function                        | Status | CPU | CUDA |
+| ------- | ---------------- | ------------------------------- | ------ | --- | ---- | --- |
+| Toffoli | toffoli(c1,c2,t) | Applies X if both controls are  | 1⟩     | ✅  | ✅   | ✅  |
+| Fredkin | fredkin(c,q1,q2) | Swaps two targets if control is | 1⟩     | ✅  | ✅   | ✅  |
+
+---
+
+## 🎯 5. Measurements
+
+| Name      | Code      | Function                            | Status                         | CPU | CUDA |
+| --------- | --------- | ----------------------------------- | ------------------------------ | --- | ---- |
+| Z Measure | m(q) / mz | Measures in Z computational basis   | ✅ Implemented                 | ✅  | ✅   |
+| X Measure | mx(q)     | Applies H + measures (X basis)      | ⬜ Planned (via Python helper) | ⬜  | ⬜   |
+| Y Measure | my(q)     | Applies S† + H + measures (Y basis) | ⬜ Planned (via Python helper) | ⬜  | ⬜   |
+
+---
+
+## 🧩 Legend
+
+- ✅ _Implemented_
+- ⬜ _Planned_
+- CPU / CUDA indicate backend support
+
+---
+
+## 🤝 Contributing
+
+To contribute with new gates, improvements or optimizations:
+
+- Clone the repo (`git clone ...`)
+- Check the `CONTRIBUTING.md` file
+- Or open an _issue_ with your suggestion or question
