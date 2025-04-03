@@ -3,7 +3,7 @@ use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
 use ndarray::{Array2, array};
 
 pub struct SDagger {
-    matrix: Array2<CudaComplex>,
+    pub matrix: Array2<CudaComplex>,
 }
 
 impl SDagger {
