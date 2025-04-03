@@ -26,10 +26,10 @@ Comparação entre sua QVM + QLang e os principais simuladores (Qiskit, Cirq, qs
 | **SWAP**                             | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
 | **Toffoli (CCNOT)**                  | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
 | **Fredkin (CSWAP)**                  | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
-| **Gate arbitrário unitário (U3)**    | ❌ Ainda não   | ✅ Sim                | ⚠️ Pode vir depois                     |
+| **Gate arbitrário unitário (U3)**    | ✅ Sim         | ✅ Sim                | ✔️ Pronto                              |
 | **Ruído / Decoerência**              | ❌ Ainda não   | ✅ Sim                | 🚧 Avançado, deixar para versão futura |
 | **Otimização de circuitos**          | ❌ Ainda não   | ✅ Sim                | 🧠 Fase 2 (análise e reordenação)      |
-| **Suporte a >30 qubits**             | ⚠️ Parcial     | ✅ Sim (ex: qsim)     | 🔬 Testar escalabilidade da sua QVM    |
+| **Suporte a >30 qubits**             | ✅ Sim         | ✅ Sim (ex: qsim)     | 🔬 Testar escalabilidade da sua QVM    |
 | **Execução via linguagem própria**   | ✅ Sim (QLang) | ⚠️ Alguns (QASM, etc) | ✔️ Você tem vantagem aqui 💎           |
 | **Execução via string inline**       | ✅ Sim         | ✅ Sim                | ✔️ Com `run_qlang_inline`              |
 | **API C / Python / FFI**             | ✅ Sim         | ✅ Sim                | ✔️ No mesmo nível                      |
@@ -114,3 +114,10 @@ Quer contribuir, sugerir uma feature ou usar QLang no seu projeto acadêmico ou 
 Sinta-se livre para abrir uma issue, mandar PR ou entrar em contato comigo.
 
 ---
+
+Tarefa Status Prioridade
+Criar CircuitJob { circuit, init } 🛠️ Alta
+Permitir Vec<Job> no QVM 🛠️ Alta
+Backend CPU rodar em paralelo (rayon) 🛠️ Alta
+Backend CUDA operar múltiplos vetores 🛠️ Alta
+Benchmarkar gains com e sem batching 🧪 Média
