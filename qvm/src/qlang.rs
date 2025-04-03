@@ -16,6 +16,7 @@ use crate::gates::{
     t_dagger::TDagger,
     toffoli::Toffoli,
     fredkin::Fredkin,
+    u1::U1,
     u2::U2,
     u3::U3
 };
@@ -170,6 +171,12 @@ impl QLang {
                             let t2 = args[2].parse::<usize>().unwrap();
                             self.qvm.apply_gate_3q(&g, ctrl, t1, t2);
                         }
+                        "u1" => {
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            let lambda = args[1].parse::<f64>().unwrap();
+                            let g = U1::new(lambda);
+                            self.qvm.apply_gate(&g, qubit);
+                        }
                         "u2" => {
                             let qubit = args[0].parse::<usize>().unwrap();
                             let phi = args[1].parse::<f64>().unwrap();
@@ -274,16 +281,10 @@ impl QLang {
                         vec![args[0].clone(), args[1].clone(), args[2].clone()],
                     ));
                 }
-                "u2" => {
-                    if args.len() == 3 {
-                        self.ast.push(QLangCommand::ApplyGate(canonical_name.to_string(), args.clone()));
-                    }
-                }
-
-                "u3" => {
-                    if args.len() == 4 {
-                        self.ast.push(QLangCommand::ApplyGate(canonical_name.to_string(), args.clone()));
-                    }
+                "u1" | "u2" | "u3" | "phase" => {
+                    let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+                    validate_gate_arity(&canonical_name, &args_refs);
+                    self.ast.push(QLangCommand::ApplyGate(canonical_name.to_string(), args.clone()));
                 }
 
                 //"u3" => {
@@ -334,6 +335,8 @@ impl QLang {
             func_regex,
         }
     }
+
+
 }
 
 impl fmt::Display for QLang {
@@ -351,4 +354,13 @@ impl fmt::Display for QLang {
         }
         Ok(())
     }
+}
+
+    fn validate_gate_arity(name: &str, args: &[&str]) -> Result<(), String> {
+        match name {
+            "u1" => (args.len() == 2).then_some(()).ok_or("u1 requires 2 args".into()),
+            "u2" => (args.len() == 3).then_some(()).ok_or("u2 requires 3 args".into()),
+            "u3" => (args.len() == 4).then_some(()).ok_or("u3 requires 4 args".into()),
+            _ => Ok(()),
+        }
 }

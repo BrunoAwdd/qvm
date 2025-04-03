@@ -15,5 +15,7 @@ mod gates {
     mod t_dagger_test;
     mod toffoli_test;
     mod fredkin_test;
+    mod u1_test;
+    mod u2_test;
     mod u3_test;
 }

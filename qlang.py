@@ -52,14 +52,9 @@ class QLangScript:
     def s_dagger(self, q): self.assert_qubit_range(q); self.line(f"sdagger({q})")
     def t(self, q):        self.assert_qubit_range(q); self.line(f"t({q})")
     def t_dagger(self, q): self.assert_qubit_range(q); self.line(f"tdagger({q})")
-
-    def u2(self, q, phi, lambda_): 
-        self.assert_qubit_range(q); 
-        self.line(f"u2({q},{phi},{lambda_})")
-
-    def u3(self, q, theta, phi, lambda_): 
-        self.assert_qubit_range(q); 
-        self.line(f"u3({q},{theta},{phi},{lambda_})")
+    def u1(self, q, lambda_): self.assert_qubit_range(q); self.line(f"u1({q},{lambda_})")
+    def u2(self, q, phi, lambda_): self.assert_qubit_range(q); self.line(f"u2({q},{phi},{lambda_})")
+    def u3(self, q, theta, phi, lambda_): self.assert_qubit_range(q); self.line(f"u3({q},{theta},{phi},{lambda_})")
 
     # Aliases
     def id(self, q): self.identity(q)
