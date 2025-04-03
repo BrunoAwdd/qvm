@@ -8,6 +8,11 @@ mod gates {
     mod ry_test;
     mod rz_test;
     mod s_test;
+    mod s_dagger_test;
     mod swap_test;
     mod t_test;
+    mod t_dagger_test;
+    mod toffoli_test;
+    mod fredkin_test;
+    mod u3_test;
 }
