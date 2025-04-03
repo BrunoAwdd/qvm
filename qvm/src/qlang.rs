@@ -12,6 +12,7 @@ use crate::gates::{
     s_dagger::SDagger,
     swap::Swap, 
     t::T,
+    t_dagger::TDagger,
     toffoli::Toffoli,
     fredkin::Fredkin,
     u3::U3
@@ -129,6 +130,12 @@ impl QLang {
                             let qubit = args[0].parse::<usize>().unwrap();
                             self.qvm.apply_gate(&g, qubit);
                         }
+                        "tdagger" | "tdg" => {
+                            let g = TDagger::new();
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            self.qvm.apply_gate(&g, qubit);
+                        }
+
                         "cnot" | "cx" => {
                             let g = CNOT::new();
                             let q0 = args[0].parse::<usize>().unwrap();
@@ -208,6 +215,7 @@ impl QLang {
                 "m" => "measure_all",
                 "d" => "display",
                 "sdg" => "sdagger",
+                "tdg" => "tdagger",
                 other => other,
             };
 
@@ -216,7 +224,7 @@ impl QLang {
                     let qubit = args[0].parse::<usize>().unwrap();
                     self.ast.push(QLangCommand::Create(qubit));
                 }
-                "hadamard" | "paulix" | "pauliy" | "pauliz" | "s" | "t" | "sdagger"=> {
+                "hadamard" | "paulix" | "pauliy" | "pauliz" | "s" | "t" | "sdagger" | "tdagger"=> {
                     self.ast.push(QLangCommand::ApplyGate(
                         canonical_name.to_string(), 
                         vec![args[0].clone()]

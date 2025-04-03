@@ -48,7 +48,9 @@ class QLangScript:
     def pauli_y(self, q):  self.assert_qubit_range(q); self.line(f"pauliy({q})")
     def pauli_z(self, q):  self.assert_qubit_range(q); self.line(f"pauliz({q})")
     def s(self, q):        self.assert_qubit_range(q); self.line(f"s({q})")
+    def s_dagger(self, q): self.assert_qubit_range(q); self.line(f"sdagger({q})")
     def t(self, q):        self.assert_qubit_range(q); self.line(f"t({q})")
+    def t_dagger(self, q): self.assert_qubit_range(q); self.line(f"tdagger({q})")
 
     def u3(self, q, theta, phi, lambda_): 
         self.assert_qubit_range(q); 
@@ -61,6 +63,8 @@ class QLangScript:
     def z(self, q): self.pauli_z(q)
     def m(self):    self.measure_all()
     def d(self):    self.display()
+    def sdg(self, q): self.s_dagger(q)
+    def tdg(self, q): self.t_dagger(q)
     def cx(self, c, t): self.cnot(c, t)
 
     # Gates de 2 qubits
