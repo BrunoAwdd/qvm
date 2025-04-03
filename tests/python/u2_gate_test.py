@@ -18,6 +18,3 @@ def test_u2_gate():
         else:
             q0 = q0 + 1
 
-    print(f"q0: {q0}% - q1: {q1}%")
-
-test_u2_gate()

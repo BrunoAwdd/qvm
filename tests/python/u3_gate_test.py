@@ -21,4 +21,3 @@ def test_u3_gate(qubits=1, device="cpu"):
 
     print(f"q0: {q0}% - q1: {q1}%")
 
-test_u3_gate()
