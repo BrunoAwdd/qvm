@@ -16,6 +16,7 @@ use crate::gates::{
     t_dagger::TDagger,
     toffoli::Toffoli,
     fredkin::Fredkin,
+    u2::U2,
     u3::U3
 };
 
@@ -169,6 +170,13 @@ impl QLang {
                             let t2 = args[2].parse::<usize>().unwrap();
                             self.qvm.apply_gate_3q(&g, ctrl, t1, t2);
                         }
+                        "u2" => {
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            let phi = args[1].parse::<f64>().unwrap();
+                            let lambda = args[2].parse::<f64>().unwrap();
+                            let g = U2::new(phi, lambda);
+                            self.qvm.apply_gate(&g, qubit);
+                        }
                         "u3" => {
                             let qubit = args[0].parse::<usize>().unwrap();
                             let theta = args[1].parse::<f64>().unwrap();
@@ -232,13 +240,8 @@ impl QLang {
                     let qubit = args[0].parse::<usize>().unwrap();
                     self.ast.push(QLangCommand::Create(qubit));
                 }
-                "hadamard" | "paulix" | "pauliy" | "pauliz" | "s" | "t" | "sdagger" | "tdagger"=> {
-                    self.ast.push(QLangCommand::ApplyGate(
-                        canonical_name.to_string(), 
-                        vec![args[0].clone()]
-                    ));
-                }
-                "identity" => {
+                "hadamard" | "paulix" | "pauliy" | "pauliz" | 
+                "s" | "t" | "sdagger" | "tdagger" | "identity"=> {
                     self.ast.push(QLangCommand::ApplyGate(
                         canonical_name.to_string(), 
                         vec![args[0].clone()]
@@ -271,14 +274,26 @@ impl QLang {
                         vec![args[0].clone(), args[1].clone(), args[2].clone()],
                     ));
                 }
-                "u3" => {
-                    self.ast.push(QLangCommand::ApplyGate(
-                        "u3".to_string(),
-                        vec![
-                            args[0].clone(), args[1].clone(), args[2].clone(), args[3].clone()
-                        ],
-                    ));
+                "u2" => {
+                    if args.len() == 3 {
+                        self.ast.push(QLangCommand::ApplyGate(canonical_name.to_string(), args.clone()));
+                    }
                 }
+
+                "u3" => {
+                    if args.len() == 4 {
+                        self.ast.push(QLangCommand::ApplyGate(canonical_name.to_string(), args.clone()));
+                    }
+                }
+
+                //"u3" => {
+                //    self.ast.push(QLangCommand::ApplyGate(
+                //        canonical_name.to_string(),
+                //        vec![
+                //            args[0].clone(), args[1].clone(), args[2].clone(), args[3].clone()
+                //        ],
+                //    ));
+                //}
                 "measure_all" => {
                     self.ast.push(QLangCommand::MeasureAll);
                 }

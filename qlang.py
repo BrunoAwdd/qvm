@@ -53,6 +53,10 @@ class QLangScript:
     def t(self, q):        self.assert_qubit_range(q); self.line(f"t({q})")
     def t_dagger(self, q): self.assert_qubit_range(q); self.line(f"tdagger({q})")
 
+    def u2(self, q, phi, lambda_): 
+        self.assert_qubit_range(q); 
+        self.line(f"u2({q},{phi},{lambda_})")
+
     def u3(self, q, theta, phi, lambda_): 
         self.assert_qubit_range(q); 
         self.line(f"u3({q},{theta},{phi},{lambda_})")

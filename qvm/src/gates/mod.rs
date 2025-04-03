@@ -15,6 +15,7 @@ pub mod swap;
 pub mod t;
 pub mod t_dagger;
 pub mod toffoli;
+pub mod u2;
 pub mod u3;
 
 
