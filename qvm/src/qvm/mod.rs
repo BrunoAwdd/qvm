@@ -60,3 +60,11 @@ impl QVM {
 
 
 }
+
+impl Clone for QVM {
+    fn clone(&self) -> Self {
+        Self {
+            backend: self.backend.clone(),
+        }
+    }
+}

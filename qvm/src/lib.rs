@@ -2,6 +2,7 @@ pub mod qvm;
 pub mod qlang;
 pub mod gates;
 pub mod state;
+pub mod batch;
 
 use crate::qvm::QVM;
 use crate::qlang::QLang;
@@ -112,4 +113,15 @@ pub extern "C" fn get_num_qubits() -> usize {
         return qlang.qvm.num_qubits();
     }
     0
+}
+
+#[no_mangle]
+pub extern "C" fn get_qlang_source() -> *const c_char {
+    let source = QLANG_INSTANCE
+    .get()
+    .expect("QLANG_INSTANCE não inicializado")
+    .lock()
+    .unwrap()
+    .to_string();
+    CString::new(source).unwrap().into_raw()
 }

@@ -296,5 +296,31 @@ impl QuantumBackend for CudaBackend {
         }
     }
 
+    fn box_clone(&self) -> Box<dyn QuantumBackend> {
+        Box::new(self.clone())
+    }
+
+    fn name(&self) -> &'static str {
+        "CUDA"
+    }
+
 }
+
+impl Clone for CudaBackend {
+    fn clone(&self) -> Self {
+        // Copia o conteúdo da GPU para o host
+        let mut host_state = vec![CudaComplex::default(); self.state.len()];
+        self.state.copy_to(&mut host_state).unwrap();
+
+        // Cria um novo backend com o mesmo número de qubits
+        let mut new_backend = CudaBackend::new(self.num_qubits);
+
+        // Copia o estado do host para a GPU do novo backend
+        new_backend.state.copy_from(&host_state).unwrap();
+
+        new_backend
+    }
+}
+
+
 pub type Backend = CudaBackend; 

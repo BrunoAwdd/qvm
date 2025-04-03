@@ -180,5 +180,23 @@ impl QuantumBackend for CpuBackend {
         self.state.state_vector.iter().map(|c| CudaComplex::new(c.re, c.im)).collect()
     }
 
+    fn box_clone(&self) -> Box<dyn QuantumBackend> {
+        Box::new(self.clone())
+    }
+    
+    fn name(&self) -> &'static str {
+        "CPU"
+    }
+
 }
+
+
+impl Clone for CpuBackend {
+    fn clone(&self) -> Self {
+        Self {
+            state: self.state.clone(),
+        }
+    }
+}
+
 pub type Backend = CpuBackend; 
