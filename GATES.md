@@ -13,9 +13,9 @@ Este documento lista todas as portas quânticas suportadas (ou planejadas) na li
 | Pauli-Z    | z(q)   | Aplica fase -1 ao 1⟩           | ✅ Implementado |
 | Hadamard   | h(q)   | Cria superposição: (0⟩ +1⟩)/√2 | ✅ Implementado |
 | S          | s(q)   | Aplica fase de π/2             | ✅ Implementado |
-| S-dagger   | sdg(q) | Inversa da S                   | ⬜ Planejado    |
+| S-dagger   | sdg(q) | Inversa da S                   | ✅ Implementado |
 | T          | t(q)   | Aplica fase de π/4             | ✅ Implementado |
-| T-dagger   | tdg(q) | Inversa da T                   | ⬜ Planejado    |
+| T-dagger   | tdg(q) | Inversa da T                   | ✅ Implementado |
 | Identidade | id(q)  | Não faz nada                   | ⬜ Planejado    |
 
 ---
