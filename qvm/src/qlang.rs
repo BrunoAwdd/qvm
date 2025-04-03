@@ -9,18 +9,21 @@ use crate::gates::{
     ry::RY, 
     rz::RZ, 
     s::S,
+    s_dagger::SDagger,
     swap::Swap, 
     t::T,
     toffoli::Toffoli,
     fredkin::Fredkin,
     u3::U3
 };
+
+use std::fmt;
 use regex::Regex;
 use std::fs;
 
 use crate::qvm::backend::QuantumBackend;
 
-
+#[derive(Clone)]
 pub enum QLangCommand {
     Create(usize),
     ApplyGate(String, Vec<String>),
@@ -33,6 +36,17 @@ pub struct QLang {
     pub ast: Vec<QLangCommand>,
     pub collapsed: bool,
     func_regex: Regex,
+}
+
+impl Clone for QLang {
+    fn clone(&self) -> Self {
+        Self {
+            qvm: self.qvm.clone(),
+            ast: self.ast.clone(),
+            collapsed: self.collapsed,
+            func_regex: Regex::new(self.func_regex.as_str()).unwrap(),
+        }
+    }
 }
 
 impl QLang {
@@ -102,6 +116,11 @@ impl QLang {
                         }
                         "s" => {
                             let g = S::new();
+                            let qubit = args[0].parse::<usize>().unwrap();
+                            self.qvm.apply_gate(&g, qubit);
+                        }
+                        "sdagger" | "sdg" => {
+                            let g = SDagger::new();
                             let qubit = args[0].parse::<usize>().unwrap();
                             self.qvm.apply_gate(&g, qubit);
                         }
@@ -188,6 +207,7 @@ impl QLang {
                 "cx" => "cnot",
                 "m" => "measure_all",
                 "d" => "display",
+                "sdg" => "sdagger",
                 other => other,
             };
 
@@ -196,7 +216,7 @@ impl QLang {
                     let qubit = args[0].parse::<usize>().unwrap();
                     self.ast.push(QLangCommand::Create(qubit));
                 }
-                "hadamard" | "paulix" | "pauliy" | "pauliz" | "s" | "t" => {
+                "hadamard" | "paulix" | "pauliy" | "pauliz" | "s" | "t" | "sdagger"=> {
                     self.ast.push(QLangCommand::ApplyGate(
                         canonical_name.to_string(), 
                         vec![args[0].clone()]
@@ -276,5 +296,22 @@ impl QLang {
             collapsed: false,
             func_regex,
         }
+    }
+}
+
+impl fmt::Display for QLang {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "# backend: {}", self.qvm.backend.name())?;
+        for cmd in &self.ast {
+            match cmd {
+                QLangCommand::Create(n) => writeln!(f, "create({})", n)?,
+                QLangCommand::ApplyGate(name, args) => {
+                    writeln!(f, "{}({})", name, args.join(","))?
+                }
+                QLangCommand::MeasureAll => writeln!(f, "measure_all()")?,
+                QLangCommand::Display => writeln!(f, "display()")?,
+            }
+        }
+        Ok(())
     }
 }

@@ -9,6 +9,7 @@ pub mod rx;
 pub mod ry;
 pub mod rz;
 pub mod s;
+pub mod s_dagger;
 pub mod swap;
 pub mod t;
 pub mod toffoli;
