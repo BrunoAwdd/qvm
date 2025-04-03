@@ -3,4 +3,7 @@ myfile.ql
 qlang.zip
 benchmark.py
 test.py
+generate_batch.py
 scripts/*
+batch/*
+test
