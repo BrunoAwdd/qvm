@@ -1,5 +1,5 @@
 use qlang::qvm::cuda::types::CudaComplex;
-use qlang::gates::pauli_z::PauliZ;
+use qlang::gates::one_q::pauli_z::PauliZ;
 use ndarray::array;
 
 #[test]

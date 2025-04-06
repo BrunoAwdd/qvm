@@ -1,4 +1,4 @@
-use ndarray::{array, Array2};
+use ndarray::Array2;
 use crate::qvm::cuda::types::CudaComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
 

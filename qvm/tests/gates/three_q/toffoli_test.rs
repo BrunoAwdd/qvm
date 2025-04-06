@@ -1,4 +1,4 @@
-use qlang::gates::toffoli::Toffoli;
+use qlang::gates::three_q::toffoli::Toffoli;
 use qlang::qvm::cuda::types::CudaComplex;
 
 #[test]

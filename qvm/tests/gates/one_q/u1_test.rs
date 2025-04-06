@@ -1,4 +1,4 @@
-use qlang::gates::u1::U1;
+use qlang::gates::one_q::u1::U1;
 use qlang::qvm::cuda::types::CudaComplex;
 use std::f64::consts::PI;
 

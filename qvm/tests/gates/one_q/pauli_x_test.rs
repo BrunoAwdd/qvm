@@ -1,4 +1,4 @@
-use qlang::gates::pauli_x::PauliX; // Importação correta do módulo
+use qlang::gates::one_q::pauli_x::PauliX; // Importação correta do módulo
 use qlang::qvm::cuda::types::CudaComplex;
 use ndarray::array;
 

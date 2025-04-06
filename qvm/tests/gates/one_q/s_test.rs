@@ -1,4 +1,4 @@
-use qlang::gates::s::S;
+use qlang::gates::one_q::s::S;
 use qlang::qvm::cuda::types::CudaComplex;
 
 #[test]

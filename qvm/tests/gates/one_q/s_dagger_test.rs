@@ -1,4 +1,4 @@
-use qlang::gates::s_dagger::SDagger;
+use qlang::gates::one_q::s_dagger::SDagger;
 use qlang::qvm::cuda::types::CudaComplex;
 use std::f64::consts::FRAC_PI_2; // π/2
 use ndarray::array;

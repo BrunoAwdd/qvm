@@ -1,4 +1,4 @@
-use qlang::gates::rx::RX;
+use qlang::gates::one_q::rx::RX;
 use qlang::qvm::cuda::types::CudaComplex;
 use std::f64::consts::PI;
 use ndarray::array;

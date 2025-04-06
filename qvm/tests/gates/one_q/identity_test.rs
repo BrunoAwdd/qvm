@@ -1,4 +1,4 @@
-use qlang::gates::identity::Identity;
+use qlang::gates::one_q::identity::Identity;
 use qlang::qvm::cuda::types::CudaComplex;
 use ndarray::array;
 

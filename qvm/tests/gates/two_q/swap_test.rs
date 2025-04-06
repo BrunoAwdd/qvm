@@ -1,4 +1,4 @@
-use qlang::gates::swap::Swap;
+use qlang::gates::two_q::swap::Swap;
 use qlang::qvm::cuda::types::CudaComplex;
 
 #[test]

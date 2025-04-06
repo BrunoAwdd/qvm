@@ -1,4 +1,4 @@
-use qlang::gates::pauli_y::PauliY;
+use qlang::gates::one_q::pauli_y::PauliY;
 use qlang::qvm::cuda::types::CudaComplex;
 use ndarray::array;
 

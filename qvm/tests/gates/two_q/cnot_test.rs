@@ -1,4 +1,4 @@
-use qlang::gates::cnot::CNOT;
+use qlang::gates::two_q::cnot::CNOT;
 use qlang::qvm::cuda::types::CudaComplex;
 use ndarray::array;
 

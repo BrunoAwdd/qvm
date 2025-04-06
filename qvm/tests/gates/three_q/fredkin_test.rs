@@ -1,4 +1,4 @@
-use qlang::gates::fredkin::Fredkin;
+use qlang::gates::three_q::fredkin::Fredkin;
 use qlang::qvm::cuda::types::CudaComplex;
 
 #[test]
