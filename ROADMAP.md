@@ -25,7 +25,7 @@ This document defines the milestones for QLang version 0.1, including basic quan
 - [x] `rz(q, θ)`
 - [x] `u3(q, θ, φ, λ)`
 - [x] `u2(q, φ, λ)`
-- [ ] `u1(q, λ)` _(planned for 0.1)_
+- [x] `u1(q, λ)` _(planned for 0.1)_
 - [ ] `phase(q, θ)` _(planned for 0.1)_
 
 ### 🔹 2-Qubit Gates
@@ -243,6 +243,90 @@ A WebAssembly-compiled version accessible from any modern browser, enabling real
 - [ ] Bindings for Go, Julia, etc.
 
 ---
+
+# 🧭 QLang Roadmap — v0.7 to v1.0
+
+## ✅ v0.7 — Standard Quantum Algorithms
+
+> Introduces a set of classic quantum algorithms as reusable, ready-to-run circuits.
+
+- [ ] Implement circuit library for:
+- [ ] Grover Search
+- [ ] QFT (Quantum Fourier Transform)
+- [ ] Deutsch-Jozsa
+- [ ] Bernstein-Vazirani
+- [ ] Bell State
+- [ ] GHZ State
+- [ ] Internal `CircuitLibrary` structure
+- [ ] Helper functions (`qlib.grover(n)`, etc.)
+- [ ] Examples in README and `.ql` scripts
+- [ ] Unit tests to validate all algorithms
+
+---
+
+## ✅ v0.8 — Optimizer and Transpiler
+
+> Circuit performance improvements with smart simplification and rewrite rules.
+
+- [ ] Circuit transpiler:
+- [ ] Merge consecutive gates
+- [ ] Cancel inverse gates (`x; x = id`)
+- [ ] Simplify via identities (`h; z; h = x`)
+- [ ] Optimizer with configurable heuristics
+- [ ] Transformation logger (`--opt-log`)
+- [ ] CLI flag `--optimize`
+- [ ] Export `.qopt` files with optimized circuits
+
+---
+
+## ✅ v0.9 — Advanced Noise + Physical Backends
+
+> Realistic simulations and export to hardware-compatible formats.
+
+- [ ] Noise simulator:
+- [ ] Channels: depolarizing, bit-flip, phase-flip
+- [ ] Custom noise per gate
+- [ ] Noise profiles (`--noise=ibm_standard`)
+- [ ] Export to QASM v2.0
+- [ ] Optional Qiskit Cloud integration (`--export-to=qiskit`)
+- [ ] `qlang-to-qiskit` tool for direct interoperability
+
+---
+
+## ✅ v1.0 — Stability, Interactivity and Ecosystem
+
+> The official stable release with strong documentation and full tooling.
+
+- [ ] **CLI / REPL final version**
+- [ ] Autocomplete, highlight, macros
+- [ ] History, `.save`, `.load`, `.viz`
+- [ ] **Web Playground 1.0**
+- [ ] Online `.ql` editor + WASM runner
+- [ ] Graphical circuit viewer
+- [ ] **Full Documentation**
+- [ ] `docs.qlang.dev` (or similar)
+- [ ] Tutorials for Python, C, JS
+- [ ] **Official Packages**
+- [ ] `pip install qlang`
+- [ ] `npm install @qlang/qvm`
+- [ ] `cargo add qlang`
+- [ ] **Smart multi-backend support**
+- [ ] Automatic: CPU / GPU / Tensor / WASM
+- [ ] **Final `.ql` language version**
+- [ ] Stable syntax with robust parser
+- [ ] **Validation with IBM circuits**
+- [ ] 50+ real-world circuit benchmarks
+
+---
+
+## 📦 Post-1.0 (Future Ideas)
+
+- [ ] Official VSCode plugin (syntax, execution)
+- [ ] QLang-based education framework
+- [ ] Quantum Error Correction support
+- [ ] Physical hardware emulation (latency, decoherence)
+- [ ] WebGPU backend (via `wgpu`)
+- [ ] Visual DSL for drag-and-drop circuit design
 
 ## 📜 License and Repository
 
