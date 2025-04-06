@@ -1,13 +1,13 @@
 
 use ndarray::Array1;
 use std::fmt;
-use crate::qvm::cuda::types::CudaComplex;
+use crate::types::qlang_complex::QLangComplex;
 
 #[derive(Debug, Clone)] 
 
 pub struct QuantumState {
     pub num_qubits: usize,
-    pub state_vector: Array1<CudaComplex>,
+    pub state_vector: Array1<QLangComplex>,
 }
 
 impl fmt::Display for QuantumState {
@@ -32,13 +32,13 @@ impl fmt::Display for QuantumState {
 impl QuantumState {
     pub fn new(num_qubits: usize) -> Self {
         let dim = 1 << num_qubits;
-        let mut state_vector = Array1::<CudaComplex>::zeros(dim);
-        state_vector[0] = CudaComplex::new(1.0, 0.0);
+        let mut state_vector = Array1::<QLangComplex>::zeros(dim);
+        state_vector[0] = QLangComplex::new(1.0, 0.0);
         Self { num_qubits, state_vector }
     }
 
     pub fn reset_state(&mut self) {
-        self.state_vector.fill(CudaComplex::new(0.0, 0.0));
-        self.state_vector[0] = CudaComplex::new(1.0, 0.0);
+        self.state_vector.fill(QLangComplex::new(0.0, 0.0));
+        self.state_vector[0] = QLangComplex::new(1.0, 0.0);
     }
 }

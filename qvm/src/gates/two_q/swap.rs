@@ -1,15 +1,15 @@
 use ndarray::array;
 use ndarray::Array2;
 
-use crate::qvm::cuda::types::CudaComplex;
+use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
 
 pub struct Swap {
-    pub matrix: Array2<CudaComplex>,
+    pub matrix: Array2<QLangComplex>,
 }
 
 impl QuantumGateAbstract for Swap {
-    fn matrix(&self) -> Array2<CudaComplex> {
+    fn matrix(&self) -> Array2<QLangComplex> {
         self.matrix.clone()
     }
 
@@ -20,8 +20,8 @@ impl QuantumGateAbstract for Swap {
 
 impl Swap {
     pub fn new() -> Self {
-        let zero = CudaComplex::new(0.0, 0.0);
-        let one = CudaComplex::new(1.0, 0.0);
+        let zero = QLangComplex::new(0.0, 0.0);
+        let one = QLangComplex::new(1.0, 0.0);
 
         let matrix = array![
             [one, zero, zero, zero],

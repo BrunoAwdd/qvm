@@ -1,4 +1,4 @@
-use qlang::qvm::cuda::types::CudaComplex;
+use qlang::types::qlang_complex::QLangComplex;
 use qlang::gates::one_q::pauli_z::PauliZ;
 use ndarray::array;
 
@@ -8,8 +8,8 @@ fn test_pauli_z_matrix() {
     let matrix = z.matrix;
 
     let expected = array![
-        [CudaComplex::new(1.0, 0.0), CudaComplex::new(0.0, 0.0)],
-        [CudaComplex::new(0.0, 0.0), CudaComplex::new(-1.0, 0.0)]
+        [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
+        [QLangComplex::new(0.0, 0.0), QLangComplex::new(-1.0, 0.0)]
     ];
 
     assert_eq!(matrix[[0, 0]], expected[[0, 0]]);

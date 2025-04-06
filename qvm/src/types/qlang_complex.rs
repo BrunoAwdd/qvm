@@ -6,12 +6,12 @@ use num_traits::One;
 
 #[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]
-pub struct CudaComplex {
+pub struct QLangComplex {
     pub re: f64,
     pub im: f64,
 }
 
-impl CudaComplex {
+impl QLangComplex {
     pub fn new(re: f64, im: f64) -> Self {
         Self { re, im }
     }
@@ -32,27 +32,27 @@ impl CudaComplex {
     }
 }
 
-impl From<Complex64> for CudaComplex {
+impl From<Complex64> for QLangComplex {
     fn from(c: Complex64) -> Self {
         Self { re: c.re, im: c.im }
     }
 }
 
-impl From<CudaComplex> for Complex64 {
-    fn from(c: CudaComplex) -> Self {
+impl From<QLangComplex> for Complex64 {
+    fn from(c: QLangComplex) -> Self {
         Complex64::new(c.re, c.im)
     }
 }
 
-pub fn to_complex_vec(src: &[CudaComplex]) -> Vec<Complex64> {
+pub fn to_complex_vec(src: &[QLangComplex]) -> Vec<Complex64> {
     src.iter().copied().map(Complex64::from).collect()
 }
 
 
 #[cfg(feature = "cuda")]
-unsafe impl cust::memory::DeviceCopy for CudaComplex {}
+unsafe impl cust::memory::DeviceCopy for QLangComplex {}
 
-impl Neg for CudaComplex {
+impl Neg for QLangComplex {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -64,9 +64,9 @@ impl Neg for CudaComplex {
 }
 
 
-impl Zero for CudaComplex {
+impl Zero for QLangComplex {
     fn zero() -> Self {
-        CudaComplex { re: 0.0, im: 0.0 }
+        QLangComplex { re: 0.0, im: 0.0 }
     }
 
     fn is_zero(&self) -> bool {
@@ -74,57 +74,57 @@ impl Zero for CudaComplex {
     }
 }
 
-impl Add for CudaComplex {
+impl Add for QLangComplex {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {
         Self { re: self.re + rhs.re, im: self.im + rhs.im }
     }
 }
 
-impl AddAssign for CudaComplex {
+impl AddAssign for QLangComplex {
     fn add_assign(&mut self, rhs: Self) {
         self.re += rhs.re;
         self.im += rhs.im;
     }
 }
 
-impl Sub for CudaComplex {
+impl Sub for QLangComplex {
     type Output = Self;
     fn sub(self, rhs: Self) -> Self {
         Self { re: self.re - rhs.re, im: self.im - rhs.im }
     }
 }
 
-impl SubAssign for CudaComplex {
+impl SubAssign for QLangComplex {
     fn sub_assign(&mut self, rhs: Self) {
         self.re -= rhs.re;
         self.im -= rhs.im;
     }
 }
 
-impl Mul<f64> for CudaComplex {
-    type Output = CudaComplex;
+impl Mul<f64> for QLangComplex {
+    type Output = QLangComplex;
 
-    fn mul(self, rhs: f64) -> CudaComplex {
-        CudaComplex {
+    fn mul(self, rhs: f64) -> QLangComplex {
+        QLangComplex {
             re: self.re * rhs,
             im: self.im * rhs,
         }
     }
 }
 
-impl Mul<CudaComplex> for f64 {
-    type Output = CudaComplex;
+impl Mul<QLangComplex> for f64 {
+    type Output = QLangComplex;
 
-    fn mul(self, rhs: CudaComplex) -> CudaComplex {
-        CudaComplex {
+    fn mul(self, rhs: QLangComplex) -> QLangComplex {
+        QLangComplex {
             re: rhs.re * self,
             im: rhs.im * self,
         }
     }
 }
 
-impl Mul for CudaComplex {
+impl Mul for QLangComplex {
     type Output = Self;
     fn mul(self, rhs: Self) -> Self {
         Self {
@@ -134,14 +134,14 @@ impl Mul for CudaComplex {
     }
 }
 
-impl MulAssign for CudaComplex {
+impl MulAssign for QLangComplex {
     fn mul_assign(&mut self, rhs: Self) {
         let temp = *self * rhs;
         *self = temp;
     }
 }
 
-impl Div for CudaComplex {
+impl Div for QLangComplex {
     type Output = Self;
     fn div(self, rhs: Self) -> Self {
         let denom = rhs.re * rhs.re + rhs.im * rhs.im;
@@ -152,29 +152,29 @@ impl Div for CudaComplex {
     }
 }
 
-impl DivAssign for CudaComplex {
+impl DivAssign for QLangComplex {
     fn div_assign(&mut self, rhs: Self) {
         let temp = *self / rhs;
         *self = temp;
     }
 }
 
-impl Mul<CudaComplex> for Complex64 {
+impl Mul<QLangComplex> for Complex64 {
     type Output = Complex64;
-    fn mul(self, rhs: CudaComplex) -> Complex64 {
+    fn mul(self, rhs: QLangComplex) -> Complex64 {
         self * Complex64::new(rhs.re, rhs.im)
     }
 }
 
-impl PartialEq for CudaComplex {
+impl PartialEq for QLangComplex {
     fn eq(&self, other: &Self) -> bool {
         (self.re - other.re).abs() < 1e-10 && (self.im - other.im).abs() < 1e-10
     }
 }
 
-impl One for CudaComplex {
+impl One for QLangComplex {
     fn one() -> Self {
-        CudaComplex::new(1.0, 0.0)
+        QLangComplex::new(1.0, 0.0)
     }
 
     fn is_one(&self) -> bool {
@@ -182,4 +182,4 @@ impl One for CudaComplex {
     }
 }
 
-impl ScalarOperand for CudaComplex {}
+impl ScalarOperand for QLangComplex {}

@@ -3,6 +3,7 @@ pub mod qvm;
 pub mod gates;
 pub mod state;
 pub mod batch;
+pub mod types;
 
 use crate::qlang::{QLang, ast::QLangCommand};
 use crate::batch::circuit_job::CircuitJob;

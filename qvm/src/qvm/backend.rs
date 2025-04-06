@@ -1,5 +1,5 @@
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
-use crate::qvm::cuda::types::CudaComplex;
+use crate::types::qlang_complex::QLangComplex;
 
 pub trait QuantumBackend {
     fn num_qubits(&self) -> usize;
@@ -10,7 +10,7 @@ pub trait QuantumBackend {
     fn measure_all(&mut self) -> Vec<u8>;
     fn display(&self);
     fn reset(&mut self, num_qubits: usize);
-    fn state_vector(&self) -> Vec<CudaComplex>;
+    fn state_vector(&self) -> Vec<QLangComplex>;
 
     /// Clonagem dinâmica
     fn box_clone(&self) -> Box<dyn QuantumBackend>;

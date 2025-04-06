@@ -1,8 +1,9 @@
+pub mod batch;
+pub mod gates;
 pub mod qvm;
 pub mod qlang;
-pub mod gates;
 pub mod state;
-pub mod batch;
+pub mod types;
 
 use crate::qvm::QVM;
 use crate::qlang::QLang;

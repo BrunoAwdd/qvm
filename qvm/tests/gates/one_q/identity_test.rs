@@ -1,5 +1,5 @@
 use qlang::gates::one_q::identity::Identity;
-use qlang::qvm::cuda::types::CudaComplex;
+use qlang::types::qlang_complex::QLangComplex;
 use ndarray::array;
 
 #[test]
@@ -8,8 +8,8 @@ fn test_identity_gate_matrix() {
     let matrix = id.matrix;
 
     let expected = array![
-        [CudaComplex::new(1.0, 0.0), CudaComplex::new(0.0, 0.0)],
-        [CudaComplex::new(0.0, 0.0), CudaComplex::new(1.0, 0.0)],
+        [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
+        [QLangComplex::new(0.0, 0.0), QLangComplex::new(1.0, 0.0)],
     ];
 
     assert_eq!(matrix[[0, 0]], expected[[0, 0]]);

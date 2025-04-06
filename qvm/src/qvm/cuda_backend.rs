@@ -4,16 +4,17 @@ use cust::{context::Context, memory::*, prelude::*, stream::Stream};
 
 use rand::Rng;
 
-use crate::qvm::cuda::{types::CudaComplex, executor::{launch_cuda_gate_kernel, KernelArg}};
+use crate::qvm::cuda::executor::{launch_cuda_gate_kernel, KernelArg};
 use crate::qvm::backend::QuantumBackend;
 use crate::qvm::util::{infer_theta_from_matrix, get_cuda_gate_kernel};
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
 
 pub struct CudaBackend {
     context: Context,
     _device: Device,
     _stream: Stream,
-    state: DeviceBuffer<CudaComplex>,
+    state: DeviceBuffer<QLangComplex>,
     num_qubits: usize,
 }
 
@@ -28,7 +29,7 @@ impl CudaBackend {
 
         let state_len = 1 << num_qubits;
         let mut host_state = Self::default_host_state(num_qubits);
-        host_state[0] = CudaComplex::new(1.0, 0.0); // |0⟩
+        host_state[0] = QLangComplex::new(1.0, 0.0); // |0⟩
 
         let state = DeviceBuffer::from_slice(&host_state).unwrap();
 
@@ -41,10 +42,10 @@ impl CudaBackend {
         }
     }
 
-    fn default_host_state(num_qubits: usize) -> Vec<CudaComplex> {
+    fn default_host_state(num_qubits: usize) -> Vec<QLangComplex> {
         let state_len = 1 << num_qubits;
-        let mut tmp = vec![CudaComplex::default(); state_len];
-        tmp[0] = CudaComplex { re: 1.0, im: 0.0 };
+        let mut tmp = vec![QLangComplex::default(); state_len];
+        tmp[0] = QLangComplex { re: 1.0, im: 0.0 };
         tmp
     }
 }
@@ -54,10 +55,10 @@ impl QuantumBackend for CudaBackend {
         self.num_qubits
     }
 
-    fn state_vector(&self) -> Vec<CudaComplex> {
-        let mut host = vec![CudaComplex::default(); self.state.len()];
+    fn state_vector(&self) -> Vec<QLangComplex> {
+        let mut host = vec![QLangComplex::default(); self.state.len()];
         self.state.copy_to(&mut host).unwrap();
-        host.into_iter().map(CudaComplex::from).collect()
+        host.into_iter().map(QLangComplex::from).collect()
     }
 
     fn apply_gate(&mut self, gate: &dyn QuantumGateAbstract, qubit: usize) {
@@ -102,7 +103,7 @@ impl QuantumBackend for CudaBackend {
         }
 
         // --- Fallback CPU ---
-        let mut host = vec![CudaComplex::default(); self.state.len()];
+        let mut host = vec![QLangComplex::default(); self.state.len()];
         self.state.copy_to(&mut host).unwrap();
 
         let dim = host.len();
@@ -115,9 +116,9 @@ impl QuantumBackend for CudaBackend {
                 let a = host[i];
                 let b = host[j];
                 new_state[i] =
-                    CudaComplex::from(gate_matrix[(0, 0)]) * a + CudaComplex::from(gate_matrix[(0, 1)]) * b;
+                    QLangComplex::from(gate_matrix[(0, 0)]) * a + QLangComplex::from(gate_matrix[(0, 1)]) * b;
                 new_state[j] =
-                    CudaComplex::from(gate_matrix[(1, 0)]) * a + CudaComplex::from(gate_matrix[(1, 1)]) * b;
+                    QLangComplex::from(gate_matrix[(1, 0)]) * a + QLangComplex::from(gate_matrix[(1, 1)]) * b;
             }
         }
 
@@ -127,14 +128,14 @@ impl QuantumBackend for CudaBackend {
 
 
     fn apply_gate_2q(&mut self, gate: &dyn QuantumGateAbstract, q1: usize, q2: usize) {
-        let mut host = vec![CudaComplex::default(); self.state.len()];
+        let mut host = vec![QLangComplex::default(); self.state.len()];
         self.state.copy_to(&mut host).unwrap();
 
         let n = self.num_qubits;
         let dim = 1 << n;
         let gate_matrix = gate.matrix();
 
-        let mut new_state = vec![CudaComplex::default(); dim];
+        let mut new_state = vec![QLangComplex::default(); dim];
 
         for i in 0..dim {
             let b1 = (i >> q1) & 1;
@@ -152,7 +153,7 @@ impl QuantumBackend for CudaBackend {
                 j |= o2 << q2;
 
                 let amp = gate_matrix[(output_index, input_index)];
-                new_state[j] = new_state[j] + CudaComplex::from(amp) * host[i];
+                new_state[j] = new_state[j] + QLangComplex::from(amp) * host[i];
             }
         }
 
@@ -193,7 +194,7 @@ impl QuantumBackend for CudaBackend {
         }
 
         // Fallback: CPU-style simulação com host (como nos 2Q)
-        let mut host = vec![CudaComplex::default(); self.state.len()];
+        let mut host = vec![QLangComplex::default(); self.state.len()];
         self.state.copy_to(&mut host).unwrap();
 
         let dim = 1 << n;
@@ -220,7 +221,7 @@ impl QuantumBackend for CudaBackend {
                 j |= o2 << q2;
 
                 let amp = gate_matrix[(output_index, input_index)];
-                new_state[j] = new_state[j] + CudaComplex::from(amp) * host[i];
+                new_state[j] = new_state[j] + QLangComplex::from(amp) * host[i];
             }
         }
 
@@ -238,7 +239,7 @@ impl QuantumBackend for CudaBackend {
 
     fn measure(&mut self, qubit: usize) -> u8 {
         let dim = self.state.len();
-        let mut host = vec![CudaComplex::default(); dim];
+        let mut host = vec![QLangComplex::default(); dim];
         self.state.copy_to(&mut host).unwrap();
 
         let mut prob_0 = 0.0;
@@ -256,12 +257,12 @@ impl QuantumBackend for CudaBackend {
         for i in 0..dim {
             let bit = (i >> qubit) & 1;
             if bit != measured_value {
-                host[i] = CudaComplex::new(0.0, 0.0);
+                host[i] = QLangComplex::new(0.0, 0.0);
             }
         }
 
         let norm_factor = (host.iter().map(|x| x.norm_sqr()).sum::<f64>()).sqrt();
-        let norm_complex = CudaComplex::new(norm_factor, 0.0);
+        let norm_complex = QLangComplex::new(norm_factor, 0.0);
         for h in &mut host {
             *h /= norm_complex;
         }
@@ -291,7 +292,7 @@ impl QuantumBackend for CudaBackend {
             *self = CudaBackend::new(num_qubits);
         } else {
             let mut host_state = Self::default_host_state(num_qubits);
-            host_state[0] = CudaComplex::new(1.0, 0.0);
+            host_state[0] = QLangComplex::new(1.0, 0.0);
             self.state.copy_from(&host_state).unwrap();
         }
     }
@@ -308,7 +309,7 @@ impl QuantumBackend for CudaBackend {
 
 impl Clone for CudaBackend {
     fn clone(&self) -> Self {
-        let mut host_state = vec![CudaComplex::default(); self.state.len()];
+        let mut host_state = vec![QLangComplex::default(); self.state.len()];
         self.state.copy_to(&mut host_state).unwrap();
 
         let mut new_backend = CudaBackend::new(self.num_qubits);

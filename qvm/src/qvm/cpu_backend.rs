@@ -3,11 +3,9 @@ use rand::{thread_rng, Rng};
 
 use crate::{
     gates::quantum_gate_abstract::QuantumGateAbstract,
-    qvm::{
-        backend::QuantumBackend,
-        cuda::types::CudaComplex,
-    },
+    qvm::backend::QuantumBackend,
     state::quantum_state::QuantumState,
+    types::qlang_complex::QLangComplex,
 };
 
 pub struct CpuBackend {
@@ -105,13 +103,13 @@ impl QuantumBackend for CpuBackend {
 
         for (i, amp) in self.state.state_vector.iter_mut().enumerate() {
             if ((i >> qubit) & 1) != outcome {
-                *amp = CudaComplex::new(0.0, 0.0);
+                *amp = QLangComplex::new(0.0, 0.0);
             }
         }
 
         let norm: f64 = self.state.state_vector.iter().map(|x| x.norm_sqr()).sum::<f64>().sqrt();
         if norm != 0.0 {
-            let norm_complex = CudaComplex::new(norm, 0.0);
+            let norm_complex = QLangComplex::new(norm, 0.0);
             for amp in self.state.state_vector.iter_mut() {
                 *amp /= norm_complex;
             }
@@ -143,7 +141,7 @@ impl QuantumBackend for CpuBackend {
         self.state.num_qubits
     }
 
-    fn state_vector(&self) -> Vec<CudaComplex> {
+    fn state_vector(&self) -> Vec<QLangComplex> {
         self.state.state_vector.to_vec()
     }
 
@@ -163,8 +161,6 @@ impl Clone for CpuBackend {
 }
 
 pub type Backend = CpuBackend;
-
-// ──────────────────────────────────────────────────────────────────────
 
 fn assert_valid_qubits(label: &str, total: usize, indices: &[usize]) {
     for &q in indices {

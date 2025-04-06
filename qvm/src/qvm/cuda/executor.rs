@@ -8,11 +8,11 @@ use cust::{
     context::Context,
 };
 
-use crate::qvm::cuda::types::CudaComplex;
+use crate::types::qlang_complex::QLangComplex;
 
 /// Representa um argumento possível para um kernel CUDA
 pub enum KernelArg {
-    Ptr(DevicePointer<CudaComplex>),
+    Ptr(DevicePointer<QLangComplex>),
     I32(i32),
     F64(f64),
 }

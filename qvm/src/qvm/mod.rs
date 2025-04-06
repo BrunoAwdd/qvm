@@ -15,7 +15,7 @@ use selected_backend::Backend;
 // traits
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract; 
 use crate::qvm::backend::QuantumBackend;
-use crate::qvm::cuda::types::CudaComplex;
+use crate::types::qlang_complex::QLangComplex;
 
 #[cfg(feature = "cuda")]
 use crate::qvm::cuda_backend::CudaBackend;
@@ -63,7 +63,7 @@ impl QVM {
         self.backend.num_qubits()
     }
 
-    pub fn state_vector(&self) -> Vec<CudaComplex> {
+    pub fn state_vector(&self) -> Vec<QLangComplex> {
         self.backend.state_vector()
     }
 

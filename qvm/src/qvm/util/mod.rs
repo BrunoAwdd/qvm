@@ -1,5 +1,5 @@
 
-use crate::qvm::cuda::types::CudaComplex;
+use crate::types::qlang_complex::QLangComplex;
 use ndarray::Array2;
 
 pub struct GateKernel {
@@ -10,7 +10,7 @@ pub struct GateKernel {
 
 /// Extrai `θ` de uma matriz de rotação RX, RY ou RZ.
 /// Supõe que a matriz é válida e segue o padrão dos gates quânticos.
-pub fn infer_theta_from_matrix(matrix: &Array2<CudaComplex>) -> f64 {
+pub fn infer_theta_from_matrix(matrix: &Array2<QLangComplex>) -> f64 {
 
     let m00 = matrix[(0, 0)];
     let m01 = matrix[(0, 1)];
@@ -18,7 +18,7 @@ pub fn infer_theta_from_matrix(matrix: &Array2<CudaComplex>) -> f64 {
     let m11 = matrix[(1, 1)];
 
     // RZ: matriz diagonal e unitária => infere θ a partir da fase relativa
-    if m01 == CudaComplex::new(0.0, 0.0) && m10 == CudaComplex::new(0.0, 0.0) {
+    if m01 == QLangComplex::new(0.0, 0.0) && m10 == QLangComplex::new(0.0, 0.0) {
         // m11 = e^{-iθ/2}, m00 = e^{iθ/2}
         let phase_diff = m11.arg() - m00.arg();
         return -phase_diff;

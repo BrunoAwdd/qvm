@@ -1,5 +1,5 @@
 use qlang::gates::one_q::ry::RY;
-use qlang::qvm::cuda::types::CudaComplex;
+use qlang::types::qlang_complex::QLangComplex;
 use std::f64::consts::PI;
 use ndarray::array;
 
@@ -8,8 +8,8 @@ fn test_ry_pi() {
     let ry = RY::new(PI);
     let matrix = ry.matrix;
     let expected = array![
-        [CudaComplex::new(0.0, 0.0), CudaComplex::new(-1.0, 0.0)],
-        [CudaComplex::new(1.0, 0.0), CudaComplex::new(0.0, 0.0)],
+        [QLangComplex::new(0.0, 0.0), QLangComplex::new(-1.0, 0.0)],
+        [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
     ];
     assert_eq!(matrix[[0, 1]], expected[[0, 1]]);
     assert_eq!(matrix[[1, 0]], expected[[1, 0]]);

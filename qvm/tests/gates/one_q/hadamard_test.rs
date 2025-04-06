@@ -1,7 +1,7 @@
 use qlang::gates::one_q::hadamard::Hadamard;
 use qlang::qvm::QVM;
 use qlang::qlang::QLang;
-use qlang::qvm::cuda::types::CudaComplex;
+use qlang::types::qlang_complex::QLangComplex;
 use ndarray::array;
 
 #[test]
@@ -10,8 +10,8 @@ fn test_hadamard_matrix() {
     let factor = 1.0 / (2.0_f64).sqrt();
 
     let expected = array![
-        [CudaComplex::new(factor, 0.0), CudaComplex::new(factor, 0.0)],
-        [CudaComplex::new(factor, 0.0), CudaComplex::new(-factor, 0.0)]
+        [QLangComplex::new(factor, 0.0), QLangComplex::new(factor, 0.0)],
+        [QLangComplex::new(factor, 0.0), QLangComplex::new(-factor, 0.0)]
     ];
 
     assert_eq!(h.matrix, expected);

@@ -41,7 +41,7 @@ impl QLang {
         }
     }
 
-     pub fn to_source(&self) -> String {
+    pub fn to_source(&self) -> String {
         self.ast
             .iter()
             .map(|cmd| cmd.to_string())

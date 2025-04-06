@@ -1,14 +1,14 @@
 use ndarray::{array, Array2};
 use std::f64::consts::PI;
-use crate::qvm::cuda::types::CudaComplex;
+use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
 
 pub struct T {
-    pub matrix: Array2<CudaComplex>,
+    pub matrix: Array2<QLangComplex>,
 }
 
 impl QuantumGateAbstract for T {
-    fn matrix(&self) -> Array2<CudaComplex> {
+    fn matrix(&self) -> Array2<QLangComplex> {
         self.matrix.clone()
     }
 
@@ -20,11 +20,11 @@ impl QuantumGateAbstract for T {
 impl T {
     pub fn new() -> Self {
         let angle = PI / 4.0;
-        let phase = CudaComplex::new(angle.cos(), angle.sin()); // e^(iπ/4)
+        let phase = QLangComplex::new(angle.cos(), angle.sin()); // e^(iπ/4)
 
         let matrix = array![
-            [CudaComplex::new(1.0, 0.0), CudaComplex::new(0.0, 0.0)],
-            [CudaComplex::new(0.0, 0.0), phase]
+            [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
+            [QLangComplex::new(0.0, 0.0), phase]
         ];
 
         Self { matrix }
