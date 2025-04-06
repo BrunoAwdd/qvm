@@ -1,11 +1,9 @@
 
 pub mod backend;
-pub mod cuda_backend;
 pub mod cpu_backend;
+pub mod cuda_backend;
 pub mod cuda;
 pub mod util;
-
-use crate::gates::quantum_gate_abstract::QuantumGateAbstract; // Traço que define os gates
 
 #[cfg_attr(feature = "cuda", path = "cuda_backend.rs")]
 #[cfg_attr(feature = "wgpu", path = "wgpu_backend.rs")]
@@ -14,7 +12,10 @@ mod selected_backend;
 
 use selected_backend::Backend;
 
+// traits
+use crate::gates::quantum_gate_abstract::QuantumGateAbstract; 
 use crate::qvm::backend::QuantumBackend;
+use crate::qvm::cuda::types::CudaComplex;
 
 #[cfg(feature = "cuda")]
 use crate::qvm::cuda_backend::CudaBackend;
@@ -36,16 +37,16 @@ impl QVM {
         self.backend.apply_gate( gate, qubit);
     }
 
-    pub fn apply_gate_2q(&mut self, gate: &dyn QuantumGateAbstract, q1: usize, q2: usize) {
-        self.backend.apply_gate_2q( gate, q1, q2); // Aplica o gate ao backend
+    pub fn apply_gate_2q(&mut self, gate: &dyn QuantumGateAbstract, q0: usize, q1: usize) {
+        self.backend.apply_gate_2q( gate, q0, q1); // Aplica o gate ao backend
     }
 
     pub fn apply_gate_3q(&mut self, gate: &impl QuantumGateAbstract, q0: usize, q1: usize, q2: usize) {
         self.backend.apply_gate_3q(gate, q0, q1, q2);
     }
 
-    pub fn measure(&mut self, qubit: usize) {
-        self.backend.measure(qubit); // Mede um qubit no backend
+    pub fn measure(&mut self, qubit: usize) -> u8 {
+        self.backend.measure(qubit) // Mede um qubit no backend
     }
 
     /// Mede o estado de todos os qubits
@@ -60,6 +61,10 @@ impl QVM {
 
     pub fn num_qubits(&self) -> usize {
         self.backend.num_qubits()
+    }
+
+    pub fn state_vector(&self) -> Vec<CudaComplex> {
+        self.backend.state_vector()
     }
 
 
