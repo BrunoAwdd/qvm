@@ -117,11 +117,10 @@ pub extern "C" fn get_num_qubits() -> usize {
 
 #[no_mangle]
 pub extern "C" fn get_qlang_source() -> *const c_char {
-    let source = QLANG_INSTANCE
-    .get()
-    .expect("QLANG_INSTANCE não inicializado")
-    .lock()
-    .unwrap()
-    .to_string();
+    let qlang = QLANG_INSTANCE.get().unwrap().lock().unwrap();
+    let source = qlang.ast.iter()
+        .map(|cmd| cmd.to_string())
+        .collect::<Vec<_>>()
+        .join("\n");
     CString::new(source).unwrap().into_raw()
 }

@@ -1,4 +1,4 @@
-use crate::qlang::QLangCommand;
+use crate::qlang::ast::QLangCommand;
 
 #[derive(Clone)]
 pub struct CircuitJob {
