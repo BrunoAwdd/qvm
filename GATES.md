@@ -15,17 +15,17 @@ This document lists all quantum gates available (or planned) in the **QLang** la
 
 ## 🔹 1. Single-Qubit Gates
 
-| Name     | Code   | Function                      | Status | CPU    | CUDA |
-| -------- | ------ | ----------------------------- | ------ | ------ | ---- | --- | --- |
-| Pauli-X  | x(q)   | Flips the state: 0⟩ ↔ 1⟩      | ✅     | ✅     | ✅   |
-| Pauli-Y  | y(q)   | Rotation with imaginary phase | ✅     | ✅     | ✅   |
-| Pauli-Z  | z(q)   | Applies -1 phase to           | 1⟩     | ✅     | ✅   | ✅  |
-| Hadamard | h(q)   | Superposition (               | 0⟩ +   | 1⟩)/√2 | ✅   | ✅  | ✅  |
-| S        | s(q)   | Applies phase of π/2          | ✅     | ✅     | ✅   |
-| S-dagger | sdg(q) | Inverse of S                  | ✅     | ✅     | ✅   |
-| T        | t(q)   | Applies phase of π/4          | ✅     | ✅     | ✅   |
-| T-dagger | tdg(q) | Inverse of T                  | ✅     | ✅     | ✅   |
-| Identity | id(q)  | Does nothing                  | ✅     | ✅     | ✅   |
+| Name     | Code   | Function                      | Status | CPU | CUDA |
+| -------- | ------ | ----------------------------- | ------ | --- | ---- |
+| Pauli-X  | x(q)   | Flips the state: 0⟩ ↔ 1⟩      | ✅     | ✅  | ✅   |
+| Pauli-Y  | y(q)   | Rotation with imaginary phase | ✅     | ✅  | ✅   |
+| Pauli-Z  | z(q)   | Applies -1 phase to 1⟩        | ✅     | ✅  | ✅   |
+| Hadamard | h(q)   | Superposition (0⟩ +1⟩)/√2     | ✅     | ✅  | ✅   |
+| S        | s(q)   | Applies phase of π/2          | ✅     | ✅  | ✅   |
+| S-dagger | sdg(q) | Inverse of S                  | ✅     | ✅  | ✅   |
+| T        | t(q)   | Applies phase of π/4          | ✅     | ✅  | ✅   |
+| T-dagger | tdg(q) | Inverse of T                  | ✅     | ✅  | ✅   |
+| Identity | id(q)  | Does nothing                  | ✅     | ✅  | ✅   |
 
 ---
 
@@ -38,20 +38,20 @@ This document lists all quantum gates available (or planned) in the **QLang** la
 | Rz    | rz(θ, q)       | Rotation on Z-axis          | ✅     | ✅  | ✅   |
 | U3    | u3(θ, φ, λ, q) | Universal single-qubit gate | ✅     | ✅  | ✅   |
 | U2    | u2(φ, λ, q)    | Midpoint between H and U3   | ✅     | ✅  | ✅   |
-| U1    | u1(λ, q)       | Scaled Rz gate              | ⬜     | ⬜  | ⬜   |
+| U1    | u1(λ, q)       | Scaled Rz gate              | ✅     | ✅  | ✅   |
 | Phase | phase(θ, q)    | Applies arbitrary phase     | ⬜     | ⬜  | ⬜   |
 
 ---
 
 ## 🔻 3. Two-Qubit Gates (Controlled)
 
-| Name  | Code       | Function                          | Status | CPU | CUDA |
-| ----- | ---------- | --------------------------------- | ------ | --- | ---- | --- |
-| CNOT  | cnot(c, t) | Applies X on target if control is | 1⟩     | ✅  | ✅   | ✅  |
-| CZ    | cz(c, t)   | Applies Z on target if control is | 1⟩     | ⬜  | ⬜   | ⬜  |
-| CY    | cy(c, t)   | Applies Y on target if control is | 1⟩     | ⬜  | ⬜   | ⬜  |
-| SWAP  | swap(a, b) | Swaps the states of two qubits    | ✅     | ✅  | ✅   |
-| iSWAP | iswap(a,b) | Swap with imaginary phase         | ⬜     | ⬜  | ⬜   |
+| Name  | Code       | Function                             | Status | CPU | CUDA |
+| ----- | ---------- | ------------------------------------ | ------ | --- | ---- |
+| CNOT  | cnot(c, t) | Applies X on target if control is 1⟩ | ✅     | ✅  | ✅   |
+| CZ    | cz(c, t)   | Applies Z on target if control is 1⟩ | ⬜     | ⬜  | ⬜   |
+| CY    | cy(c, t)   | Applies Y on target if control is 1⟩ | ⬜     | ⬜  | ⬜   |
+| SWAP  | swap(a, b) | Swaps the states of two qubits       | ✅     | ✅  | ✅   |
+| iSWAP | iswap(a,b) | Swap with imaginary phase            | ⬜     | ⬜  | ⬜   |
 
 ---
 
