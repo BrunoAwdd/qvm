@@ -17,93 +17,84 @@ pub enum KernelArg {
     F64(f64),
 }
 
-/// Lança um kernel CUDA com até 4 argumentos
 pub fn launch_cuda_gate_kernel(
     kernel_name: &str,
     ptx_filename: &str,
     args: &[KernelArg],
     stream: &Stream,
-    _context: &Context,
+    context: &Context,
 ) {
-
-    let ptx_code = match ptx_filename {
-        "cnot.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/cnot.ptx")),
-        "fredkin.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/fredkin.ptx")),
-        "hadamard.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/hadamard.ptx")),
-        "rx.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/rx.ptx")),
-        "ry.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/ry.ptx")),
-        "rz.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/rz.ptx")),
-        "pauli_x.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/pauli_x.ptx")),
-        "pauli_y.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/pauli_y.ptx")),
-        "pauli_z.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/pauli_z.ptx")),
-        "s.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/s.ptx")),
-        "s_dagger.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/s_dagger.ptx")),
-        "swap.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/swap.ptx")),
-        "t.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/t.ptx")),
-        "t_dagger.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/t_dagger.ptx")),
-        "toffoli.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/toffoli.ptx")),
-        "u1.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/u1.ptx")),
-        "u2.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/u2.ptx")),
-        "u3.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/u3.ptx")),
-        _ => panic!("PTX desconhecido: {}", ptx_filename),
-    };
-
-
+    let ptx_code = load_ptx(ptx_filename);
     let module = Module::from_ptx(ptx_code, &[]).unwrap();
     let function = module.get_function(kernel_name).unwrap();
 
-    // Estimativa de tamanho com base no maior valor de qubit
-    let size = 1 << args.iter().filter_map(|arg| match arg {
-        KernelArg::I32(v) => Some(*v as usize), 
+    let grid_size = estimate_grid_size(args);
+
+    unsafe {
+        launch_kernel_args(&function, stream, grid_size, args);
+    }
+
+    stream.synchronize().unwrap();
+}
+
+
+fn load_ptx(ptx_filename: &str) -> &'static str {
+    match ptx_filename {
+        "cnot.ptx"     => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/cnot.ptx")),
+        "fredkin.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/fredkin.ptx")),
+        "hadamard.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/hadamard.ptx")),
+        "rx.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/rx.ptx")),
+        "ry.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/ry.ptx")),
+        "rz.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/rz.ptx")),
+        "pauli_x.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/pauli_x.ptx")),
+        "pauli_y.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/pauli_y.ptx")),
+        "pauli_z.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/pauli_z.ptx")),
+        "s.ptx"        => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/s.ptx")),
+        "s_dagger.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/s_dagger.ptx")),
+        "swap.ptx"     => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/swap.ptx")),
+        "t.ptx"        => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/t.ptx")),
+        "t_dagger.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/t_dagger.ptx")),
+        "toffoli.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/toffoli.ptx")),
+        "u1.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/u1.ptx")),
+        "u2.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/u2.ptx")),
+        "u3.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/u3.ptx")),
+        _ => panic!("PTX desconhecido: {}", ptx_filename),
+    }
+}
+
+fn estimate_grid_size(args: &[KernelArg]) -> u32 {
+    let max_index = args.iter().filter_map(|arg| match arg {
+        KernelArg::I32(v) => Some(*v as usize),
         _ => None,
     }).max().unwrap_or(8);
 
-
     let block_size = 256;
-    let grid_size = ((size + block_size - 1) / block_size) as u32;
+    ((1 << max_index) + block_size - 1) / block_size
+}
 
-    unsafe {
-        match args {
-            // Ex: CNOT, SWAP, etc.
-            [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b)] => {
-                cust::launch!(
-                    function<<<grid_size, block_size, 0, stream>>>(
-                        *ptr, *a, *b
-                    )
-                ).expect("Falha ao lançar kernel com 3 argumentos");
-            }
-
-            // Ex: RX, RY, RZ
-            [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b), KernelArg::F64(theta)] => {
-                cust::launch!(
-                    function<<<grid_size, block_size, 0, stream>>>(
-                        *ptr, *a, *b, *theta
-                    )
-                ).expect("Falha ao lançar kernel com 4 argumentos");
-            }
-
-            // Ex: Toffoli
-            [KernelArg::Ptr(ptr), KernelArg::I32(q0), KernelArg::I32(q1), KernelArg::I32(q2), KernelArg::I32(n)] => {
-                cust::launch!(
-                    function<<<grid_size, block_size, 0, stream>>>(
-                        *ptr, *q0, *q1, *q2, *n
-                    )
-                ).expect("Falha ao lançar kernel com 5 argumentos");
-            }
-
-            // ✅ Novo caso: U3
-            [KernelArg::Ptr(ptr), KernelArg::I32(qubit), KernelArg::I32(n), KernelArg::F64(theta), KernelArg::F64(phi), KernelArg::F64(lambda)] => {
-                cust::launch!(
-                    function<<<grid_size, block_size, 0, stream>>>(
-                        *ptr, *qubit, *n, *theta, *phi, *lambda
-                    )
-                ).expect("Falha ao lançar kernel com 6 argumentos (U3)");
-            }
-
-            _ => panic!("Número de argumentos não suportado para kernel {}", kernel_name),
+unsafe fn launch_kernel_args(
+    function: &Function,
+    stream: &Stream,
+    grid_size: u32,
+    args: &[KernelArg],
+) {
+    match args {
+        [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b)] => {
+            cust::launch!(function<<<grid_size, 256, 0, stream>>>(*ptr, *a, *b))
+                .expect("Kernel 3 args");
         }
+        [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b), KernelArg::F64(theta)] => {
+            cust::launch!(function<<<grid_size, 256, 0, stream>>>(*ptr, *a, *b, *theta))
+                .expect("Kernel 4 args");
+        }
+        [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b), KernelArg::I32(c), KernelArg::I32(d)] => {
+            cust::launch!(function<<<grid_size, 256, 0, stream>>>(*ptr, *a, *b, *c, *d))
+                .expect("Kernel 5 args");
+        }
+        [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b), KernelArg::F64(t), KernelArg::F64(p), KernelArg::F64(l)] => {
+            cust::launch!(function<<<grid_size, 256, 0, stream>>>(*ptr, *a, *b, *t, *p, *l))
+                .expect("Kernel 6 args");
+        }
+        _ => panic!("Número de argumentos não suportado"),
     }
-
-
-    stream.synchronize().unwrap();
 }
