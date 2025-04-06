@@ -4,7 +4,7 @@ pub mod gates;
 pub mod state;
 pub mod batch;
 
-use crate::qlang::{QLang, QLangCommand};
+use crate::qlang::{QLang, ast::QLangCommand};
 use crate::batch::circuit_job::CircuitJob;
 use crate::batch::runner::BatchRunner;
 
@@ -40,7 +40,7 @@ fn main() {
     for (i, (qvm, qlang)) in results.iter().zip(qlangs.iter()).enumerate() {
         println!("=== Job {} ===", i + 1);
         println!("Código QLang:");
-        println!("{}", qlang); // Assumindo que `Display` foi implementado
+        println!("{}", qlang.to_source()); 
         println!("Resultado:");
         qvm.display();
         println!();
