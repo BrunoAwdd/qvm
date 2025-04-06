@@ -8,12 +8,9 @@ pub struct GateKernel {
     pub use_theta: bool,
 }
 
-
-
 /// Extrai `θ` de uma matriz de rotação RX, RY ou RZ.
 /// Supõe que a matriz é válida e segue o padrão dos gates quânticos.
 pub fn infer_theta_from_matrix(matrix: &Array2<CudaComplex>) -> f64 {
-    use std::f64::consts::PI;
 
     let m00 = matrix[(0, 0)];
     let m01 = matrix[(0, 1)];
