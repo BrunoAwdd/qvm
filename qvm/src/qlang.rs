@@ -1,39 +1,15 @@
-use crate::qvm::QVM;
-use crate::gates::{
-    identity::Identity,
-    hadamard::Hadamard, 
-    pauli_x::PauliX, 
-    pauli_y::PauliY, 
-    pauli_z::PauliZ, 
-    cnot::CNOT, 
-    rx::RX, 
-    ry::RY, 
-    rz::RZ, 
-    s::S,
-    s_dagger::SDagger,
-    swap::Swap, 
-    t::T,
-    t_dagger::TDagger,
-    toffoli::Toffoli,
-    fredkin::Fredkin,
-    u1::U1,
-    u2::U2,
-    u3::U3
-};
+pub mod aliases;
+pub mod apply;
+pub mod ast;
+pub mod parser;
+pub mod interpreter;
+pub mod validators;
 
-use std::fmt;
 use regex::Regex;
-use std::fs;
+use std::{fs, collections::HashSet};
 
-use crate::qvm::backend::QuantumBackend;
-
-#[derive(Clone)]
-pub enum QLangCommand {
-    Create(usize),
-    ApplyGate(String, Vec<String>),
-    MeasureAll,
-    Display,
-}
+use crate::qlang::{ast::QLangCommand, parser::{QLangParser, QLangLine}, interpreter::run_ast, validators::validate_gate_arity};
+use crate::qvm::{QVM, backend::QuantumBackend};
 
 pub struct QLang {
     pub qvm: QVM,
@@ -65,6 +41,14 @@ impl QLang {
         }
     }
 
+     pub fn to_source(&self) -> String {
+        self.ast
+            .iter()
+            .map(|cmd| cmd.to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
     pub fn append(&mut self, cmd: QLangCommand) {
         if matches!(cmd, QLangCommand::MeasureAll) {
             self.collapsed = true;
@@ -73,137 +57,7 @@ impl QLang {
     }
 
     pub fn run(&mut self) {
-        for cmd in &self.ast {
-            match cmd {
-                QLangCommand::Create(n) => {
-                    self.qvm = QVM::new(*n);
-                }
-                QLangCommand::ApplyGate(name, args) => {
-                    match name.as_str() {
-                        "hadamard" | "h" => {
-                            let g = Hadamard::new();
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "identity" | "id" => {
-                            let g = Identity::new();
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-
-                        "paulix" | "x" => {
-                            let g = PauliX::new();
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "pauliy" | "y" => {
-                            let g = PauliY::new();
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "pauliz" | "z" => {
-                            let g = PauliZ::new();
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "rx" => {
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            let theta = args[1].parse::<f64>().unwrap();
-                            let g = RX::new(theta);
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "ry" => {
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            let theta = args[1].parse::<f64>().unwrap();
-                            let g = RY::new(theta);
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "rz" => {
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            let theta = args[1].parse::<f64>().unwrap();
-                            let g = RZ::new(theta);
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "s" => {
-                            let g = S::new();
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "sdagger" | "sdg" => {
-                            let g = SDagger::new();
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "t" => {
-                            let g = T::new();
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "tdagger" | "tdg" => {
-                            let g = TDagger::new();
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-
-                        "cnot" | "cx" => {
-                            let g = CNOT::new();
-                            let q0 = args[0].parse::<usize>().unwrap();
-                            let q1 = args[1].parse::<usize>().unwrap();
-                            self.qvm.apply_gate_2q(&g, q0, q1);
-                        }
-                        "swap" => {
-                            let g = Swap::new();
-                            let q0 = args[0].parse::<usize>().unwrap();
-                            let q1 = args[1].parse::<usize>().unwrap();
-                            self.qvm.apply_gate_2q(&g, q0, q1);
-                        }
-                        "toffoli" => {
-                            let g = Toffoli::new();
-                            let c1 = args[0].parse::<usize>().unwrap();
-                            let c2 = args[1].parse::<usize>().unwrap();
-                            let target = args[2].parse::<usize>().unwrap();
-                            self.qvm.apply_gate_3q(&g, c1, c2, target);
-                        }
-                        "fredkin" => {
-                            let g = Fredkin::new();
-                            let ctrl = args[0].parse::<usize>().unwrap();
-                            let t1 = args[1].parse::<usize>().unwrap();
-                            let t2 = args[2].parse::<usize>().unwrap();
-                            self.qvm.apply_gate_3q(&g, ctrl, t1, t2);
-                        }
-                        "u1" => {
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            let lambda = args[1].parse::<f64>().unwrap();
-                            let g = U1::new(lambda);
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "u2" => {
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            let phi = args[1].parse::<f64>().unwrap();
-                            let lambda = args[2].parse::<f64>().unwrap();
-                            let g = U2::new(phi, lambda);
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-                        "u3" => {
-                            let qubit = args[0].parse::<usize>().unwrap();
-                            let theta = args[1].parse::<f64>().unwrap();
-                            let phi = args[2].parse::<f64>().unwrap();
-                            let lambda = args[3].parse::<f64>().unwrap();
-                            let g = U3::new(theta, phi, lambda);
-                            self.qvm.apply_gate(&g, qubit);
-                        }
-
-                        _ => println!("Gate desconhecido: {}", name),
-                    }
-                }
-                QLangCommand::Display => {
-                    self.qvm.display();
-                }
-                QLangCommand::MeasureAll => {
-                    self.qvm.measure_all();
-                }
-            }
-        }
+        run_ast(&mut self.qvm, &self.ast);
     }
 
     pub fn run_from_str(&mut self, code: &str) {
@@ -218,90 +72,46 @@ impl QLang {
         self.run(); 
     }
 
-    pub fn run_qlang_from_line(&mut self, line: &str) {
-        if let Some(caps) = self.func_regex.captures(line.trim()) {
-            let raw = caps.get(1).unwrap().as_str();
-            let args_str = caps.get(2).unwrap().as_str();
-            let args: Vec<String> = args_str
-                .split(',')
-                .filter(|s| !s.trim().is_empty())
-                .map(|s| s.trim().to_string())
-                .collect();
-
-            let canonical_name = match raw {
-                "h" => "hadamard",
-                "x" => "paulix",
-                "y" => "pauliy",
-                "z" => "pauliz",
-                "cx" => "cnot",
-                "m" => "measure_all",
-                "d" => "display",
-                "sdg" => "sdagger",
-                "tdg" => "tdagger",
-                "id" => "identity",
-                other => other,
-            };
-
-            match canonical_name {
-                "create" => {
-                    let qubit = args[0].parse::<usize>().unwrap();
-                    self.ast.push(QLangCommand::Create(qubit));
+    pub fn run_qlang_from_line(&mut self, line: &str) -> Result<Option<Vec<u8>>, String>  {
+        let parser = QLangParser::new();
+        match parser.parse_line(line) {
+            Ok(QLangLine::Command(QLangCommand::ApplyGate(ref name, ref args))) => {
+                let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+                validate_gate_arity(name, self.qvm.num_qubits(), &args_refs)?;
+                self.ast.push(QLangCommand::ApplyGate(name.clone(), args.clone()));
+                Ok(None)
+            }
+            Ok(QLangLine::Command(QLangCommand::Create(n))) => {
+                if self.ast.iter().any(|cmd| matches!(cmd, QLangCommand::Create(_))) {
+                    //return Err("Erro: comando 'create' já foi usado. Só é permitido um create(...) por programa.".into());
+                    return Ok(None);
                 }
-                "hadamard" | "paulix" | "pauliy" | "pauliz" | 
-                "s" | "t" | "sdagger" | "tdagger" | "identity"=> {
-                    self.ast.push(QLangCommand::ApplyGate(
-                        canonical_name.to_string(), 
-                        vec![args[0].clone()]
-                    ));
-                }
-                "rx" | "ry" | "rz" => {
-                    let q = args[0].parse::<usize>().unwrap();
-                    let theta = args[1].parse::<f64>().unwrap();
-                    self.ast.push(QLangCommand::ApplyGate(
-                        canonical_name.to_string(),
-                        vec![q.to_string(), theta.to_string()],
-                    ));
-                }
-                "cnot" | "swap" => {
-                    let q0 = args[0].parse::<usize>().unwrap();
-                    let q1 = args[1].parse::<usize>().unwrap();
-
-                    if q0 == q1 {
-                        panic!("Os qubits usados no '{}' devem ser diferentes. Recebido: {}, {}", canonical_name, q0, q1);
-                    }
-
-                    self.ast.push(QLangCommand::ApplyGate(
-                        canonical_name.to_string(),
-                        vec![q0.to_string(), q1.to_string()],
-                    ));
-                }
-                "toffoli" | "fredkin" => {
-                    self.ast.push(QLangCommand::ApplyGate(
-                        canonical_name.to_string(),
-                        vec![args[0].clone(), args[1].clone(), args[2].clone()],
-                    ));
-                }
-                "u1" | "u2" | "u3" | "phase" => {
-                    let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
-                    validate_gate_arity(&canonical_name, &args_refs);
-                    self.ast.push(QLangCommand::ApplyGate(canonical_name.to_string(), args.clone()));
-                }
-
-                //"u3" => {
-                //    self.ast.push(QLangCommand::ApplyGate(
-                //        canonical_name.to_string(),
-                //        vec![
-                //            args[0].clone(), args[1].clone(), args[2].clone(), args[3].clone()
-                //        ],
-                //    ));
-                //}
-                "measure_all" => {
-                    self.ast.push(QLangCommand::MeasureAll);
-                }
-                "display" => {
-                    self.ast.push(QLangCommand::Display);
-                }
-                _ => println!("Comando desconhecido: {}", canonical_name),
+                self.reset();
+                self.ast.push(QLangCommand::Create(n));
+                Ok(None)
+            }
+            Ok(QLangLine::Command(QLangCommand::MeasureMany(qs))) => {
+                self.run(); // executa o AST acumulado até aqui
+                let set_qs: HashSet<usize> = qs.iter().cloned().collect();
+                let results = set_qs.into_iter().map(|q| self.qvm.measure(q)).collect();
+                self.ast.clear(); // opcional: limpa AST após colapso
+                Ok(Some(results))
+            }
+            Ok(QLangLine::Run) => {
+                self.run();
+                Ok(None)
+            }
+            Ok(QLangLine::Reset) => {
+                self.reset();
+                Ok(None)
+            }
+            Ok(QLangLine::Command(cmd)) => {
+                self.ast.push(cmd);
+                Ok(None)
+            }
+            Err(e) => {
+                eprintln!("Erro ao interpretar linha '{}': {}", line, e);
+                Err(e)
             }
         }
     }
@@ -335,32 +145,6 @@ impl QLang {
             func_regex,
         }
     }
+    
+} 
 
-
-}
-
-impl fmt::Display for QLang {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "# backend: {}", self.qvm.backend.name())?;
-        for cmd in &self.ast {
-            match cmd {
-                QLangCommand::Create(n) => writeln!(f, "create({})", n)?,
-                QLangCommand::ApplyGate(name, args) => {
-                    writeln!(f, "{}({})", name, args.join(","))?
-                }
-                QLangCommand::MeasureAll => writeln!(f, "measure_all()")?,
-                QLangCommand::Display => writeln!(f, "display()")?,
-            }
-        }
-        Ok(())
-    }
-}
-
-    fn validate_gate_arity(name: &str, args: &[&str]) -> Result<(), String> {
-        match name {
-            "u1" => (args.len() == 2).then_some(()).ok_or("u1 requires 2 args".into()),
-            "u2" => (args.len() == 3).then_some(()).ok_or("u2 requires 3 args".into()),
-            "u3" => (args.len() == 4).then_some(()).ok_or("u3 requires 4 args".into()),
-            _ => Ok(()),
-        }
-}
