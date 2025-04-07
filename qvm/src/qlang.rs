@@ -66,7 +66,7 @@ impl QLang {
             if trimmed.is_empty() || trimmed.starts_with("//") {
                 continue;
             }
-            self.run_qlang_from_line(trimmed);
+            let _ = self.run_qlang_from_line(trimmed);
         }
 
         self.run(); 
@@ -125,7 +125,7 @@ impl QLang {
             if trimmed.is_empty() || trimmed.starts_with("//") {
                 continue;
             }
-            self.run_qlang_from_line(trimmed);
+            let _ = self.run_qlang_from_line(trimmed);
         }
     }
 
