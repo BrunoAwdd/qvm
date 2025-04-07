@@ -77,6 +77,28 @@ pub extern "C" fn display_qvm() -> *mut c_char {
     std::ptr::null_mut()
 }
 
+#[no_mangle]
+pub extern "C" fn measure(indices: *const usize, len: usize) -> *const usize {
+    use std::slice;
+
+    if let Some(mutex) = QLANG_INSTANCE.get() {
+        let mut qlang = mutex.lock().unwrap();
+        let input = unsafe { slice::from_raw_parts(indices, len) };
+
+        let results: Vec<usize> = input.iter()
+            .flat_map(|&q| [q, qlang.qvm.backend.measure(q) as usize])
+            .collect();
+
+        let boxed = results.into_boxed_slice();
+        let ptr = boxed.as_ptr();
+        std::mem::forget(boxed);
+        return ptr;
+    }
+
+    std::ptr::null()
+}
+
+
 
 #[no_mangle]
 pub extern "C" fn measure_all() -> *const u8 {

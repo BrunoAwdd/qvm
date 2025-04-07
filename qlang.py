@@ -28,6 +28,7 @@ class QLangScript:
     def run(self):
         code = "\n".join(self.code_lines).encode("utf-8")
         self.lib.run_qlang_inline(ctypes.c_char_p(code))
+        
     def get_num_qubits(self): return self.lib.get_num_qubits()
 
     def assert_qubit_range(self, *qs):
@@ -104,8 +105,16 @@ class QLangScript:
         arr_type = ctypes.c_size_t * len(qubits)
         arr = arr_type(*qubits)
 
-        ptr = self.lib.measure_qubits(arr, len(qubits))
-        return [ptr[i] for i in range(len(qubits))] if ptr else []
+        self.lib.measure.restype = ctypes.POINTER(ctypes.c_size_t)
+        raw = self.lib.measure(arr, len(qubits))
+
+        result = {}
+        for i in range(len(qubits)):
+            q = raw[i * 2]
+            v = raw[i * 2 + 1]
+            result[q] = v
+
+        return result
 
 
     # Ações
