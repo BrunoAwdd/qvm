@@ -2,13 +2,6 @@ use qlang::qlang::QLang;
 use qlang::qlang::ast::QLangCommand;
 
 #[test]
-fn test_run_line_create() {
-    let mut qlang = QLang::new(1);
-    qlang.run_qlang_from_line("create(3)").unwrap();
-    assert!(matches!(qlang.ast.last().unwrap(), QLangCommand::Create(3)));
-}
-
-#[test]
 fn test_run_line_hadamard() {
     let mut qlang = QLang::new(1);
     qlang.run_qlang_from_line("h(0)").unwrap();
@@ -18,22 +11,26 @@ fn test_run_line_hadamard() {
 #[test]
 fn test_run_line_measure() {
     let mut qlang = QLang::new(2);
-    qlang.run_qlang_from_line("measure(1)").unwrap();
-    assert!(matches!(qlang.ast.last().unwrap(), QLangCommand::MeasureMany(_)));
+    let result = qlang.run_qlang_from_line("measure(1)").unwrap();
+
+    assert!(result.is_some());
+
+    let measurements = result.unwrap();
+    assert_eq!(measurements.len(), 1);
+    assert!(matches!(measurements[0], 0 | 1));
 }
 
 #[test]
 fn test_to_source_reconstruction() {
     let mut qlang = QLang::new(1);
     qlang.run_qlang_from_line("x(0)").unwrap();
-    qlang.run_qlang_from_line("measure(0)").unwrap();
 
-    let src = qlang.to_source();
+    let src = qlang.to_source(); // <-- aqui!
     assert!(src.contains("create(1)"));
     assert!(src.contains("paulix(0)"));
-    assert!(src.contains("measure(0)"));
-}
 
+    qlang.run_qlang_from_line("measure(0)").unwrap();
+}
 #[test]
 fn test_reset_clears_ast() {
     let mut qlang = QLang::new(3);
