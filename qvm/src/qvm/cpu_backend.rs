@@ -91,7 +91,6 @@ impl QuantumBackend for CpuBackend {
     }
 
     fn measure(&mut self, qubit: usize) -> u8 {
-        let dim = self.state.state_vector.len();
         let prob_0: f64 = self.state.state_vector
             .iter()
             .enumerate()
