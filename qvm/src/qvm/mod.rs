@@ -5,7 +5,7 @@ pub mod cuda_backend;
 pub mod cuda;
 pub mod util;
 
-#[cfg_attr(feature = "cuda", path = "cuda_backend.rs")]
+#[cfg_attr(feature = "cuda", path = "cuda_backend/mod.rs")]
 #[cfg_attr(feature = "wgpu", path = "wgpu_backend.rs")]
 #[cfg_attr(feature = "cpu", path = "cpu_backend.rs")]
 mod selected_backend;
