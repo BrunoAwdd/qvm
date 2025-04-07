@@ -94,6 +94,12 @@ impl QLang {
                 self.run(); // executa o AST acumulado até aqui
                 let set_qs: HashSet<usize> = qs.iter().cloned().collect();
                 let results = set_qs.into_iter().map(|q| self.qvm.measure(q)).collect();
+                self.ast.clear();
+                Ok(Some(results))
+            }
+            Ok(QLangLine::Command(QLangCommand::MeasureAll)) => {
+                self.run(); // executa o AST acumulado até aqui
+                let results = self.qvm.measure_all();
                 self.ast.clear(); // opcional: limpa AST após colapso
                 Ok(Some(results))
             }
