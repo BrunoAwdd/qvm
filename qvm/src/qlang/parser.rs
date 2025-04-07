@@ -1,11 +1,22 @@
 use crate::qlang::{ast::QLangCommand, aliases::resolve_alias};
 use regex::Regex;
+use std::fmt;
 
 #[derive(Clone, Debug)]
 pub enum QLangLine {
     Command(QLangCommand),
     Run,
     Reset,
+}
+
+impl fmt::Display for QLangLine {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            QLangLine::Command(cmd) => write!(f, "{cmd}"),
+            QLangLine::Run => write!(f, "RUN"),
+            QLangLine::Reset => write!(f, "RESET"),
+        }
+    }
 }
 
 pub struct QLangParser {
