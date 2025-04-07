@@ -98,8 +98,23 @@ class QLangScript:
     def ry(self, q, theta): self.assert_qubit_range(q); self.line(f"ry({q},{theta})")
     def rz(self, q, theta): self.assert_qubit_range(q); self.line(f"rz({q},{theta})")
 
+    def measure(self, *qubits):
+        self.assert_qubit_range(*qubits)
+
+        arr_type = ctypes.c_size_t * len(qubits)
+        arr = arr_type(*qubits)
+
+        ptr = self.lib.measure_qubits(arr, len(qubits))
+        return [ptr[i] for i in range(len(qubits))] if ptr else []
+
+
     # Ações
-    def measure_all(self): self.line("measure_all()")
+    def measure_all(self):
+        code = "\n".join(self.code_lines).encode("utf-8")
+        ptr = self.lib.measure_all(ctypes.c_char_p(code))
+        self.code_lines = []  # opcional: limpa o buffer de código após executar
+        return [ptr[i] for i in range(self.get_num_qubits())] if ptr else []
+    
     def display(self): self.line("display()")
 
     # Resultados
