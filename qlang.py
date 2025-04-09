@@ -23,7 +23,10 @@ class QLangScript:
         self.lib.get_num_qubits.restype = ctypes.c_size_t
 
     # Utils
-    def line(self, s): self.code_lines.append(s)
+    def line(self, s):
+        self.code_lines.append(s)
+        self.lib.append_qlang_line(ctypes.c_char_p(s.encode("utf-8")))
+
     def reset(self): self.code_lines = []; self.lib.reset_qvm()
     def run(self):
         code = "\n".join(self.code_lines).encode("utf-8")
@@ -68,6 +71,7 @@ class QLangScript:
     def sdg(self, q): self.s_dagger(q)
     def tdg(self, q): self.t_dagger(q)
     def cx(self, c, t): self.cnot(c, t)
+    def p(self, q, theta): self.phase(q, theta)
 
     # Gates de 2 qubits
     def cnot(self, c, t):
@@ -82,6 +86,24 @@ class QLangScript:
             raise ValueError(f"SWAP requer qubits distintos: {c} == {t}")
         self.line(f"swap({c},{t})")
 
+    def cy(self, c, t):
+        self.assert_qubit_range(c, t)
+        if c == t:
+            raise ValueError(f"CY requer qubits distintos: {c} == {t}")
+        self.line(f"cy({c},{t})")
+
+    def cz(self, c, t):
+        self.assert_qubit_range(c, t)
+        if c == t:
+            raise ValueError(f"CZ requer qubits distintos: {c} == {t}")
+        self.line(f"cz({c},{t})")
+
+    def cu(self, c, t, u00, u01, u10, u11):
+        self.assert_qubit_range(c, t)
+        if c == t:
+            raise ValueError(f"CU requer qubits distintos: {c} == {t}")
+        self.line(f"cu({c},{t},{u00},{u01},{u10},{u11})")   
+
     def toffoli(self, c, t1, t2):
         self.assert_qubit_range(c, t1, t2)
         if c == t1 or c == t2:
@@ -95,6 +117,7 @@ class QLangScript:
         self.line(f"fredkin({c},{t1},{t2})")
 
     # Gates de rotação
+    def phase(self, q, theta): self.assert_qubit_range(q); self.line(f"phase({q},{theta})")
     def rx(self, q, theta): self.assert_qubit_range(q); self.line(f"rx({q},{theta})")
     def ry(self, q, theta): self.assert_qubit_range(q); self.line(f"ry({q},{theta})")
     def rz(self, q, theta): self.assert_qubit_range(q); self.line(f"rz({q},{theta})")
@@ -116,13 +139,13 @@ class QLangScript:
 
         return result
 
-
     # Ações
     def measure_all(self):
-        code = "\n".join(self.code_lines).encode("utf-8")
-        ptr = self.lib.measure_all(ctypes.c_char_p(code))
-        self.code_lines = []  # opcional: limpa o buffer de código após executar
-        return [ptr[i] for i in range(self.get_num_qubits())] if ptr else []
+        n = self.get_num_qubits()
+        ptr = self.lib.measure_all()
+
+        return {i: ptr[i] for i in range(n)} if ptr else {}
+        
     
     def display(self): self.line("display()")
 
