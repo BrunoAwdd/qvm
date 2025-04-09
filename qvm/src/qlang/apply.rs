@@ -53,6 +53,27 @@ pub fn apply_two_q_gate<G: QuantumGateAbstract>(qvm: &mut QVM, gate: &G, args: &
     qvm.apply_gate_2q(gate, q0, q1);
 }
 
+/// Porta CU (Controlled-U) com 4 parâmetros f64 (reais ou componentes da matriz)
+pub fn apply_controlled_u(qvm: &mut QVM, args: &[String]) {
+    if args.len() != 6 {
+        panic!("CU espera 6 argumentos: control, target, u00, u01, u10, u11");
+    }
+
+    let control = parse_usize(&args[0]);
+    let target  = parse_usize(&args[1]);
+
+    let u00 = parse_f64(&args[2]);
+    let u01 = parse_f64(&args[3]);
+    let u10 = parse_f64(&args[4]);
+    let u11 = parse_f64(&args[5]);
+
+    use crate::gates::general::controlled_u::ControlledU;
+
+    let gate = ControlledU::new_real(u00, u01, u10, u11); // ou .new_complex se fizer isso depois
+    qvm.apply_gate_2q(&gate, control, target);
+}
+
+
 /// Porta de 3 qubits
 pub fn apply_three_q_gate<G: QuantumGateAbstract>(qvm: &mut QVM, gate: &G, args: &[String]) {
     let q0 = parse_usize(&args[0]);
