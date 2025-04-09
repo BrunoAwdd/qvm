@@ -1,4 +1,4 @@
-use qlang::gates::one_q::u1::U1;
+use qlang::gates::rotation_q::u1::U1;
 use qlang::types::qlang_complex::QLangComplex;
 use std::f64::consts::PI;
 

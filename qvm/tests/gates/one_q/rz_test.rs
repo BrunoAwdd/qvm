@@ -1,4 +1,4 @@
-use qlang::gates::one_q::rz::RZ;
+use qlang::gates::rotation_q::rz::RZ;
 use qlang::types::qlang_complex::QLangComplex;
 use std::f64::consts::PI;
 use ndarray::array;

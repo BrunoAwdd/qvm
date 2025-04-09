@@ -90,11 +90,14 @@ fn test_measure_many_hadamard() {
     qlang.run_qlang_from_line("x(1)").unwrap(); // Aplica o PX
     let m2 = qlang.run_qlang_from_line("measure(0, 1, 2)").unwrap(); // Medições múltiplas
 
+    let m_all = qlang.run_qlang_from_line("measure_all()").unwrap();
+
     qlang.run(); // Executa AST até esse ponto
 
     let result = qlang.qvm.measure_all();
 
     println!("M0 = {:?}, M1 = {:?}, M2 = {:?}", m0, m1, m2);
+    println!("M_ALL = {:?}", m_all);
     println!("Resultado final do qubit 0: {:?}", result);
 
     assert!(result[0] == 0 || result[0] == 1, "Resultado inválido de medição");
