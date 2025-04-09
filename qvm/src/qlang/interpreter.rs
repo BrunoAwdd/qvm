@@ -1,13 +1,16 @@
 use crate::qvm::QVM;
 use crate::qlang::{ast::QLangCommand, apply::*};
 use crate::gates::{
-    one_q::{hadamard::*, identity::*, pauli_x::*, pauli_y::*, pauli_z::*, rx::*, ry::*, rz::*, s::*, s_dagger::*, t::*, t_dagger::*, u1::*, u2::*, u3::*},
-    two_q::{cnot::*, swap::*},
+    general::controlled_u::*,
+    one_q::{hadamard::*, identity::*, pauli_x::*, pauli_y::*, pauli_z::*, s::*, s_dagger::*, t::*, t_dagger::*},
+    rotation_q::{phase::*, rx::*, ry::*, rz::*, u1::*, u2::*, u3::*},
+    two_q::{cnot::*, swap::*, cy::*, cz::*},
     three_q::{fredkin::*, toffoli::*},
 };
 
 
 pub fn run_ast(qvm: &mut QVM, ast: &[QLangCommand]) {
+    println!("Running AST with {:?} commands", ast);
     for cmd in ast {
         match cmd {
             QLangCommand::Create(n) => {
@@ -24,6 +27,7 @@ pub fn run_ast(qvm: &mut QVM, ast: &[QLangCommand]) {
                 "sdagger" | "sdg"   => apply_one_q_gate(qvm, &SDagger::new(), args),
                 "t"                 => apply_one_q_gate(qvm, &T::new(), args),
                 "tdagger" | "tdg"   => apply_one_q_gate(qvm, &TDagger::new(), args),
+                "phase"             => apply_one_q_with_1f64(qvm, &Phase::new, args),
                 "rx"                => apply_one_q_with_1f64(qvm, &RX::new, args),
                 "ry"                => apply_one_q_with_1f64(qvm, &RY::new, args),
                 "rz"                => apply_one_q_with_1f64(qvm ,&RZ::new, args),
@@ -32,6 +36,9 @@ pub fn run_ast(qvm: &mut QVM, ast: &[QLangCommand]) {
                 "u3"                => apply_one_q_with_3f64(qvm, &U3::new, args),
                 "cnot" | "cx"       => apply_two_q_gate(qvm, &CNOT::new(), args),
                 "swap"              => apply_two_q_gate(qvm, &Swap::new(), args),
+                "cy"                => apply_two_q_gate(qvm, &ControlledY::new(), args),
+                "cz"                => apply_two_q_gate(qvm, &ControlledZ::new(), args),
+                "cu"                => apply_controlled_u(qvm, args),
                 "toffoli"           => apply_three_q_gate(qvm, &Toffoli::new(), args),
                 "fredkin"           => apply_three_q_gate(qvm, &Fredkin::new(), args),  
                 _ => println!("Gate desconhecido: {}", name),
