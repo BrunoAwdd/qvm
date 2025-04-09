@@ -1,5 +1,6 @@
 use qlang::qlang::QLang;
 use qlang::qlang::ast::QLangCommand;
+use qlang::types::qlang_complex::QLangComplex;
 
 #[test]
 fn test_run_line_hadamard() {
@@ -25,7 +26,7 @@ fn test_to_source_reconstruction() {
     let mut qlang = QLang::new(1);
     qlang.run_qlang_from_line("x(0)").unwrap();
 
-    let src = qlang.to_source(); // <-- aqui!
+    let src = qlang.to_source();
     assert!(src.contains("create(1)"));
     assert!(src.contains("paulix(0)"));
 
@@ -41,3 +42,16 @@ fn test_reset_clears_ast() {
     assert_eq!(qlang.ast.len(), 0);
 }
 
+#[test]
+fn test_negative_complex() {
+    let c = QLangComplex::new(-1.0, 0.0);
+    assert_eq!(c.re, -1.0);
+    assert_eq!(c.im, 0.0);
+
+    let result = c * QLangComplex::new(0.0, 1.0); // (-1 + 0i) * (0 + 1i) = 0 - i
+
+    println!("{:?}", result);
+
+    assert_eq!(result.re, 0.0);
+    assert_eq!(result.im, -1.0);
+}
