@@ -36,12 +36,16 @@ pub fn infer_theta_from_matrix(matrix: &Array2<QLangComplex>) -> f64 {
 
 pub fn get_cuda_gate_kernel(gate_name: &str) -> Option<GateKernel> {
     match gate_name {
+        "Controlled_U" => Some(GateKernel { kernel_name: "cu_kernel", ptx_file: "controlled_u.ptx", use_theta: false }),
         "Cnot"     => Some(GateKernel { kernel_name: "cnot_kernel",     ptx_file: "cnot.ptx", use_theta: false }),
+        "Cy"       => Some(GateKernel { kernel_name: "cy_kernel",       ptx_file: "cy.ptx", use_theta: false }),
+        "Cz"       => Some(GateKernel { kernel_name: "cz_kernel",       ptx_file: "cz.ptx", use_theta: false }),
         "Fredkin"  => Some(GateKernel { kernel_name: "fredkin_kernel",  ptx_file: "fredkin.ptx", use_theta: false }),
         "Hadamard" => Some(GateKernel { kernel_name: "hadamard_kernel", ptx_file: "hadamard.ptx", use_theta: false }),
         "RX"       => Some(GateKernel { kernel_name: "rx_kernel",       ptx_file: "rx.ptx", use_theta: true  }),
         "RY"       => Some(GateKernel { kernel_name: "ry_kernel",       ptx_file: "ry.ptx", use_theta: true  }),
         "RZ"       => Some(GateKernel { kernel_name: "rz_kernel",       ptx_file: "rz.ptx", use_theta: true  }),
+        "Phase"    => Some(GateKernel { kernel_name: "phase_kernel",    ptx_file: "phase.ptx", use_theta: true  }),
         "PauliX"   => Some(GateKernel { kernel_name: "pauli_x_kernel",  ptx_file: "pauli_x.ptx", use_theta: false }),
         "PauliY"   => Some(GateKernel { kernel_name: "pauli_y_kernel",  ptx_file: "pauli_y.ptx", use_theta: false }),
         "PauliZ"   => Some(GateKernel { kernel_name: "pauli_z_kernel",  ptx_file: "pauli_z.ptx", use_theta: false }),
