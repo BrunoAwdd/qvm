@@ -6,9 +6,10 @@ pub fn validate_gate_arity(name: &str, total_qubits: usize, args: &[&str], ) -> 
         "u1" => validate_1q_gate_1f4(name, total_qubits, args),
         "u2" => validate_1q_gate_2f4(name, total_qubits, args),
         "u3" => validate_1q_gate_3f4(name, total_qubits, args),
-        "rx" | "ry" | "rz" => validate_1q_gate_1f4(name, total_qubits, args),
-        "cnot" | "swap" => validate_2q_gate(name, total_qubits, args),
+        "phase" |"rx" | "ry" | "rz" => validate_1q_gate_1f4(name, total_qubits, args),
+        "cnot" | "swap" | "cy" | "cz" => validate_2q_gate(name, total_qubits, args),
         "toffoli" | "fredkin" => validade_3q_gate(name, total_qubits, args),
+        "controlled_u" | "cu" => validate_controlled_u(name, total_qubits, args),
         _ => Err(format!("Unknown gate: '{}'", name)),
     }
 }
@@ -95,6 +96,33 @@ fn validate_2q_gate(name: &str, total_qubits: usize, args: &[&str]) -> Result<()
 
     Ok(())
 }
+
+fn validate_controlled_u(name: &str, total_qubits: usize, args: &[&str]) -> Result<(), String> {
+    if args.len() != 6 {
+        return Err(format!("{} requires 6 arguments: control, target, u00, u01, u10, u11", name));
+    }
+
+    let q0 = args[0].parse::<usize>()
+        .map_err(|_| format!("{}: invalid control qubit '{}'", name, args[0]))?;
+
+    let q1 = args[1].parse::<usize>()
+        .map_err(|_| format!("{}: invalid target qubit '{}'", name, args[1]))?;
+
+    check_bounds(name, q0, total_qubits)?;
+    check_bounds(name, q1, total_qubits)?;
+
+    if q0 == q1 {
+        return Err(format!("{}: control and target must be different", name));
+    }
+
+    for (i, val) in args[2..].iter().enumerate() {
+        val.parse::<f64>()
+            .map_err(|_| format!("{}: invalid matrix parameter at position {}: '{}'", name, i + 2, val))?;
+    }
+
+    Ok(())
+}
+
 
 fn validade_3q_gate(name: &str, total_qubits: usize, args: &[&str]) -> Result<(), String> {
     if args.len() != 3 {
