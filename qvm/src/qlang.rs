@@ -6,7 +6,7 @@ pub mod interpreter;
 pub mod validators;
 
 use regex::Regex;
-use std::{fs, collections::HashSet};
+use std::fs;
 
 use crate::qlang::{ast::QLangCommand, parser::{QLangParser, QLangLine}, interpreter::run_ast, validators::validate_gate_arity};
 use crate::qvm::{QVM, backend::QuantumBackend};
@@ -53,7 +53,7 @@ impl QLang {
         if matches!(cmd, QLangCommand::MeasureAll) {
             self.collapsed = true;
         }
-        self.ast.push(cmd);
+        self.push_ast(cmd);
     }
 
     pub fn run(&mut self) {
@@ -78,41 +78,43 @@ impl QLang {
             Ok(QLangLine::Command(QLangCommand::ApplyGate(ref name, ref args))) => {
                 let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
                 validate_gate_arity(name, self.qvm.num_qubits(), &args_refs)?;
-                self.ast.push(QLangCommand::ApplyGate(name.clone(), args.clone()));
+                self.push_ast(QLangCommand::ApplyGate(name.clone(), args.clone()));
                 Ok(None)
             }
             Ok(QLangLine::Command(QLangCommand::Create(n))) => {
                 if self.ast.iter().any(|cmd| matches!(cmd, QLangCommand::Create(_))) {
-                    //return Err("Erro: comando 'create' já foi usado. Só é permitido um create(...) por programa.".into());
                     return Ok(None);
                 }
                 self.reset();
-                self.ast.push(QLangCommand::Create(n));
+                self.push_ast(QLangCommand::Create(n));
                 Ok(None)
             }
             Ok(QLangLine::Command(QLangCommand::MeasureMany(qs))) => {
-                self.run(); // executa o AST acumulado até aqui
-                let set_qs: HashSet<usize> = qs.iter().cloned().collect();
-                let results = set_qs.into_iter().map(|q| self.qvm.measure(q)).collect();
-                self.ast.clear();
+                println!("MeasureMany");
+                self.run();
+                let results = qs.iter().map(|&q| self.qvm.measure(q)).collect();
+                self.clear_ast();
+
                 Ok(Some(results))
             }
             Ok(QLangLine::Command(QLangCommand::MeasureAll)) => {
-                self.run(); // executa o AST acumulado até aqui
+                self.run();
                 let results = self.qvm.measure_all();
-                self.ast.clear(); // opcional: limpa AST após colapso
+                self.clear_ast();
                 Ok(Some(results))
             }
             Ok(QLangLine::Run) => {
                 self.run();
+                self.clear_ast();
                 Ok(None)
             }
             Ok(QLangLine::Reset) => {
                 self.reset();
+                println!("Reset");
                 Ok(None)
             }
             Ok(QLangLine::Command(cmd)) => {
-                self.ast.push(cmd);
+                self.push_ast(cmd);
                 Ok(None)
             }
             Err(e) => {
@@ -138,7 +140,7 @@ impl QLang {
     pub fn reset(&mut self) {
         let qubits = self.qvm.backend.num_qubits();
         self.qvm = QVM::new(qubits);
-        self.ast.clear();
+        self.clear_ast();
         self.collapsed = false;
     }
 
@@ -151,6 +153,16 @@ impl QLang {
             func_regex,
         }
     }
-    
+
+    fn push_ast(&mut self, cmd: QLangCommand) {
+        println!("pushing ast: {:?}", cmd);
+        self.ast.push(cmd);
+    }
+
+    pub fn clear_ast(&mut self) {
+        println!("cleaning ast");
+        self.ast.clear();
+    }
+
 } 
 
