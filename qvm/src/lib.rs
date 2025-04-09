@@ -8,6 +8,7 @@ pub mod types;
 use crate::qvm::QVM;
 use crate::qlang::QLang;
 use libc::c_char;
+use qlang::parser::QLangLine;
 use std::sync::Mutex;
 use std::ffi::{CStr, CString};
 use once_cell::sync::OnceCell;
@@ -85,14 +86,25 @@ pub extern "C" fn measure(indices: *const usize, len: usize) -> *const usize {
         let mut qlang = mutex.lock().unwrap();
         let input = unsafe { slice::from_raw_parts(indices, len) };
 
-        let results: Vec<usize> = input.iter()
-            .flat_map(|&q| [q, qlang.qvm.backend.measure(q) as usize])
-            .collect();
+        let joined = input.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(", ");
+        let line = format!("measure({})", joined);
 
-        let boxed = results.into_boxed_slice();
-        let ptr = boxed.as_ptr();
-        std::mem::forget(boxed);
-        return ptr;
+        match qlang.run_qlang_from_line(&line) {
+            Ok(Some(result)) => {
+                let flat: Vec<usize> = input
+                    .iter()
+                    .cloned()
+                    .zip(result.into_iter())
+                    .flat_map(|(q, v)| [q, v as usize])
+                    .collect();
+
+                let boxed = flat.into_boxed_slice();
+                let ptr = boxed.as_ptr();
+                std::mem::forget(boxed);
+                return ptr;
+            }
+            _ => return std::ptr::null(),
+        }
     }
 
     std::ptr::null()
@@ -104,12 +116,21 @@ pub extern "C" fn measure(indices: *const usize, len: usize) -> *const usize {
 pub extern "C" fn measure_all() -> *const u8 {
     if let Some(mutex) = QLANG_INSTANCE.get() {
         let mut qlang = mutex.lock().unwrap();
-        let result = qlang.qvm.backend.measure_all();
-        return Box::into_raw(result.into_boxed_slice()) as *const u8;
+
+        match qlang.run_qlang_from_line("measure_all()") {
+            Ok(Some(result)) => {
+                let boxed = result.into_boxed_slice();
+                let ptr = boxed.as_ptr();
+                std::mem::forget(boxed);
+                return ptr;
+            }
+            _ => return std::ptr::null(),
+        }
     }
-    
+
     std::ptr::null()
 }
+
 
 #[no_mangle]
 pub extern "C" fn free_measurement(ptr: *mut u8, len: usize) {
@@ -146,4 +167,15 @@ pub extern "C" fn get_qlang_source() -> *const c_char {
         .collect::<Vec<_>>()
         .join("\n");
     CString::new(source).unwrap().into_raw()
+}
+
+#[no_mangle]
+pub extern "C" fn append_qlang_line(line: *const c_char) {
+    if let Some(mutex) = QLANG_INSTANCE.get() {
+        let mut qlang = mutex.lock().unwrap();
+        let c_str = unsafe { CStr::from_ptr(line) };
+        let line_str = c_str.to_str().unwrap();
+
+        qlang.run_qlang_from_line(line_str).unwrap();
+    }
 }
