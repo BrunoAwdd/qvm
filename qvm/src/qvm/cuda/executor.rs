@@ -40,24 +40,33 @@ pub fn launch_cuda_gate_kernel(
 
 fn load_ptx(ptx_filename: &str) -> &'static str {
     match ptx_filename {
-        "cnot.ptx"     => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/cnot.ptx")),
-        "fredkin.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/fredkin.ptx")),
-        "hadamard.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/hadamard.ptx")),
-        "rx.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/rx.ptx")),
-        "ry.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/ry.ptx")),
-        "rz.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/rz.ptx")),
-        "pauli_x.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/pauli_x.ptx")),
-        "pauli_y.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/pauli_y.ptx")),
-        "pauli_z.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/pauli_z.ptx")),
-        "s.ptx"        => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/s.ptx")),
-        "s_dagger.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/s_dagger.ptx")),
-        "swap.ptx"     => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/swap.ptx")),
-        "t.ptx"        => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/t.ptx")),
-        "t_dagger.ptx" => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/t_dagger.ptx")),
-        "toffoli.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/toffoli.ptx")),
-        "u1.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/u1.ptx")),
-        "u2.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/u2.ptx")),
-        "u3.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/cu/ptx/u3.ptx")),
+        // General Gates
+        "contolled_u.ptx"   => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/general/controlled_u/controlled_u.ptx")),
+        // One-Qubit Gates
+        "hadamard.ptx"      => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/hadamard/hadamard.ptx")),
+        "pauli_x.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/pauli_x/pauli_x.ptx")),
+        "pauli_y.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/pauli_y/pauli_y.ptx")),
+        "pauli_z.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/pauli_z/pauli_z.ptx")),
+        "s.ptx"             => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/s/s.ptx")),
+        "s_dagger.ptx"      => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/s_dagger/s_dagger.ptx")),
+        "t.ptx"             => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/t/t.ptx")),
+        "t_dagger.ptx"      => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/t_dagger/t_dagger.ptx")),
+        // Rotation Gates
+        "rx.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/rx/rx.ptx")),
+        "ry.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/ry/ry.ptx")),
+        "rz.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/rz/rz.ptx")),
+        "phase.ptx"    => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/phase/phase.ptx")),
+        "u1.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/u1/u1.ptx")),
+        "u2.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/u2/u2.ptx")),
+        "u3.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/u3/u3.ptx")),
+        // Two-Qubit Gates
+        "cnot.ptx"     => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/cnot/cnot.ptx")),
+        "cy.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/cy/cy.ptx")),
+        "cz.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/cz/cz.ptx")),
+        "swap.ptx"     => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/swap/swap.ptx")),
+        // Three-Qubit Gates
+        "fredkin.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/three_q/fredkin/fredkin.ptx")),
+        "toffoli.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/three_q/toffoli/toffoli.ptx")),
         _ => panic!("PTX desconhecido: {}", ptx_filename),
     }
 }
