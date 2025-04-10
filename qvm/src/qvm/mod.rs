@@ -2,13 +2,20 @@
 pub mod backend;
 pub mod cpu_backend;
 pub mod cuda_backend;
+pub mod tensor_backend;
 pub mod cuda;
 pub mod util;
 
-#[cfg_attr(feature = "cuda", path = "cuda_backend/mod.rs")]
-#[cfg_attr(feature = "wgpu", path = "wgpu_backend.rs")]
-#[cfg_attr(feature = "cpu", path = "cpu_backend.rs")]
-mod selected_backend;
+mod selected_backend {
+    #[cfg(feature = "tensor")]
+    pub use crate::qvm::tensor_backend::TensorBackend as Backend;
+
+    #[cfg(feature = "cuda")]
+    pub use crate::qvm::cuda_backend::CudaBackend as Backend;
+
+    #[cfg(feature = "cpu")]
+    pub use crate::qvm::cpu_backend::CpuBackend as Backend;
+}
 
 use selected_backend::Backend;
 
@@ -16,10 +23,6 @@ use selected_backend::Backend;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract; 
 use crate::qvm::backend::QuantumBackend;
 use crate::types::qlang_complex::QLangComplex;
-
-#[cfg(feature = "cuda")]
-use crate::qvm::cuda_backend::CudaBackend;
-
 
 pub struct QVM {
     pub backend: Backend, // Backend do QVM
@@ -47,6 +50,10 @@ impl QVM {
 
     pub fn measure(&mut self, qubit: usize) -> u8 {
         self.backend.measure(qubit) // Mede um qubit no backend
+    }
+
+    pub fn measure_many(&mut self, qubits: &Vec<usize>) -> Vec<u8> {
+        self.backend.measure_many(qubits) // Mede vários qubits no backend
     }
 
     /// Mede o estado de todos os qubits
