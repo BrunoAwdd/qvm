@@ -25,16 +25,16 @@ This document defines the milestones for QLang version 0.1, including basic quan
 - [x] `rz(q, θ)`
 - [x] `u3(q, θ, φ, λ)`
 - [x] `u2(q, φ, λ)`
-- [x] `u1(q, λ)` _(planned for 0.1)_
-- [ ] `phase(q, θ)` _(planned for 0.1)_
+- [x] `u1(q, λ)`
+- [x] `phase(q, θ)`
 
 ### 🔹 2-Qubit Gates
 
 - [x] `cnot(c, t)`
 - [x] `swap(q1, q2)`
-- [ ] `iswap(q1, q2)` _(planned for 0.1)_
-- [ ] `cz(c, t)` _(planned for 0.1)_
-- [ ] `cy(c, t)` _(planned for 0.1)_
+- [x] `iswap(q1, q2)`
+- [x] `cz(c, t)`
+- [x] `cy(c, t)`
 
 ### 🔹 3-Qubit Gates
 
@@ -59,17 +59,17 @@ This document defines the milestones for QLang version 0.1, including basic quan
 
 ## 🚧 v0.1 Scope
 
-| Item                                     | Status         |
-| ---------------------------------------- | -------------- |
-| QLang language and AST                   | ✅ Completed   |
-| Execution from `.ql` files               | ✅ Completed   |
-| Inline interpretation (string)           | ✅ Completed   |
-| Parametrized `U3`, `U2` gate support     | ✅ Completed   |
-| Parallel job execution (`BatchRunner`)   | ✅ Completed   |
-| Gates `iswap`, `cz`, `cy`, `u1`, `phase` | ⏳ In progress |
-| Helpers `mx`, `my` (X/Y measurements)    | ⏳ In progress |
-| Library packaging as `libQLang.so`       | ✅ Completed   |
-| Python bindings (via `ctypes`)           | ✅ Completed   |
+| Item                                     | Status       |
+| ---------------------------------------- | ------------ |
+| QLang language and AST                   | ✅ Completed |
+| Execution from `.ql` files               | ✅ Completed |
+| Inline interpretation (string)           | ✅ Completed |
+| Parametrized `U3`, `U2` gate support     | ✅ Completed |
+| Parallel job execution (`BatchRunner`)   | ✅ Completed |
+| Gates `iswap`, `cz`, `cy`, `u1`, `phase` | ✅ Completed |
+| Helpers `mx`, `my` (X/Y measurements)    | ✅ Completed |
+| Library packaging as `libQLang.so`       | ✅ Completed |
+| Python bindings (via `ctypes`)           | ✅ Completed |
 
 ---
 
@@ -98,8 +98,6 @@ This document defines the milestones for QLang version 0.1, including basic quan
 - [x] Batch execution using `Vec<CircuitJob>`
 - [x] Parallel execution with `rayon` (CPU)
 - [x] Sequential CUDA execution (1 kernel per circuit)
-- [ ] CUDA kernel to operate multiple state vectors in **one launch**
-- [ ] Benchmark: `batch vs single` in time and resource usage
 
 #### 🔧 Challenges:
 
@@ -114,15 +112,16 @@ This document defines the milestones for QLang version 0.1, including basic quan
 > Simulation based on tensor networks (like MPS), ideal for circuits with low entanglement. Enables +40 qubit simulations without exhausting RAM.
 
 - [x] Study and selection of model (MPS as initial base)
-- [x] Abstraction of `TensorNode` and `TensorNetwork`
-- [ ] Representation of states as chained tensors
-- [ ] Application of gates as tensor contractions
-- [ ] Full support for 1-qubit gates
-- [ ] Partial support for 2-qubit gates (adjacent)
-- [ ] Simulation of measurements and local collapse
-- [ ] Backend flag: `--backend=tensor`
+- [ ] Abstraction of `TensorNode` and `TensorNetwork`
+- [x] Representation of states as chained tensors
+- [x] Application of gates as tensor contractions
+- [x] Full support for 1-qubit gates
+- [x] Support for 2-qubit and 3-qubit gates
+- [x] Simulation of measurements and local collapse
+- [x] Backend flag: `--backend=tensor`
 - [ ] Benchmark: `tensor vs full-state` in time and RAM usage
 - [ ] Create `estimate_entanglement(&Circuit)`
+- [ ] Measure-X and Measure-Y
 
 ## 🔬 Version 0.4 — Scientific Expansion and Interoperability
 
@@ -175,6 +174,11 @@ Version 0.5 focuses on **usability, discoverability, and practical performance**
 - [ ] Future integration with `matplotlib` or `plotly` via Python
 
 > 🎯 **Goal:** assist in education, debugging, and analysis.
+
+### ✅ Batch Execution
+
+- [ ] CUDA kernel to operate multiple state vectors in **one launch**
+- [ ] Benchmark: `batch vs single` in time and resource usage
 
 ## 🧪 Possible Extras (if time permits)
 
