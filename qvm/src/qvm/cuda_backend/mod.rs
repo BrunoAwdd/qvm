@@ -11,7 +11,6 @@ use cust::{
     context::Context, 
     device::Device, 
     memory::*, 
-    prelude::*, 
     stream::Stream
 };
 use crate::{
@@ -53,6 +52,10 @@ impl QuantumBackend for CudaBackend {
 
     fn measure(&mut self, qubit: usize) -> u8 {
         self.measure(qubit)
+    }
+
+    fn measure_many(&mut self, qubits: &Vec<usize>) -> Vec<u8> {
+        self.measure_many(qubits)
     }
 
     fn measure_all(&mut self) -> Vec<u8> {

@@ -14,6 +14,7 @@ pub struct CpuBackend {
 
 impl CpuBackend {
     pub fn new(num_qubits: usize) -> Self {
+        println!("CPUBackend: network created with {} qubits", num_qubits);
         Self { state: QuantumState::new(num_qubits) }
     }
 }
@@ -124,6 +125,17 @@ impl QuantumBackend for CpuBackend {
         (0..self.state.num_qubits)
             .map(|q| self.measure(q))
             .collect()
+    }
+
+    fn measure_many(&mut self, qubits: &Vec<usize>) -> Vec<u8> {
+        let mut results = Vec::with_capacity(qubits.len());
+
+        for &q in qubits {
+            let r = self.measure(q);
+            results.push(r);
+        }
+
+        results
     }
 
     fn display(&self) {
