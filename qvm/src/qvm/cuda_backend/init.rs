@@ -6,12 +6,12 @@ use cust::{
     context::Context, 
     device::Device, 
     memory::*, 
-    prelude::*, 
     stream::{Stream, StreamFlags}
 };
 
 impl CudaBackend {
     pub fn new(num_qubits: usize) -> Self {
+        println!("CudaBackend: network created with {} qubits", num_qubits);
         cust::init(cust::CudaFlags::empty()).expect("CUDA init failed");
         let device = Device::get_device(0).unwrap();
         let context = Context::new(device).unwrap();

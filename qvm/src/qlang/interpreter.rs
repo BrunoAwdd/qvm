@@ -1,7 +1,6 @@
 use crate::qvm::QVM;
 use crate::qlang::{ast::QLangCommand, apply::*};
 use crate::gates::{
-    general::controlled_u::*,
     one_q::{hadamard::*, identity::*, pauli_x::*, pauli_y::*, pauli_z::*, s::*, s_dagger::*, t::*, t_dagger::*},
     rotation_q::{phase::*, rx::*, ry::*, rz::*, u1::*, u2::*, u3::*},
     two_q::{cnot::*, cy::*, cz::*, iswap::*, swap::*, },
@@ -40,7 +39,6 @@ pub fn run_ast(qvm: &mut QVM, ast: &[QLangCommand]) {
                 "swap"              => apply_two_q_gate(qvm, &Swap::new(), args),
                 "cy"                => apply_two_q_gate(qvm, &ControlledY::new(), args),
                 "cz"                => apply_two_q_gate(qvm, &ControlledZ::new(), args),
-                "cu"                => apply_controlled_u(qvm, args),
                 "toffoli"           => apply_three_q_gate(qvm, &Toffoli::new(), args),
                 "fredkin"           => apply_three_q_gate(qvm, &Fredkin::new(), args),  
                 _ => println!("Gate desconhecido: {}", name),
@@ -48,7 +46,7 @@ pub fn run_ast(qvm: &mut QVM, ast: &[QLangCommand]) {
             QLangCommand::Display => qvm.display(),
             QLangCommand::MeasureAll => { qvm.measure_all(); },
             QLangCommand::Measure(q) => { qvm.measure(*q); },
-            QLangCommand::MeasureMany(qs) => for q in qs { qvm.measure(*q); },
+            QLangCommand::MeasureMany(qs) => { qvm.measure_many(qs);},
         }
     }
 }

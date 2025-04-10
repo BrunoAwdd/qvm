@@ -8,7 +8,6 @@ pub mod types;
 use crate::qvm::QVM;
 use crate::qlang::QLang;
 use libc::c_char;
-use qlang::parser::QLangLine;
 use std::sync::Mutex;
 use std::ffi::{CStr, CString};
 use once_cell::sync::OnceCell;

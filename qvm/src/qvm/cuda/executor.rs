@@ -1,7 +1,7 @@
 #![cfg(feature = "cuda")]
 
 use cust::{
-    memory::{DeviceBuffer, DevicePointer},
+    memory::DevicePointer,
     module::Module,
     prelude::*,
     stream::Stream,
@@ -22,7 +22,7 @@ pub fn launch_cuda_gate_kernel(
     ptx_filename: &str,
     args: &[KernelArg],
     stream: &Stream,
-    context: &Context,
+    _context: &Context,
 ) {
     let ptx_code = load_ptx(ptx_filename);
     let module = Module::from_ptx(ptx_code, &[]).unwrap();
