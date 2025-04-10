@@ -4,8 +4,8 @@ import os
 class QLangScript:
     def __init__(self, backend="cpu"):
         backend = backend.lower()
-        if backend not in ["cpu", "cuda"]:
-            raise ValueError("Backend deve ser 'cpu' ou 'cuda'")
+        if backend not in ["cpu", "cuda", "tensor"]:
+            raise ValueError("Backend deve ser 'cpu', 'cuda' ou 'tensor'")
         
         lib_name = f"libqlang_{backend}.so"
         lib_path = os.path.abspath(f"./qvm/target/release/{lib_name}")
