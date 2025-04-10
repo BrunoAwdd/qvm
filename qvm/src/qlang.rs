@@ -92,7 +92,7 @@ impl QLang {
             Ok(QLangLine::Command(QLangCommand::MeasureMany(qs))) => {
                 println!("MeasureMany");
                 self.run();
-                let results = qs.iter().map(|&q| self.qvm.measure(q)).collect();
+                let results = self.qvm.measure_many(&qs);
                 self.clear_ast();
 
                 Ok(Some(results))
@@ -155,12 +155,10 @@ impl QLang {
     }
 
     fn push_ast(&mut self, cmd: QLangCommand) {
-        println!("pushing ast: {:?}", cmd);
         self.ast.push(cmd);
     }
 
     pub fn clear_ast(&mut self) {
-        println!("cleaning ast");
         self.ast.clear();
     }
 
