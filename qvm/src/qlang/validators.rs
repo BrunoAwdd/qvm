@@ -7,7 +7,7 @@ pub fn validate_gate_arity(name: &str, total_qubits: usize, args: &[&str], ) -> 
         "u2" => validate_1q_gate_2f4(name, total_qubits, args),
         "u3" => validate_1q_gate_3f4(name, total_qubits, args),
         "phase" |"rx" | "ry" | "rz" => validate_1q_gate_1f4(name, total_qubits, args),
-        "cnot" | "swap" | "cy" | "cz" => validate_2q_gate(name, total_qubits, args),
+        "cnot" | "swap" | "cy" | "cz" | "iswap" => validate_2q_gate(name, total_qubits, args),
         "toffoli" | "fredkin" => validade_3q_gate(name, total_qubits, args),
         "controlled_u" | "cu" => validate_controlled_u(name, total_qubits, args),
         _ => Err(format!("Unknown gate: '{}'", name)),
