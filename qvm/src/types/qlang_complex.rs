@@ -1,7 +1,7 @@
 use num_complex::Complex64;
 use num_traits::Zero;
 use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, Div, MulAssign, DivAssign, Neg};
-use ndarray::ScalarOperand;
+use ndarray::{Array2, ArrayBase, Data, Ix2, ScalarOperand};
 use num_traits::One;
 
 #[repr(C)]
@@ -42,6 +42,14 @@ impl From<QLangComplex> for Complex64 {
     fn from(c: QLangComplex) -> Self {
         Complex64::new(c.re, c.im)
     }
+}
+
+pub fn to_complex64<A: Data<Elem = QLangComplex>>(a: &ArrayBase<A, Ix2>) -> Array2<Complex64> {
+    a.map(|z| Complex64::from(*z))
+}
+
+pub fn from_complex64<A: Data<Elem = Complex64>>(a: &ArrayBase<A, Ix2>) -> Array2<QLangComplex> {
+    a.map(|z| QLangComplex::from(*z))
 }
 
 pub fn to_complex_vec(src: &[QLangComplex]) -> Vec<Complex64> {
@@ -149,6 +157,25 @@ impl Div for QLangComplex {
             re: (self.re * rhs.re + self.im * rhs.im) / denom,
             im: (self.im * rhs.re - self.re * rhs.im) / denom,
         }
+    }
+}
+
+impl Div<f64> for QLangComplex {
+    type Output = Self;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        Self {
+            re: self.re / rhs,
+            im: self.im / rhs,
+        }
+    }
+}
+
+impl Div<f64> for &QLangComplex {
+    type Output = QLangComplex;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        QLangComplex::new(self.re / rhs, self.im / rhs)
     }
 }
 
