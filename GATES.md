@@ -39,7 +39,7 @@ This document lists all quantum gates available (or planned) in the **QLang** la
 | U3    | u3(θ, φ, λ, q) | Universal single-qubit gate | ✅     | ✅  | ✅   |
 | U2    | u2(φ, λ, q)    | Midpoint between H and U3   | ✅     | ✅  | ✅   |
 | U1    | u1(λ, q)       | Scaled Rz gate              | ✅     | ✅  | ✅   |
-| Phase | phase(θ, q)    | Applies arbitrary phase     | ⬜     | ⬜  | ⬜   |
+| Phase | phase(θ, q)    | Applies arbitrary phase     | ✅     | ✅  | ✅   |
 
 ---
 
@@ -48,10 +48,10 @@ This document lists all quantum gates available (or planned) in the **QLang** la
 | Name  | Code       | Function                             | Status | CPU | CUDA |
 | ----- | ---------- | ------------------------------------ | ------ | --- | ---- |
 | CNOT  | cnot(c, t) | Applies X on target if control is 1⟩ | ✅     | ✅  | ✅   |
-| CZ    | cz(c, t)   | Applies Z on target if control is 1⟩ | ⬜     | ⬜  | ⬜   |
-| CY    | cy(c, t)   | Applies Y on target if control is 1⟩ | ⬜     | ⬜  | ⬜   |
+| CZ    | cz(c, t)   | Applies Z on target if control is 1⟩ | ✅     | ✅  | ✅   |
+| CY    | cy(c, t)   | Applies Y on target if control is 1⟩ | ✅     | ✅  | ✅   |
 | SWAP  | swap(a, b) | Swaps the states of two qubits       | ✅     | ✅  | ✅   |
-| iSWAP | iswap(a,b) | Swap with imaginary phase            | ⬜     | ⬜  | ⬜   |
+| iSWAP | iswap(a,b) | Swap with imaginary phase            | ✅     | ✅  | ✅   |
 
 ---
 
