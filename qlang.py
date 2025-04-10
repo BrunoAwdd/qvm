@@ -80,6 +80,13 @@ class QLangScript:
             raise ValueError(f"CNOT requer qubits distintos: {c} == {t}")
         self.line(f"cnot({c},{t})")
 
+    def iswap(self, c, t):
+        self.assert_qubit_range(c, t)
+        if c == t:
+            raise ValueError(f"iSWAP requer qubits distintos: {c} == {t}")
+        self.line(f"iswap({c},{t})")
+
+
     def swap(self, c, t):
         self.assert_qubit_range(c, t)
         if c == t:

@@ -4,7 +4,7 @@ use crate::gates::{
     general::controlled_u::*,
     one_q::{hadamard::*, identity::*, pauli_x::*, pauli_y::*, pauli_z::*, s::*, s_dagger::*, t::*, t_dagger::*},
     rotation_q::{phase::*, rx::*, ry::*, rz::*, u1::*, u2::*, u3::*},
-    two_q::{cnot::*, swap::*, cy::*, cz::*},
+    two_q::{cnot::*, cy::*, cz::*, iswap::*, swap::*, },
     three_q::{fredkin::*, toffoli::*},
 };
 
@@ -18,6 +18,7 @@ pub fn run_ast(qvm: &mut QVM, ast: &[QLangCommand]) {
             }
             QLangCommand::ApplyGate(name, args) => {
                 match name.as_str() {
+                "controlled_u" | "cu" => apply_controlled_u(qvm, args),
                 "hadamard" | "h"    => apply_one_q_gate(qvm, &Hadamard::new(), args),
                 "identity" | "id"   => apply_one_q_gate(qvm, &Identity::new(), args),
                 "paulix" | "x"      => apply_one_q_gate(qvm, &PauliX::new(), args),
@@ -35,6 +36,7 @@ pub fn run_ast(qvm: &mut QVM, ast: &[QLangCommand]) {
                 "u2"                => apply_one_q_with_2f64(qvm, &U2::new, args),
                 "u3"                => apply_one_q_with_3f64(qvm, &U3::new, args),
                 "cnot" | "cx"       => apply_two_q_gate(qvm, &CNOT::new(), args),
+                "iswap"             => apply_two_q_gate(qvm, &ISwap::new(), args),
                 "swap"              => apply_two_q_gate(qvm, &Swap::new(), args),
                 "cy"                => apply_two_q_gate(qvm, &ControlledY::new(), args),
                 "cz"                => apply_two_q_gate(qvm, &ControlledZ::new(), args),

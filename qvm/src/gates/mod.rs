@@ -31,6 +31,7 @@ pub mod two_q{
     pub mod cnot;
     pub mod cy;
     pub mod cz;
+    pub mod iswap;
     pub mod swap;
 }
 

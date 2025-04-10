@@ -64,6 +64,7 @@ fn load_ptx(ptx_filename: &str) -> &'static str {
         "cy.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/cy/cy.ptx")),
         "cz.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/cz/cz.ptx")),
         "swap.ptx"     => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/swap/swap.ptx")),
+        "iswap.ptx"    => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/iswap/iswap.ptx")),
         // Three-Qubit Gates
         "fredkin.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/three_q/fredkin/fredkin.ptx")),
         "toffoli.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/three_q/toffoli/toffoli.ptx")),
