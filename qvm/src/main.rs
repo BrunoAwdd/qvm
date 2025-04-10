@@ -5,11 +5,18 @@ pub mod state;
 pub mod batch;
 pub mod types;
 
-use crate::qlang::{QLang, ast::QLangCommand};
-use crate::batch::circuit_job::CircuitJob;
-use crate::batch::runner::BatchRunner;
+use std::time::Instant;
+
+use crate::{
+    qlang::QLang, 
+    batch::{circuit_job::CircuitJob, runner::BatchRunner}};
+
 
 fn main() {
+    let start = Instant::now();
+   
+
+
     let mut jobs = vec![];
     let mut qlangs = vec![]; // Armazena os QLangs para impressão posterior
 
@@ -18,13 +25,7 @@ fn main() {
         let mut qlang = QLang::new(1); // valor dummy, será sobrescrito
         qlang.run_qlang_from_file(&path);
 
-        let num_qubits = qlang.ast.iter().find_map(|cmd| {
-            if let QLangCommand::Create(n) = cmd {
-                Some(*n)
-            } else {
-                None
-            }
-        }).expect("Arquivo sem comando 'create' válido.");
+        let num_qubits = 3;
 
         let job = CircuitJob {
             num_qubits,
@@ -46,4 +47,18 @@ fn main() {
         qvm.display();
         println!();
     }
+
+    let duration = start.elapsed();
+
+    println!("⏱️ Tempo total de execução: {:.3?}", duration);
+
+    for i in 1..=4 {
+        let path = format!("../batch/batch_test_{}.ql", i);
+        let mut qlang = QLang::new(1);
+        qlang.run_qlang_from_file(&path);
+    }
+
+    let duration2 = start.elapsed();
+
+    println!("⏱️ Tempo total de execução: {:.3?} - {:.3?}", duration, duration2-duration);
 }
