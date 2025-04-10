@@ -1,12 +1,7 @@
 // src/qvm/cuda_backend/measure.rs
 #![cfg(feature = "cuda")]
 use super::CudaBackend;
-use crate::{
-    gates::quantum_gate_abstract::QuantumGateAbstract,
-    qvm::backend::QuantumBackend,
-    types::qlang_complex::QLangComplex,
-
-};
+use crate::types::qlang_complex::QLangComplex;
 use rand::Rng;
 use cust::memory::CopyDestination;
 
@@ -14,6 +9,17 @@ use cust::memory::CopyDestination;
 impl CudaBackend {
     pub fn measure_all(&mut self) -> Vec<u8> {
         (0..self.num_qubits).map(|q| self.measure(q)).collect()
+    }
+
+    pub fn measure_many(&mut self, qubits: &Vec<usize>) -> Vec<u8> {
+        let mut results = Vec::with_capacity(qubits.len());
+
+        for &q in qubits {
+            let r = self.measure(q);
+            results.push(r);
+        }
+
+        results
     }
 
     pub fn measure(&mut self, qubit: usize) -> u8 {
