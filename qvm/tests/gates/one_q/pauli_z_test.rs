@@ -7,9 +7,13 @@ fn test_pauli_z_matrix() {
     let z = PauliZ::new();
     let matrix = z.matrix;
 
+    let zero = QLangComplex::zero();
+    let one = QLangComplex::one();
+    let neg_one = QLangComplex::neg_one();
+
     let expected = array![
-        [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
-        [QLangComplex::new(0.0, 0.0), QLangComplex::new(-1.0, 0.0)]
+        [one, zero],
+        [zero, neg_one]
     ];
 
     assert_eq!(matrix[[0, 0]], expected[[0, 0]]);

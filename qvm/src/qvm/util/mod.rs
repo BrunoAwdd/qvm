@@ -18,7 +18,7 @@ pub fn infer_theta_from_matrix(matrix: &Array2<QLangComplex>) -> f64 {
     let m11 = matrix[(1, 1)];
 
     // RZ: matriz diagonal e unitária => infere θ a partir da fase relativa
-    if m01 == QLangComplex::new(0.0, 0.0) && m10 == QLangComplex::new(0.0, 0.0) {
+    if m01 == QLangComplex::zero() && m10 == QLangComplex::zero() {
         // m11 = e^{-iθ/2}, m00 = e^{iθ/2}
         let phase_diff = m11.arg() - m00.arg();
         return -phase_diff;

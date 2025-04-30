@@ -22,9 +22,12 @@ impl T {
         let angle = PI / 4.0;
         let phase = QLangComplex::new(angle.cos(), angle.sin()); // e^(iπ/4)
 
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+
         let matrix = array![
-            [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
-            [QLangComplex::new(0.0, 0.0), phase]
+            [one, zero],
+            [zero, phase]
         ];
 
         Self { matrix }

@@ -5,6 +5,10 @@ use qlang::types::qlang_complex::QLangComplex;
 fn test_s_gate_matrix() {
     let s = S::new();
     let matrix = s.matrix;
-    assert_eq!(matrix[[0, 0]], QLangComplex::new(1.0, 0.0));
-    assert_eq!(matrix[[1, 1]], QLangComplex::new(0.0, 1.0));
+
+    let one = QLangComplex::one();
+    let i = QLangComplex::i();
+
+    assert_eq!(matrix[[0, 0]], one);
+    assert_eq!(matrix[[1, 1]], i);
 }

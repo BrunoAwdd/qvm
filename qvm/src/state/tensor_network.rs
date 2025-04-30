@@ -14,7 +14,7 @@ pub struct TensorNode {
 impl TensorNode {
     pub fn identity() -> Self {
         let mut tensor = Array3::from_elem((1, 2, 1), QLangComplex::default());
-        tensor[[0, 0, 0]] = QLangComplex::new(1.0, 0.0); 
+        tensor[[0, 0, 0]] = QLangComplex::one(); 
         Self { tensor }
     }
 }

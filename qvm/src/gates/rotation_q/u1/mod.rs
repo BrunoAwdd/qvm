@@ -8,19 +8,6 @@ pub struct U1 {
     pub matrix: Array2<QLangComplex>,
 }
 
-impl U1 {
-    pub fn new(lambda: f64) -> Self {
-        let e_i_lambda = QLangComplex::from_polar(1.0, lambda);
-
-        let matrix = array![
-            [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
-            [QLangComplex::new(0.0, 0.0), e_i_lambda]
-        ];
-
-        Self { lambda, matrix }
-    }
-}
-
 impl QuantumGateAbstract for U1 {
     fn matrix(&self) -> Array2<QLangComplex> {
         self.matrix.clone()
@@ -30,3 +17,21 @@ impl QuantumGateAbstract for U1 {
         "U1"
     }
 }
+
+impl U1 {
+    pub fn new(lambda: f64) -> Self {
+        let e_i_lambda = QLangComplex::from_polar(1.0, lambda);
+
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+
+        let matrix = array![
+            [one, zero],
+            [zero, e_i_lambda]
+        ];
+
+        Self { lambda, matrix }
+    }
+}
+
+

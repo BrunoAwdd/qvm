@@ -18,9 +18,13 @@ impl QuantumGateAbstract for PauliY {
 
 impl PauliY {
     pub fn new() -> Self {
+        let zero = QLangComplex::zero();
+        let i = QLangComplex::i();
+        let neg_i = QLangComplex::neg_i();
+
         let matrix: ndarray::ArrayBase<ndarray::OwnedRepr<QLangComplex>, ndarray::Dim<[usize; 2]>> = array![
-            [QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, -1.0)],
-            [QLangComplex::new(0.0, 1.0), QLangComplex::new(0.0, 0.0)]
+            [zero, neg_i],
+            [i, zero]
         ];
 
         Self { matrix }

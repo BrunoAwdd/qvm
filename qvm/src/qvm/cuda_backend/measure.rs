@@ -39,7 +39,7 @@ impl CudaBackend {
 
         for (i, amp) in host.iter_mut().enumerate() {
             if ((i >> qubit) & 1) != measured {
-                *amp = QLangComplex::new(0.0, 0.0);
+                *amp = zero;
             }
         }
 

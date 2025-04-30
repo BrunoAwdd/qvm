@@ -33,12 +33,12 @@ impl QuantumState {
     pub fn new(num_qubits: usize) -> Self {
         let dim = 1 << num_qubits;
         let mut state_vector = Array1::<QLangComplex>::zeros(dim);
-        state_vector[0] = QLangComplex::new(1.0, 0.0);
+        state_vector[0] = QLangComplex::one();
         Self { num_qubits, state_vector }
     }
 
     pub fn reset_state(&mut self) {
-        self.state_vector.fill(QLangComplex::new(0.0, 0.0));
-        self.state_vector[0] = QLangComplex::new(1.0, 0.0);
+        self.state_vector.fill(QLangComplex::zero());
+        self.state_vector[0] = QLangComplex::one();
     }
 }

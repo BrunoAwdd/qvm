@@ -22,9 +22,12 @@ impl Phase {
     pub fn new(theta: f64) -> Self {
         let phase = QLangComplex::from_polar(1.0, theta); // e^(iθ)
 
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+
         let matrix = array![
-            [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
-            [QLangComplex::new(0.0, 0.0), phase]
+            [one, zero],
+            [zero, phase]
         ];
 
         Self { theta, matrix }

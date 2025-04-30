@@ -1,8 +1,7 @@
 use num_complex::Complex64;
-use num_traits::Zero;
+use num_traits::{One, Zero};
 use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, Div, MulAssign, DivAssign, Neg};
 use ndarray::{Array2, ArrayBase, Data, Ix2, ScalarOperand};
-use num_traits::One;
 
 #[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]
@@ -30,6 +29,26 @@ impl QLangComplex {
             im: r * theta.sin(),
         }
     }
+
+    pub fn zero() -> Self {
+        QLangComplex { re: 0.0, im: 0.0 }
+    }
+
+    pub fn one() -> Self {
+        QLangComplex::new(1.0, 0.0)
+    }
+    
+    pub fn neg_one() -> Self {
+        QLangComplex::new(-1.0, 0.0)
+    }
+
+    pub fn i() -> Self {
+        QLangComplex::new(0.0, 1.0)
+    }
+
+    pub fn neg_i() -> Self {
+        QLangComplex::new(0.0, -1.0)
+    }
 }
 
 impl From<Complex64> for QLangComplex {
@@ -56,10 +75,6 @@ pub fn to_complex_vec(src: &[QLangComplex]) -> Vec<Complex64> {
     src.iter().copied().map(Complex64::from).collect()
 }
 
-
-#[cfg(feature = "cuda")]
-unsafe impl cust::memory::DeviceCopy for QLangComplex {}
-
 impl Neg for QLangComplex {
     type Output = Self;
 
@@ -68,17 +83,6 @@ impl Neg for QLangComplex {
             re: -self.re,
             im: -self.im,
         }
-    }
-}
-
-
-impl Zero for QLangComplex {
-    fn zero() -> Self {
-        QLangComplex { re: 0.0, im: 0.0 }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.re == 0.0 && self.im == 0.0
     }
 }
 
@@ -199,6 +203,16 @@ impl PartialEq for QLangComplex {
     }
 }
 
+impl Zero for QLangComplex {
+    fn zero() -> Self {
+        QLangComplex { re: 0.0, im: 0.0 }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.re == 0.0 && self.im == 0.0
+    }
+}
+
 impl One for QLangComplex {
     fn one() -> Self {
         QLangComplex::new(1.0, 0.0)
@@ -210,3 +224,6 @@ impl One for QLangComplex {
 }
 
 impl ScalarOperand for QLangComplex {}
+
+#[cfg(feature = "cuda")]
+unsafe impl cust::memory::DeviceCopy for QLangComplex {}

@@ -7,9 +7,13 @@ use ndarray::array;
 fn test_s_dagger_matrix() {
     let sdg = SDagger::new();
     let matrix = sdg.matrix;
+
+    let zero = QLangComplex::zero();
+    let one = QLangComplex::one();
+
     let expected = array![
-        [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
-        [QLangComplex::new(0.0, 0.0), QLangComplex::from_polar(1.0, -FRAC_PI_2)],
+        [one, zero],
+        [zero, QLangComplex::from_polar(1.0, -FRAC_PI_2)],
     ];
     assert_eq!(matrix[[0, 0]], expected[[0, 0]]);
     assert_eq!(matrix[[1, 1]], expected[[1, 1]]);

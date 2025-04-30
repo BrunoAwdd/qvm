@@ -18,11 +18,14 @@ impl QuantumGateAbstract for CNOT {
 
 impl CNOT {
     pub fn new() -> Self {
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+
         let matrix: ndarray::ArrayBase<ndarray::OwnedRepr<QLangComplex>, ndarray::Dim<[usize; 2]>> = array![
-            [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0)],
-            [QLangComplex::new(0.0, 0.0), QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0)],
-            [QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(1.0, 0.0)],
-            [QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)]
+            [one, zero, zero, zero],
+            [zero, one, zero, zero],
+            [zero, zero, zero, one],
+            [zero, zero, one, zero]
         ];
 
         Self { matrix }

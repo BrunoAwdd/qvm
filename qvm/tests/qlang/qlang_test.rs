@@ -44,11 +44,11 @@ fn test_reset_clears_ast() {
 
 #[test]
 fn test_negative_complex() {
-    let c = QLangComplex::new(-1.0, 0.0);
+    let c = QLangComplex::neg_one();
     assert_eq!(c.re, -1.0);
     assert_eq!(c.im, 0.0);
 
-    let result = c * QLangComplex::new(0.0, 1.0); // (-1 + 0i) * (0 + 1i) = 0 - i
+    let result = c * QLangComplex::i(); // (-1 + 0i) * (0 + 1i) = 0 - i
 
     println!("{:?}", result);
 

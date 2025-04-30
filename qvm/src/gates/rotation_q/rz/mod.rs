@@ -24,9 +24,11 @@ impl RZ {
         let phase_0 = QLangComplex::new((half_theta * -1.0).cos(), (half_theta * -1.0).sin());
         let phase_1 = QLangComplex::new((half_theta).cos(), (half_theta).sin());
 
+        let zero = QLangComplex::zero();
+
         let matrix: Array2<QLangComplex> = array![
-            [phase_0, QLangComplex::new(0.0, 0.0)],
-            [QLangComplex::new(0.0, 0.0), phase_1]
+            [phase_0, zero],
+            [zero, phase_1]
         ];
 
         Self { matrix, theta }

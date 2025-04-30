@@ -18,31 +18,16 @@ impl QuantumGateAbstract for ControlledZ {
 
 impl ControlledZ {
     pub fn new() -> Self {
+
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+        let neg_one = QLangComplex::neg_one();
+
         let matrix = array![
-            [
-                QLangComplex::new(1.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0)
-            ],
-            [
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(1.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0)
-            ],
-            [
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(1.0, 0.0),
-                QLangComplex::new(0.0, 0.0)
-            ],
-            [
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(-1.0, 0.0)
-            ]
+            [one, zero, zero, zero],
+            [zero, one, zero, zero],
+            [zero, zero, one, zero],
+            [zero, zero, zero, neg_one]
         ];
         Self { matrix }
     }

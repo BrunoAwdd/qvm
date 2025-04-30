@@ -106,7 +106,7 @@ impl QuantumBackend for CpuBackend {
 
         for (i, amp) in self.state.state_vector.iter_mut().enumerate() {
             if ((i >> qubit) & 1) != outcome {
-                *amp = QLangComplex::new(0.0, 0.0);
+                *amp = QLangComplex::zero();
             }
         }
 

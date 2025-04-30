@@ -9,9 +9,13 @@ pub struct Identity {
 
 impl Identity {
     pub fn new() -> Self {
+
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+
         let matrix = array![
-            [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
-            [QLangComplex::new(0.0, 0.0), QLangComplex::new(1.0, 0.0)],
+            [one, zero],
+            [zero, one],
         ];
         Self { matrix }
     }

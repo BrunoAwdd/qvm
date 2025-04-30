@@ -18,9 +18,9 @@ impl QuantumGateAbstract for ISwap {
 
 impl ISwap {
     pub fn new() -> Self {
-        let zero = QLangComplex::new(0.0, 0.0);
-        let one  = QLangComplex::new(1.0, 0.0);
-        let i    = QLangComplex::new(0.0, 1.0);
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+        let i = QLangComplex::i();
 
         let matrix = array![
             [one,  zero, zero, zero],

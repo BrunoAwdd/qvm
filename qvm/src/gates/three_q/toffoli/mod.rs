@@ -17,11 +17,14 @@ impl QuantumGateAbstract for Toffoli {
 
 impl Toffoli {
     pub fn new() -> Self {
-        let mut mat = Array2::<QLangComplex>::eye(8);
-        mat[[6, 6]] = QLangComplex::new(0.0, 0.0);
-        mat[[7, 7]] = QLangComplex::new(0.0, 0.0);
-        mat[[6, 7]] = QLangComplex::new(1.0, 0.0);
-        mat[[7, 6]] = QLangComplex::new(1.0, 0.0);
-        Self { matrix: mat }
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+
+        let mut matrix = Array2::<QLangComplex>::eye(8);
+        matrix[[6, 6]] = zero;
+        matrix[[7, 7]] = zero;
+        matrix[[6, 7]] = one;
+        matrix[[7, 6]] = one;
+        Self { matrix }
     }
 }

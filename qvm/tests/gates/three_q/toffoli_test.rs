@@ -6,11 +6,13 @@ fn test_toffoli_matrix_dimensions() {
     let g = Toffoli::new();
     let matrix = g.matrix;
 
+    let one = QLangComplex::one();
+
     assert_eq!(matrix.nrows(), 8);
     assert_eq!(matrix.ncols(), 8);
 
     // |110⟩ → |111⟩  → pos 6 → 7
-    assert_eq!(matrix[[7, 6]], QLangComplex::new(1.0, 0.0));
+    assert_eq!(matrix[[7, 6]], one);
     // |111⟩ → |110⟩  → pos 7 → 6
-    assert_eq!(matrix[[6, 7]], QLangComplex::new(1.0, 0.0));
+    assert_eq!(matrix[[6, 7]], one);
 }

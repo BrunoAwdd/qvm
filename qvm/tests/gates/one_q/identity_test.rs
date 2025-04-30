@@ -7,9 +7,11 @@ fn test_identity_gate_matrix() {
     let id = Identity::new();
     let matrix = id.matrix;
 
+    let zero = QLangComplex::zero();
+    let one = QLangComplex::one();
     let expected = array![
-        [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
-        [QLangComplex::new(0.0, 0.0), QLangComplex::new(1.0, 0.0)],
+        [one, zero],
+        [zero, one],
     ];
 
     assert_eq!(matrix[[0, 0]], expected[[0, 0]]);

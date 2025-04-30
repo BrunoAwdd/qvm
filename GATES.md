@@ -57,10 +57,10 @@ This document lists all quantum gates available (or planned) in the **QLang** la
 
 ## 🔺 4. Three-Qubit Gates
 
-| Name    | Code             | Function                        | Status | CPU | CUDA |
-| ------- | ---------------- | ------------------------------- | ------ | --- | ---- | --- |
-| Toffoli | toffoli(c1,c2,t) | Applies X if both controls are  | 1⟩     | ✅  | ✅   | ✅  |
-| Fredkin | fredkin(c,q1,q2) | Swaps two targets if control is | 1⟩     | ✅  | ✅   | ✅  |
+| Name    | Code             | Function                           | Status | CPU | CUDA |
+| ------- | ---------------- | ---------------------------------- | ------ | --- | ---- |
+| Toffoli | toffoli(c1,c2,t) | Applies X if both controls are 1⟩  | ✅     | ✅  | ✅   |
+| Fredkin | fredkin(c,q1,q2) | Swaps two targets if control is 1⟩ | ✅     | ✅  | ✅   |
 
 ---
 

@@ -16,6 +16,7 @@ rayon = "1.8"
 regex = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
+thiserror = "1.0"
 
 # Torna `cust` opcional
 cust = { version = "0.3.2", optional = true }

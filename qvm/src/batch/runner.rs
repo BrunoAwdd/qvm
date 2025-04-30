@@ -1,7 +1,10 @@
 
 use crate::qlang::QLang;
 use crate::qvm::QVM;
-use super::circuit_job::CircuitJob;
+use super::{
+    circuit_job::CircuitJob, 
+    errors::BatchRunnerError
+};
 use rayon::prelude::*;
 
 pub struct BatchRunner {
@@ -25,17 +28,19 @@ impl BatchRunner {
             .collect()
     }
 
-    pub fn from_files(paths: Vec<&str>) -> Self {
-        let jobs = paths.into_iter().map(|path| {
-            let content = std::fs::read_to_string(path).unwrap();
+    pub fn from_files(paths: Vec<&str>) -> Result<Self, BatchRunnerError> {
+        let jobs: Result<Vec<CircuitJob>, BatchRunnerError> = paths.into_iter().map(|path| {
+            let content = std::fs::read_to_string(path)
+                .map_err(|e| BatchRunnerError::IoError(e))?;
             let mut qlang = QLang::new(1); 
             qlang.run_from_str(&content);
-            CircuitJob {
+            Ok(CircuitJob {
                 num_qubits: qlang.qvm.num_qubits(),
                 commands: qlang.ast.clone(),
-            }
+            })
         }).collect();
 
-        Self { jobs }
+        let runner = Self { jobs: jobs? };
+        Ok(runner)
     }
 }

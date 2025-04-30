@@ -5,10 +5,14 @@ use ndarray::array;
 #[test]
 fn test_pauli_y_matrix() {
     let y = PauliY::new();
+    
+    let zero = QLangComplex::zero();
+    let i = QLangComplex::i();
+    let neg_i = QLangComplex::neg_i();
 
     let expected = array![
-        [QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, -1.0)],
-        [QLangComplex::new(0.0, 1.0), QLangComplex::new(0.0, 0.0)]
+        [zero, neg_i],
+        [i, zero]
     ];
 
     assert_eq!(y.matrix, expected);

@@ -6,9 +6,12 @@ use ndarray::array;
 fn test_pauli_x_matrix() {
     let x = PauliX::new();
 
+    let zero = QLangComplex::zero();
+    let one = QLangComplex::one();
+
     let expected = array![
-        [QLangComplex::new(0.0, 0.0), QLangComplex::new(1.0, 0.0)],
-        [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)]
+        [zero, one],
+        [one, zero]
     ];
 
     assert_eq!(x.matrix, expected);

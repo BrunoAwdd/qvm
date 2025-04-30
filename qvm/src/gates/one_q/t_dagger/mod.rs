@@ -7,17 +7,6 @@ pub struct TDagger {
     pub matrix: Array2<QLangComplex>,
 }
 
-impl TDagger {
-    pub fn new() -> Self {
-        let phase = QLangComplex::from_polar(1.0, -std::f64::consts::FRAC_PI_4);
-        let matrix = array![
-            [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
-            [QLangComplex::new(0.0, 0.0), phase],
-        ];
-        Self { matrix }
-    }
-}
-
 impl QuantumGateAbstract for TDagger {
     fn matrix(&self) -> Array2<QLangComplex> {
         self.matrix.clone()
@@ -27,3 +16,20 @@ impl QuantumGateAbstract for TDagger {
         "TDagger"
     }
 }
+
+impl TDagger {
+    pub fn new() -> Self {
+
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+
+        let phase = QLangComplex::from_polar(1.0, -std::f64::consts::FRAC_PI_4);
+        let matrix = array![
+            [one, zero],
+            [zero, phase],
+        ];
+        Self { matrix }
+    }
+}
+
+

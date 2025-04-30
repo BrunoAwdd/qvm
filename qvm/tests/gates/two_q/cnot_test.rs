@@ -6,11 +6,14 @@ use ndarray::array;
 fn test_cnot_matrix() {
     let cnot = CNOT::new();
 
+    let zero = QLangComplex::zero();
+    let one = QLangComplex::one();
+
     let expected = array![
-        [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0)],
-        [QLangComplex::new(0.0, 0.0), QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0)],
-        [QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(1.0, 0.0)],
-        [QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 0.0), QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)]
+        [one, zero, zero, zero],
+        [zero, one, zero, zero],
+        [zero, zero, zero, one],
+        [zero, zero, one, zero]
     ];
 
     assert_eq!(cnot.matrix, expected);

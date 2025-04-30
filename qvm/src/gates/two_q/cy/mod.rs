@@ -18,31 +18,16 @@ impl QuantumGateAbstract for ControlledY {
 
 impl ControlledY {
     pub fn new() -> Self {
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+        let i = QLangComplex::i();
+        let neg_i = QLangComplex::neg_i();
+
         let matrix = array![
-            [
-                QLangComplex::new(1.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0)
-            ],
-            [
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(1.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0)
-            ],
-            [
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, -1.0)
-            ],
-            [
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 0.0),
-                QLangComplex::new(0.0, 1.0),
-                QLangComplex::new(0.0, 0.0)
-            ]
+            [one, zero, zero, zero],
+            [zero, one, zero, zero],
+            [zero, zero, zero, neg_i],
+            [zero, zero, i, zero]
         ];
         Self { matrix }
     }

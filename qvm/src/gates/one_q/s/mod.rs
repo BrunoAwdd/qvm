@@ -18,9 +18,14 @@ impl QuantumGateAbstract for S {
 
 impl S {
     pub fn new() -> Self {
+
+        let zero = QLangComplex::zero();
+        let one = QLangComplex::one();
+        let i = QLangComplex::i();
+
         let matrix = array![
-            [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
-            [QLangComplex::new(0.0, 0.0), QLangComplex::new(0.0, 1.0)]
+            [one, zero],
+            [zero, i]
         ];
         Self { matrix }
     }
