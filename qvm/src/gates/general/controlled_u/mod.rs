@@ -1,6 +1,4 @@
 use ndarray::Array2;
-use ndarray_linalg::krylov::Q;
-use num_traits::Zero;
 use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
 
