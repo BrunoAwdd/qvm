@@ -1,4 +1,5 @@
 pub mod quantum_gate_abstract;
+pub mod portal_registry;
 
 pub mod one_q{
     pub mod hadamard;
