@@ -108,7 +108,7 @@ impl QLang {
     /// Panics if parsing fails or the code is malformed.
     pub fn run_from_str(&mut self, code: &str) {
         self.append_from_lines(code.lines());
-        self.run_parsed_commands();
+        let _ =self.run_parsed_commands();
 
         self.run(); 
     }
@@ -185,7 +185,7 @@ impl QLang {
             .expect("Erro ao ler o arquivo");
         
         self.append_from_lines(program.lines());
-        self.run_parsed_commands();
+        let _ =self.run_parsed_commands();
     }
 
     /// Appends a single source line to the parser if it's not empty or a comment.
@@ -244,7 +244,7 @@ mod tests {
         let lines = "h(0)";
         qlang.parser.append(lines);
         qlang.parser.validate_lines();
-        qlang.run_parsed_commands();
+        let _ = qlang.run_parsed_commands();
 
         assert!(matches!(qlang.ast.last().unwrap(), QLangCommand::ApplyGate(_, _)));
     }
