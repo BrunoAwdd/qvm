@@ -20,8 +20,6 @@ mod selected_backend {
     #[cfg(not(any(feature = "cuda", feature = "tensor")))]
     pub use crate::qvm::cpu_backend::CpuBackend as Backend;
 }
-
-
 use selected_backend::Backend;
 
 // traits
