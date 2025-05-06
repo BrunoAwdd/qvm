@@ -6,6 +6,7 @@ pub mod parser;
 pub mod interpreter;
 pub mod validators;
 
+use ast::AstController;
 use regex::Regex;
 use std::fs;
 use std::str::Lines;
@@ -28,7 +29,7 @@ pub struct QLang {
     pub ast: Vec<QLangCommand>,
 
     /// The abstract syntax tree built from parsed QLang commands only for Controller.
-    pub ast_controller: Vec<QLangCommand>,
+    pub ast_controller: AstController,
 
     /// Flag to indicate that a `measure_all` has been issued (used to collapse execution).
     pub collapsed: bool,
@@ -63,7 +64,7 @@ impl QLang {
         Self {
             qvm,
             ast: vec![QLangCommand::Create(num_qubits)],
-            ast_controller: vec![QLangCommand::Create(num_qubits)],
+            ast_controller: AstController::new(num_qubits),
             collapsed: false,
             func_regex,
             parser: QLangParser::new(),
@@ -75,13 +76,9 @@ impl QLang {
     /// Each command is formatted using its `Display` implementation,
     /// and separated by newlines.
     pub fn to_source(&self) -> String {
-        self.ast_controller
-            .iter()
-            .map(|cmd| cmd.to_string())
-            .collect::<Vec<_>>()
-            .join("\n")
+        self.ast_controller.to_source()
     }
-
+            
     /// Appends a command to the AST.
     ///
     /// If the command is `MeasureAll`, it marks the program as collapsed (executed).
@@ -228,7 +225,7 @@ impl QLang {
     /// Not exposed publicly.
     fn push_ast(&mut self, cmd: QLangCommand) {
         self.ast.push(cmd.clone());
-        self.ast_controller.push(cmd);
+        self.ast_controller.append(&cmd);
     }
 
 } 
@@ -329,7 +326,7 @@ mod tests {
 
         let src = qlang.to_source();
 
-        println!("Src: {}", src);
+        println!("Src:\n{}", src);
 
         assert!(src.contains("create(2)"));
         assert!(src.contains("paulix(0)"));

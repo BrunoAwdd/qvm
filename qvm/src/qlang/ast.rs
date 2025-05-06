@@ -1,5 +1,7 @@
 use std::fmt;
 
+use super::parser::QLangLine;
+
 /// Represents a single quantum command in the QLang abstract syntax tree.
 ///
 /// These commands form the building blocks of a quantum program.
@@ -58,6 +60,36 @@ impl fmt::Display for QLangCommand {
         }
     }
 }
+
+#[derive(Clone)]
+pub struct AstController {
+    ast: Vec<QLangCommand>,
+}
+
+impl AstController {
+    pub fn new(num_qubits: usize) -> Self { 
+        let init = vec![QLangCommand::Create(num_qubits)];
+        Self { ast: init }    
+    }
+
+    pub fn append(&mut self, cmd: &QLangCommand) {
+        self.ast.push(cmd.clone());
+    }
+
+    pub fn to_source(&self) -> String {
+        self.ast.iter().map(|cmd| cmd.to_string()).collect()
+    }
+
+    pub fn commands(&self) -> &[QLangCommand] {
+        &self.ast
+    }
+
+    pub fn clear(&mut self) {
+        self.ast.clear();
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -100,5 +132,19 @@ mod tests {
         let cmd = QLangCommand::Display;
         assert_eq!(cmd.to_string(), "display()\n");
     }
+
+    #[test]
+    fn test_ast_controller_collects_commands() {
+        let qubit = 2;
+
+        let mut controller = AstController::new(qubit);
+
+        let cmd = QLangCommand::Create(qubit);
+        controller.append(&cmd);
+
+        let source = controller.to_source();
+        assert!(source.contains("create(2)"));
+    }
+
 
 }
