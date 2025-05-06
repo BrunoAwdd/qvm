@@ -1,7 +1,5 @@
 use std::fmt;
 
-use super::parser::QLangLine;
-
 /// Represents a single quantum command in the QLang abstract syntax tree.
 ///
 /// These commands form the building blocks of a quantum program.
