@@ -6,16 +6,21 @@ pub mod tensor_backend;
 pub mod cuda;
 pub mod util;
 
-mod selected_backend {
-    #[cfg(feature = "tensor")]
-    pub use crate::qvm::tensor_backend::TensorBackend as Backend;
 
-    #[cfg(feature = "cuda")]
+mod selected_backend {
+    // Se 'cuda' estiver ativado (e for exclusivo), use CUDA
+    #[cfg(all(feature = "cuda", not(any(feature = "tensor"))))]
     pub use crate::qvm::cuda_backend::CudaBackend as Backend;
 
-    #[cfg(feature = "cpu")]
+    // Se 'tensor' estiver ativado (e não estiver 'cuda'), use Tensor
+    #[cfg(all(feature = "tensor", not(feature = "cuda")))]
+    pub use crate::qvm::tensor_backend::TensorBackend as Backend;
+
+    // Se nenhuma feature estiver ativa, use CPU como fallback
+    #[cfg(not(any(feature = "cuda", feature = "tensor")))]
     pub use crate::qvm::cpu_backend::CpuBackend as Backend;
 }
+
 
 use selected_backend::Backend;
 
