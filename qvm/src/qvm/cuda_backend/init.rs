@@ -31,6 +31,7 @@ impl CudaBackend {
 
     pub fn default_host_state(num_qubits: usize) -> Vec<QLangComplex> {
         let mut state = vec![QLangComplex::default(); 1 << num_qubits];
+        let one = QLangComplex::one();
         state[0] = one;
         state
     }

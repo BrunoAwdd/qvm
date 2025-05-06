@@ -37,6 +37,8 @@ impl CudaBackend {
         let rand: f64 = rand::thread_rng().gen();
         let measured = if rand < prob_0 { 0 } else { 1 };
 
+        let zero = QLangComplex::zero();
+
         for (i, amp) in host.iter_mut().enumerate() {
             if ((i >> qubit) & 1) != measured {
                 *amp = zero;
