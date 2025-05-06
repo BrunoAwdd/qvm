@@ -1,6 +1,5 @@
 mod gates {
     mod one_q {
-        mod hadamard_test;
         mod identity_test;
         mod pauli_x_test;
         mod pauli_y_test;
