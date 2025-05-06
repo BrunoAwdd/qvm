@@ -88,7 +88,9 @@ pub extern "C" fn measure(indices: *const usize, len: usize) -> *const usize {
         let joined = input.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(", ");
         let line = format!("measure({})", joined);
 
-        match qlang.run_qlang_from_line(&line) {
+        qlang.append_from_str(&line);
+
+        match qlang.run_parsed_commands() {
             Ok(Some(result)) => {
                 let flat: Vec<usize> = input
                     .iter()
@@ -116,7 +118,9 @@ pub extern "C" fn measure_all() -> *const u8 {
     if let Some(mutex) = QLANG_INSTANCE.get() {
         let mut qlang = mutex.lock().unwrap();
 
-        match qlang.run_qlang_from_line("measure_all()") {
+        qlang.append_from_str("measure_all()");
+
+        match qlang.run_parsed_commands() {
             Ok(Some(result)) => {
                 let boxed = result.into_boxed_slice();
                 let ptr = boxed.as_ptr();
@@ -175,6 +179,6 @@ pub extern "C" fn append_qlang_line(line: *const c_char) {
         let c_str = unsafe { CStr::from_ptr(line) };
         let line_str = c_str.to_str().unwrap();
 
-        qlang.run_qlang_from_line(line_str).unwrap();
+        qlang.append_from_str(line_str);
     }
 }
