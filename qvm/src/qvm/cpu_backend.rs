@@ -48,18 +48,19 @@ impl QuantumBackend for CpuBackend {
         let matrix = gate.matrix();
 
         for i in 0..dim {
-            let (high, low) = if q0 > q1 { (q0, q1) } else { (q1, q0) };
-            let b_high = (i >> high) & 1;
-            let b_low = (i >> low) & 1;
-            let input = (b_high << 1) | b_low;
+            // We need to map q0 to bit 1 (MSB of gate) and q1 to bit 0 (LSB of gate)
+            // regardless of which one is physically higher index.
+            let b_q0 = (i >> q0) & 1;
+            let b_q1 = (i >> q1) & 1;
+            let input = (b_q0 << 1) | b_q1;
 
             for output in 0..4 {
-                let o_high = (output >> 1) & 1;
-                let o_low = output & 1;
+                let o_q0 = (output >> 1) & 1;
+                let o_q1 = output & 1;
 
                 let mut j = i;
-                j = (j & !(1 << high)) | (o_high << high);
-                j = (j & !(1 << low)) | (o_low << low);
+                j = (j & !(1 << q0)) | (o_q0 << q0);
+                j = (j & !(1 << q1)) | (o_q1 << q1);
 
                 new_state[j] += matrix[[output, input]] * self.state.state_vector[i];
             }
