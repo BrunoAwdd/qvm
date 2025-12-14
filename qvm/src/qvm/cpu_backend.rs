@@ -2,10 +2,8 @@ use ndarray::Array1;
 use rand::{thread_rng, Rng};
 
 use crate::{
-    gates::quantum_gate_abstract::QuantumGateAbstract,
-    qvm::backend::QuantumBackend,
-    state::quantum_state::QuantumState,
-    types::qlang_complex::QLangComplex,
+    gates::quantum_gate_abstract::QuantumGateAbstract, qvm::backend::QuantumBackend,
+    state::quantum_state::QuantumState, types::qlang_complex::QLangComplex,
 };
 
 pub struct CpuBackend {
@@ -15,7 +13,9 @@ pub struct CpuBackend {
 impl CpuBackend {
     pub fn new(num_qubits: usize) -> Self {
         println!("CPUBackend: network created with {} qubits", num_qubits);
-        Self { state: QuantumState::new(num_qubits) }
+        Self {
+            state: QuantumState::new(num_qubits),
+        }
     }
 }
 
@@ -27,12 +27,12 @@ impl QuantumBackend for CpuBackend {
 
         for i in 0..dim {
             if (i >> qubit) & 1 == 0 {
-            let j = i ^ (1 << qubit);
-            let a = self.state.state_vector[i];
-            let b = self.state.state_vector[j];
+                let j = i ^ (1 << qubit);
+                let a = self.state.state_vector[i];
+                let b = self.state.state_vector[j];
 
-            new_state[i] = gate_matrix[[0, 0]] * a + gate_matrix[[0, 1]] * b;
-            new_state[j] = gate_matrix[[1, 0]] * a + gate_matrix[[1, 1]] * b;
+                new_state[i] = gate_matrix[[0, 0]] * a + gate_matrix[[0, 1]] * b;
+                new_state[j] = gate_matrix[[1, 0]] * a + gate_matrix[[1, 1]] * b;
             }
         }
 
@@ -50,16 +50,16 @@ impl QuantumBackend for CpuBackend {
         for i in 0..dim {
             let (high, low) = if q0 > q1 { (q0, q1) } else { (q1, q0) };
             let b_high = (i >> high) & 1;
-            let b_low  = (i >> low) & 1;
+            let b_low = (i >> low) & 1;
             let input = (b_high << 1) | b_low;
 
             for output in 0..4 {
                 let o_high = (output >> 1) & 1;
-                let o_low  = output & 1;
+                let o_low = output & 1;
 
                 let mut j = i;
                 j = (j & !(1 << high)) | (o_high << high);
-                j = (j & !(1 << low))  | (o_low  << low);
+                j = (j & !(1 << low)) | (o_low << low);
 
                 new_state[j] += matrix[[output, input]] * self.state.state_vector[i];
             }
@@ -95,14 +95,20 @@ impl QuantumBackend for CpuBackend {
     }
 
     fn measure(&mut self, qubit: usize) -> u8 {
-        let prob_0: f64 = self.state.state_vector
+        let prob_0: f64 = self
+            .state
+            .state_vector
             .iter()
             .enumerate()
             .filter(|(i, _)| ((i >> qubit) & 1) == 0)
             .map(|(_, amp)| amp.norm_sqr())
             .sum();
 
-        let outcome = if thread_rng().gen::<f64>() < prob_0 { 0 } else { 1 };
+        let outcome = if thread_rng().gen::<f64>() < prob_0 {
+            0
+        } else {
+            1
+        };
 
         for (i, amp) in self.state.state_vector.iter_mut().enumerate() {
             if ((i >> qubit) & 1) != outcome {
@@ -110,7 +116,13 @@ impl QuantumBackend for CpuBackend {
             }
         }
 
-        let norm: f64 = self.state.state_vector.iter().map(|x| x.norm_sqr()).sum::<f64>().sqrt();
+        let norm: f64 = self
+            .state
+            .state_vector
+            .iter()
+            .map(|x| x.norm_sqr())
+            .sum::<f64>()
+            .sqrt();
         if norm != 0.0 {
             let norm_complex = QLangComplex::new(norm, 0.0);
             for amp in self.state.state_vector.iter_mut() {
@@ -141,6 +153,7 @@ impl QuantumBackend for CpuBackend {
     fn display(&self) {
         println!("State ({} qubits):", self.num_qubits());
         println!("{}", self.state);
+        println!("{:?}", self.state.state_vector);
     }
 
     fn reset(&mut self, num_qubits: usize) {
@@ -151,26 +164,20 @@ impl QuantumBackend for CpuBackend {
         }
     }
 
-    fn num_qubits(&self) -> usize {
-        self.state.num_qubits
-    }
+    fn num_qubits(&self) -> usize { self.state.num_qubits }
 
-    fn state_vector(&self) -> Vec<QLangComplex> {
-        self.state.state_vector.to_vec()
-    }
+    fn state_vector(&self) -> Vec<QLangComplex> { self.state.state_vector.to_vec() }
 
-    fn box_clone(&self) -> Box<dyn QuantumBackend> {
-        Box::new(self.clone())
-    }
+    fn box_clone(&self) -> Box<dyn QuantumBackend> { Box::new(self.clone()) }
 
-    fn name(&self) -> &'static str {
-        "CPU"
-    }
+    fn name(&self) -> &'static str { "CPU" }
 }
 
 impl Clone for CpuBackend {
     fn clone(&self) -> Self {
-        Self { state: self.state.clone() }
+        Self {
+            state: self.state.clone(),
+        }
     }
 }
 
@@ -178,11 +185,21 @@ pub type Backend = CpuBackend;
 
 fn assert_valid_qubits(label: &str, total: usize, indices: &[usize]) {
     for &q in indices {
-        assert!(q < total, "{}: qubit {} out of bounds (max = {})", label, q, total - 1);
+        assert!(
+            q < total,
+            "{}: qubit {} out of bounds (max = {})",
+            label,
+            q,
+            total - 1
+        );
     }
     for i in 0..indices.len() {
         for j in (i + 1)..indices.len() {
-            assert!(indices[i] != indices[j], "{}: qubits must be distinct", label);
+            assert!(
+                indices[i] != indices[j],
+                "{}: qubits must be distinct",
+                label
+            );
         }
     }
 }

@@ -26,7 +26,7 @@ impl fmt::Display for QLangLine {
     }
 }
 /// Parses and validates QLang source code into an abstract syntax tree (AST).
-/// 
+///
 /// Stores raw input lines, collects syntax errors, and produces structured commands.
 #[derive(Clone)]
 pub struct QLangParser {
@@ -39,10 +39,15 @@ pub struct QLangParser {
 impl QLangParser {
     /// Creates a new `QLangParser` with default configuration and regex pattern.
     pub fn new() -> Self {
-        let func_regex = Regex::new(r"(\w+)\((.*)\)")
-            .expect("QLangParser: Invalid regex: (\\w+)\\((.*)\\)");
+        let func_regex =
+            Regex::new(r"(\w+)\((.*)\)").expect("QLangParser: Invalid regex: (\\w+)\\((.*)\\)");
 
-        Self { func_regex, errors: vec![], commands: vec![], parsed_commands: vec![] }
+        Self {
+            func_regex,
+            errors: vec![],
+            commands: vec![],
+            parsed_commands: vec![],
+        }
     }
     /// Appends a raw line of QLang source code to be parsed later.
     ///
@@ -54,9 +59,7 @@ impl QLangParser {
     /// let mut parser = QLangParser::new();
     /// parser.append("create(3)");
     /// ```
-    pub fn append(&mut self, line: &str){
-        self.commands.push(line.to_string());
-    }
+    pub fn append(&mut self, line: &str) { self.commands.push(line.to_string()); }
 
     /// Parses all appended source lines and converts them into structured commands.
     ///
@@ -71,34 +74,37 @@ impl QLangParser {
         for line in self.commands.iter() {
             match self.parse_line(line) {
                 Ok(parsed) => self.parsed_commands.push(parsed),
-                Err(err) => self.errors.push(format!("Erro na linha '{}': {}", line, err)),
+                Err(err) => self
+                    .errors
+                    .push(format!("Erro na linha '{}': {}", line, err)),
             }
         }
     }
 
     /// Returns `true` if any syntax errors were encountered during parsing.
-    pub fn has_errors(&self) -> bool {
-        !self.errors.is_empty()
-    }
+    pub fn has_errors(&self) -> bool { !self.errors.is_empty() }
 
     /// Returns a list of error messages from the most recent validation.
-    pub fn get_errors(&self) -> &[String] {
-        &self.errors
-    }
+    pub fn get_errors(&self) -> &[String] { &self.errors }
 
     /// Returns a list of error messages from the most recent validation.
-    pub fn get_commands(&self) -> &[QLangLine] {
-        &self.parsed_commands
-    }
+    pub fn get_commands(&self) -> &[QLangLine] { &self.parsed_commands }
 
     /// Attempts to parse a single line of QLang source code into a `QLangLine`.
     ///
     /// Returns an error if the syntax is invalid or arguments are malformed.
     fn parse_line(&self, line: &str) -> Result<QLangLine, String> {
-        let caps = self.func_regex.captures(line.trim()).ok_or("Invalid syntax")?;
+        let caps = self
+            .func_regex
+            .captures(line.trim())
+            .ok_or("Invalid syntax")?;
         let (raw, args_str) = (
-            caps.get(1).map(|m| m.as_str()).ok_or("Invalid function name")?,
-            caps.get(2).map(|m| m.as_str()).ok_or("Invalid argument list")?,
+            caps.get(1)
+                .map(|m| m.as_str())
+                .ok_or("Invalid function name")?,
+            caps.get(2)
+                .map(|m| m.as_str())
+                .ok_or("Invalid argument list")?,
         );
 
         let args: Vec<String> = args_str
@@ -116,7 +122,9 @@ impl QLangParser {
             "display" => Ok(QLangLine::Command(QLangCommand::Display)),
             "measure" => self.parse_measure(args).map(QLangLine::Command),
             "measure_all" => Ok(QLangLine::Command(QLangCommand::MeasureAll)),
-            _ => self.parse_gate(canonical.to_string(), args).map(QLangLine::Command),
+            _ => self
+                .parse_gate(canonical.to_string(), args)
+                .map(QLangLine::Command),
         }
     }
 
@@ -129,7 +137,8 @@ impl QLangParser {
     /// - No argument is provided
     /// - The argument is not a valid `usize`   
     fn parse_create(&self, args: Vec<String>) -> Result<QLangCommand, String> {
-        let n = args.get(0)
+        let n = args
+            .get(0)
             .ok_or("Missing argument for create")?
             .parse::<usize>()
             .map_err(|_| "Invalid number in create")?;
@@ -147,8 +156,12 @@ impl QLangParser {
         if args.is_empty() {
             Ok(QLangCommand::MeasureAll)
         } else {
-            let qubits: Result<Vec<usize>, _> = args.iter()
-                .map(|a| a.parse::<usize>().map_err(|_| format!("Invalid qubit: {}", a)))
+            let qubits: Result<Vec<usize>, _> = args
+                .iter()
+                .map(|a| {
+                    a.parse::<usize>()
+                        .map_err(|_| format!("Invalid qubit: {}", a))
+                })
                 .collect();
             Ok(QLangCommand::MeasureMany(qubits?))
         }
@@ -184,7 +197,10 @@ mod tests {
         parser.append(lines);
         parser.validate_lines();
         let cmd = parser.get_commands();
-        assert_eq!(cmd[0].to_string(), QLangCommand::ApplyGate("hadamard".into(), vec!["0".into()]).to_string());
+        assert_eq!(
+            cmd[0].to_string(),
+            QLangCommand::ApplyGate("hadamard".into(), vec!["0".into()]).to_string()
+        );
     }
 
     #[test]
@@ -194,7 +210,10 @@ mod tests {
         parser.append(lines);
         parser.validate_lines();
         let cmd = parser.get_commands();
-        assert_eq!(cmd[0].to_string(), QLangCommand::ApplyGate("rx".into(), vec!["1".into(), "3.14".into()]).to_string());
+        assert_eq!(
+            cmd[0].to_string(),
+            QLangCommand::ApplyGate("rx".into(), vec!["1".into(), "3.14".into()]).to_string()
+        );
     }
 
     #[test]
@@ -214,7 +233,10 @@ mod tests {
         parser.append(lines);
         parser.validate_lines();
         let cmd = parser.get_commands();
-        assert_eq!(cmd[0].to_string(), QLangCommand::MeasureMany(vec![2]).to_string());
+        assert_eq!(
+            cmd[0].to_string(),
+            QLangCommand::MeasureMany(vec![2]).to_string()
+        );
     }
 
     #[test]
@@ -224,7 +246,10 @@ mod tests {
         parser.append(lines);
         parser.validate_lines();
         let cmd = parser.get_commands();
-        assert_eq!(cmd[0].to_string(), QLangCommand::MeasureMany(vec![1, 2, 3]).to_string());
+        assert_eq!(
+            cmd[0].to_string(),
+            QLangCommand::MeasureMany(vec![1, 2, 3]).to_string()
+        );
     }
 
     #[test]
@@ -244,8 +269,9 @@ mod tests {
         parser.append(lines);
         parser.validate_lines();
         let cmd = parser.get_commands();
-        assert_eq!(cmd[0].to_string(), QLangCommand::ApplyGate("unknown".into(), vec!["1".into(), "2".into()]).to_string());
+        assert_eq!(
+            cmd[0].to_string(),
+            QLangCommand::ApplyGate("unknown".into(), vec!["1".into(), "2".into()]).to_string()
+        );
     }
-
-
 }

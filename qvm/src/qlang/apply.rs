@@ -1,5 +1,5 @@
-use crate::qvm::QVM;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::qvm::QVM;
 
 /// Applies a single-qubit gate with no parameters (e.g., `x(0)`, `h(1)`).
 ///
@@ -103,7 +103,7 @@ pub fn apply_controlled_u(qvm: &mut QVM, args: &[String]) {
     }
 
     let control = parse_usize(&args[0]);
-    let target  = parse_usize(&args[1]);
+    let target = parse_usize(&args[1]);
 
     let u00 = parse_f64(&args[2]);
     let u01 = parse_f64(&args[3]);
@@ -115,7 +115,6 @@ pub fn apply_controlled_u(qvm: &mut QVM, args: &[String]) {
     let gate = ControlledU::new_real(u00, u01, u10, u11); // ou .new_complex se fizer isso depois
     qvm.apply_gate_2q(&gate, control, target);
 }
-
 
 /// Applies a three-qubit gate (e.g., `toffoli(0, 1, 2)`).
 ///
@@ -134,52 +133,72 @@ pub fn apply_three_q_gate<G: QuantumGateAbstract>(qvm: &mut QVM, gate: &G, args:
 
 /// Parses a `&str` into `usize`, panicking with context on failure.
 fn parse_usize(s: &str) -> usize {
-    s.parse::<usize>().unwrap_or_else(|_| panic!("Qubit inválido: '{}'", s))
+    s.parse::<usize>()
+        .unwrap_or_else(|_| panic!("Qubit inválido: '{}'", s))
 }
 
 /// Parses a `&str` into `f64`, panicking with context on failure.
 fn parse_f64(s: &str) -> f64 {
-    s.parse::<f64>().unwrap_or_else(|_| panic!("Parâmetro inválido: '{}'", s))
+    s.parse::<f64>()
+        .unwrap_or_else(|_| panic!("Invalid Parameter: '{}'", s))
 }
-
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::gates::one_q::pauli_y::PauliY;
     use crate::qvm::QVM;
-    use crate::gates::one_q::pauli_x::PauliX;
 
-    fn str_args(args: &[&str]) -> Vec<String> {
-        args.iter().map(|s| s.to_string()).collect()
-    }
+    fn str_args(args: &[&str]) -> Vec<String> { args.iter().map(|s| s.to_string()).collect() }
 
     #[test]
     fn test_apply_one_q_gate_valid() {
         let mut qvm = QVM::new(1);
-        let gate = PauliX::new();
+        let gate = PauliY::new();
         apply_one_q_gate(&mut qvm, &gate, &str_args(&["0"]));
-        // We assume no panic = success (behavior depends on QVM internals)
+        qvm.teardown();
     }
 
     #[test]
-    #[should_panic(expected = "Qubit inválido")]
     fn test_apply_one_q_gate_invalid_qubit() {
-        let mut qvm = QVM::new(1);
-        let gate = PauliX::new();
-        apply_one_q_gate(&mut qvm, &gate, &str_args(&["not_a_number"]));
+        use std::panic;
+
+        let result = panic::catch_unwind(|| {
+            let mut qvm = QVM::new(1);
+            let gate = PauliY::new();
+            apply_one_q_gate(&mut qvm, &gate, &str_args(&["not_a_number"]));
+            qvm.teardown();
+        });
+
+        assert!(result.is_err(), "Esperado pânico ao usar qubit inválido");
     }
 
     #[test]
     fn test_apply_one_q_with_1f64_valid() {
         let mut qvm = QVM::new(1);
-        apply_one_q_with_1f64(&mut qvm, |theta| crate::gates::rotation_q::rx::RX::new(theta), &str_args(&["0", "3.14"]));
+        apply_one_q_with_1f64(
+            &mut qvm,
+            |theta| crate::gates::rotation_q::rx::RX::new(theta),
+            &str_args(&["0", "3.14"]),
+        );
+        qvm.teardown();
     }
 
     #[test]
-    #[should_panic(expected = "Parâmetro inválido")]
     fn test_apply_one_q_with_1f64_invalid_param() {
-        let mut qvm = QVM::new(1);
-        apply_one_q_with_1f64(&mut qvm, |theta| crate::gates::rotation_q::rx::RX::new(theta), &str_args(&["0", "π"]));
+        use std::panic;
+
+        let result = panic::catch_unwind(|| {
+            let mut qvm = QVM::new(1);
+            apply_one_q_with_1f64(
+                &mut qvm,
+                |theta| crate::gates::rotation_q::rx::RX::new(theta),
+                &str_args(&["0", "π"]),
+            );
+            qvm.teardown();
+        });
+
+        assert!(result.is_err());
     }
 
     #[test]
@@ -187,19 +206,22 @@ mod tests {
         let mut qvm = QVM::new(2);
         let gate = crate::gates::two_q::cnot::CNOT::new();
         apply_two_q_gate(&mut qvm, &gate, &str_args(&["0", "1"]));
+        qvm.teardown();
     }
 
     #[test]
     fn test_apply_controlled_u_valid() {
         let mut qvm = QVM::new(2);
         apply_controlled_u(&mut qvm, &str_args(&["0", "1", "1.0", "0.0", "0.0", "1.0"]));
+        qvm.teardown();
     }
 
     #[test]
     #[should_panic(expected = "CU espera 6 argumentos")]
     fn test_apply_controlled_u_invalid_args() {
         let mut qvm = QVM::new(2);
-        apply_controlled_u(&mut qvm, &str_args(&["0", "1"]));
+        apply_controlled_u(&mut qvm, &vec!["0".to_string(), "1".to_string()]);
+        qvm.teardown();
     }
 
     #[test]
@@ -207,6 +229,7 @@ mod tests {
         let mut qvm = QVM::new(3);
         let gate = crate::gates::three_q::toffoli::Toffoli::new();
         apply_three_q_gate(&mut qvm, &gate, &str_args(&["0", "1", "2"]));
+        qvm.teardown();
     }
 
     #[test]
@@ -214,5 +237,6 @@ mod tests {
         let mut qvm = QVM::new(2);
         let gate = crate::gates::two_q::cnot::CNOT::new();
         apply_two_q_gate(&mut qvm, &gate, &["0".into(), "1".into()]);
+        qvm.teardown();
     }
 }

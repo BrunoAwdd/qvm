@@ -1,6 +1,6 @@
+use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
-use std::fs;
 
 fn main() {
     println!("cargo:warning=🚧 Building CUDA kernels...");

@@ -1,13 +1,13 @@
 // src/qvm/tensor_backend/measure.rs
 
-use rand::Rng;
-use crate::types::qlang_complex::QLangComplex;
 use super::TensorBackend;
+use crate::types::qlang_complex::QLangComplex;
+use rand::Rng;
 
 impl TensorBackend {
     fn _measure(&mut self, q: usize) -> u8 {
         let tensor = &mut self.network.nodes[q].tensor;
-        let shape = tensor.shape().to_vec(); 
+        let shape = tensor.shape().to_vec();
         println!("🔍 Medindo qubit {}: shape = {:?}", q, shape);
 
         let slice_0 = tensor.index_axis(ndarray::Axis(1), 0);
@@ -70,12 +70,8 @@ impl TensorBackend {
         results
     }
 
-
-
     pub fn measure_all(&mut self) -> Vec<u8> {
-        let results: Vec<u8> = (0..self.num_qubits)
-            .map(|q| self._measure(q))
-            .collect();
+        let results: Vec<u8> = (0..self.num_qubits).map(|q| self._measure(q)).collect();
 
         // Agora sim, reescreve a rede inteira com base no novo vetor de estado
         let new_state = self.network.to_state_vector();
@@ -83,7 +79,6 @@ impl TensorBackend {
 
         results
     }
-
 
     pub fn finalize_measurements(&mut self) {
         let new_state = self.network.to_state_vector();

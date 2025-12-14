@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use std::path::Path;
-use std::ffi::OsStr;
-use libloading::{Library, Symbol};
-use std::sync::Arc;
 use super::quantum_gate_abstract::QuantumGateAbstract;
+use libloading::{Library, Symbol};
+use std::collections::HashMap;
+use std::ffi::OsStr;
+use std::path::Path;
+use std::sync::Arc;
 
 pub struct PortalRegistry {
     pub gates: HashMap<String, Arc<dyn QuantumGateAbstract>>,
@@ -11,7 +11,7 @@ pub struct PortalRegistry {
 }
 
 impl PortalRegistry {
-pub fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             gates: HashMap::new(),
             _libs: vec![],
@@ -23,9 +23,7 @@ pub fn new() -> Self {
         self.gates.insert(name, gate);
     }
 
-    pub fn list(&self) -> Vec<String> {
-        self.gates.keys().cloned().collect()
-    }
+    pub fn list(&self) -> Vec<String> { self.gates.keys().cloned().collect() }
 
     pub fn get(&self, name: &str) -> Option<Arc<dyn QuantumGateAbstract>> {
         self.gates.get(name).cloned()

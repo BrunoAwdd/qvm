@@ -1,16 +1,14 @@
 // src/qvm/tensor_backend/mod.rs
 
 pub mod apply;
+pub mod contract;
 pub mod fallback;
 pub mod init;
 pub mod measure;
-pub mod contract;
 
 use crate::{
-    state::tensor_network::TensorNetwork,
-    qvm::backend::QuantumBackend,
-    gates::quantum_gate_abstract::QuantumGateAbstract,
-    types::qlang_complex::QLangComplex,
+    gates::quantum_gate_abstract::QuantumGateAbstract, qvm::backend::QuantumBackend,
+    state::tensor_network::TensorNetwork, types::qlang_complex::QLangComplex,
 };
 
 pub struct TensorBackend {
@@ -19,13 +17,9 @@ pub struct TensorBackend {
 }
 
 impl QuantumBackend for TensorBackend {
-    fn num_qubits(&self) -> usize {
-        self.num_qubits
-    }
+    fn num_qubits(&self) -> usize { self.num_qubits }
 
-    fn state_vector(&self) -> Vec<QLangComplex> {
-        self.network.to_state_vector()
-    }
+    fn state_vector(&self) -> Vec<QLangComplex> { self.network.to_state_vector() }
 
     fn apply_gate(&mut self, gate: &dyn QuantumGateAbstract, qubit: usize) {
         self.apply_gate(gate, qubit);
@@ -39,17 +33,11 @@ impl QuantumBackend for TensorBackend {
         self.apply_gate_3q(gate, q0, q1, q2);
     }
 
-    fn measure(&mut self, qubit: usize) -> u8 {
-        self.measure(qubit)
-    }
+    fn measure(&mut self, qubit: usize) -> u8 { self.measure(qubit) }
 
-    fn measure_many(&mut self, qubits: &Vec<usize>) -> Vec<u8> {
-        self.measure_many(qubits)
-    }
+    fn measure_many(&mut self, qubits: &Vec<usize>) -> Vec<u8> { self.measure_many(qubits) }
 
-    fn measure_all(&mut self) -> Vec<u8> {
-        self.measure_all()
-    }
+    fn measure_all(&mut self) -> Vec<u8> { self.measure_all() }
 
     fn display(&self) {
         let state = self.state_vector();
@@ -64,17 +52,11 @@ impl QuantumBackend for TensorBackend {
         }
     }
 
-    fn reset(&mut self, num_qubits: usize) {
-        *self = TensorBackend::new(num_qubits);
-    }
+    fn reset(&mut self, num_qubits: usize) { *self = TensorBackend::new(num_qubits); }
 
-    fn box_clone(&self) -> Box<dyn QuantumBackend> {
-        Box::new(self.clone())
-    }
+    fn box_clone(&self) -> Box<dyn QuantumBackend> { Box::new(self.clone()) }
 
-    fn name(&self) -> &'static str {
-        "Tensor"
-    }
+    fn name(&self) -> &'static str { "Tensor" }
 }
 
 impl Clone for TensorBackend {

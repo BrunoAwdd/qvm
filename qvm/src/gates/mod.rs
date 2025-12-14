@@ -1,7 +1,7 @@
-pub mod quantum_gate_abstract;
 pub mod portal_registry;
+pub mod quantum_gate_abstract;
 
-pub mod one_q{
+pub mod one_q {
     pub mod hadamard;
     pub mod identity;
     pub mod pauli_x;
@@ -27,7 +27,7 @@ pub mod rotation_q {
     pub mod u3;
 }
 
-pub mod two_q{
+pub mod two_q {
     pub mod cnot;
     pub mod cy;
     pub mod cz;
@@ -35,21 +35,7 @@ pub mod two_q{
     pub mod swap;
 }
 
-pub mod three_q{
-    pub mod toffoli;
+pub mod three_q {
     pub mod fredkin;
+    pub mod toffoli;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

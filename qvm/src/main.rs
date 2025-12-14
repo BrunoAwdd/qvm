@@ -1,21 +1,19 @@
+pub mod batch;
+pub mod gates;
 pub mod qlang;
 pub mod qvm;
-pub mod gates;
 pub mod state;
-pub mod batch;
 pub mod types;
 
 use std::time::Instant;
 
 use crate::{
-    qlang::QLang, 
-    batch::{circuit_job::CircuitJob, runner::BatchRunner}};
-
+    batch::{circuit_job::CircuitJob, runner::BatchRunner},
+    qlang::QLang,
+};
 
 fn main() {
     let start = Instant::now();
-   
-
 
     let mut jobs = vec![];
     let mut qlangs = vec![]; // Armazena os QLangs para impressão posterior
@@ -42,7 +40,7 @@ fn main() {
     for (i, (qvm, qlang)) in results.iter().zip(qlangs.iter()).enumerate() {
         println!("=== Job {} ===", i + 1);
         println!("Código QLang:");
-        println!("{}", qlang.to_source()); 
+        println!("{}", qlang.to_source());
         println!("Resultado:");
         qvm.display();
         println!();
@@ -60,5 +58,9 @@ fn main() {
 
     let duration2 = start.elapsed();
 
-    println!("⏱️ Tempo total de execução: {:.3?} - {:.3?}", duration, duration2-duration);
+    println!(
+        "⏱️ Tempo total de execução: {:.3?} - {:.3?}",
+        duration,
+        duration2 - duration
+    );
 }

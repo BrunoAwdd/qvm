@@ -51,7 +51,11 @@ impl fmt::Display for QLangCommand {
             QLangCommand::MeasureAll => writeln!(f, "measure_all()"),
             QLangCommand::Measure(q) => writeln!(f, "measure({})", q),
             QLangCommand::MeasureMany(qs) => {
-                let list = qs.iter().map(|q| q.to_string()).collect::<Vec<_>>().join(",");
+                let list = qs
+                    .iter()
+                    .map(|q| q.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",");
                 writeln!(f, "measure({})", list)
             }
             QLangCommand::Display => writeln!(f, "display()"),
@@ -65,28 +69,19 @@ pub struct AstController {
 }
 
 impl AstController {
-    pub fn new(num_qubits: usize) -> Self { 
+    pub fn new(num_qubits: usize) -> Self {
         let init = vec![QLangCommand::Create(num_qubits)];
-        Self { ast: init }    
+        Self { ast: init }
     }
 
-    pub fn append(&mut self, cmd: &QLangCommand) {
-        self.ast.push(cmd.clone());
-    }
+    pub fn append(&mut self, cmd: &QLangCommand) { self.ast.push(cmd.clone()); }
 
-    pub fn to_source(&self) -> String {
-        self.ast.iter().map(|cmd| cmd.to_string()).collect()
-    }
+    pub fn to_source(&self) -> String { self.ast.iter().map(|cmd| cmd.to_string()).collect() }
 
-    pub fn commands(&self) -> &[QLangCommand] {
-        &self.ast
-    }
+    pub fn commands(&self) -> &[QLangCommand] { &self.ast }
 
-    pub fn clear(&mut self) {
-        self.ast.clear();
-    }
+    pub fn clear(&mut self) { self.ast.clear(); }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -143,6 +138,4 @@ mod tests {
         let source = controller.to_source();
         assert!(source.contains("create(2)"));
     }
-
-
 }

@@ -1,12 +1,6 @@
-#![cfg(feature = "cuda")]
+//#![cfg(feature = "cuda")]
 
-use cust::{
-    memory::DevicePointer,
-    module::Module,
-    prelude::*,
-    stream::Stream,
-    context::Context,
-};
+use cust::{context::Context, memory::DevicePointer, module::Module, prelude::*, stream::Stream};
 
 use crate::types::qlang_complex::QLangComplex;
 
@@ -37,46 +31,118 @@ pub fn launch_cuda_gate_kernel(
     stream.synchronize().unwrap();
 }
 
-
 fn load_ptx(ptx_filename: &str) -> &'static str {
     match ptx_filename {
         // General Gates
-        "contolled_u.ptx"   => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/general/controlled_u/controlled_u.ptx")),
+        "contolled_u.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/general/controlled_u/controlled_u.ptx"
+        )),
         // One-Qubit Gates
-        "hadamard.ptx"      => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/hadamard/hadamard.ptx")),
-        "pauli_x.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/pauli_x/pauli_x.ptx")),
-        "pauli_y.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/pauli_y/pauli_y.ptx")),
-        "pauli_z.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/pauli_z/pauli_z.ptx")),
-        "s.ptx"             => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/s/s.ptx")),
-        "s_dagger.ptx"      => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/s_dagger/s_dagger.ptx")),
-        "t.ptx"             => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/t/t.ptx")),
-        "t_dagger.ptx"      => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/one_q/t_dagger/t_dagger.ptx")),
+        "hadamard.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/one_q/hadamard/hadamard.ptx"
+        )),
+        "pauli_x.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/one_q/pauli_x/pauli_x.ptx"
+        )),
+        "pauli_y.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/one_q/pauli_y/pauli_y.ptx"
+        )),
+        "pauli_z.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/one_q/pauli_z/pauli_z.ptx"
+        )),
+        "s.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/one_q/s/s.ptx"
+        )),
+        "s_dagger.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/one_q/s_dagger/s_dagger.ptx"
+        )),
+        "t.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/one_q/t/t.ptx"
+        )),
+        "t_dagger.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/one_q/t_dagger/t_dagger.ptx"
+        )),
         // Rotation Gates
-        "rx.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/rx/rx.ptx")),
-        "ry.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/ry/ry.ptx")),
-        "rz.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/rz/rz.ptx")),
-        "phase.ptx"    => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/phase/phase.ptx")),
-        "u1.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/u1/u1.ptx")),
-        "u2.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/u2/u2.ptx")),
-        "u3.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/rotation_q/u3/u3.ptx")),
+        "rx.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/rotation_q/rx/rx.ptx"
+        )),
+        "ry.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/rotation_q/ry/ry.ptx"
+        )),
+        "rz.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/rotation_q/rz/rz.ptx"
+        )),
+        "phase.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/rotation_q/phase/phase.ptx"
+        )),
+        "u1.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/rotation_q/u1/u1.ptx"
+        )),
+        "u2.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/rotation_q/u2/u2.ptx"
+        )),
+        "u3.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/rotation_q/u3/u3.ptx"
+        )),
         // Two-Qubit Gates
-        "cnot.ptx"     => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/cnot/cnot.ptx")),
-        "cy.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/cy/cy.ptx")),
-        "cz.ptx"       => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/cz/cz.ptx")),
-        "swap.ptx"     => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/swap/swap.ptx")),
-        "iswap.ptx"    => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/two_q/iswap/iswap.ptx")),
+        "cnot.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/two_q/cnot/cnot.ptx"
+        )),
+        "cy.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/two_q/cy/cy.ptx"
+        )),
+        "cz.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/two_q/cz/cz.ptx"
+        )),
+        "swap.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/two_q/swap/swap.ptx"
+        )),
+        "iswap.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/two_q/iswap/iswap.ptx"
+        )),
         // Three-Qubit Gates
-        "fredkin.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/three_q/fredkin/fredkin.ptx")),
-        "toffoli.ptx"  => include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/gates/three_q/toffoli/toffoli.ptx")),
+        "fredkin.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/three_q/fredkin/fredkin.ptx"
+        )),
+        "toffoli.ptx" => include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/gates/three_q/toffoli/toffoli.ptx"
+        )),
         _ => panic!("PTX desconhecido: {}", ptx_filename),
     }
 }
 
 fn estimate_grid_size(args: &[KernelArg]) -> u32 {
-    let max_index = args.iter().filter_map(|arg| match arg {
-        KernelArg::I32(v) => Some(*v as usize),
-        _ => None,
-    }).max().unwrap_or(8);
+    let max_index = args
+        .iter()
+        .filter_map(|arg| match arg {
+            KernelArg::I32(v) => Some(*v as usize),
+            _ => None,
+        })
+        .max()
+        .unwrap_or(8);
 
     let block_size = 256;
     ((1 << max_index) + block_size - 1) / block_size
@@ -90,21 +156,37 @@ unsafe fn launch_kernel_args(
 ) {
     match args {
         [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b)] => {
+            assert!(!ptr.is_null(), "ptr is null");
+            //println!("Launching kernel with ptr = {:?}, a = {:?}", ptr, a);
             cust::launch!(function<<<grid_size, 256, 0, stream>>>(*ptr, *a, *b))
                 .expect("Kernel 3 args");
+            //println!("Kernel 3 args finished");
         }
         [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b), KernelArg::F64(theta)] => {
+            assert!(!ptr.is_null(), "ptr is null");
+            //println!("Launching kernel with ptr = {:?}, a = {:?}, b = {:?}, theta = {:?}", ptr, a, b, theta);
             cust::launch!(function<<<grid_size, 256, 0, stream>>>(*ptr, *a, *b, *theta))
                 .expect("Kernel 4 args");
+            //println!("Kernel 4 args finished");
         }
-        [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b), KernelArg::I32(c), KernelArg::I32(d)] => {
+        [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b), KernelArg::I32(c), KernelArg::I32(d)] =>
+        {
+            assert!(!ptr.is_null(), "ptr is null");
+            //println!("Launching kernel with ptr = {:?}, a = {:?}, b = {:?}, c = {:?}, d = {:?}", ptr, a, b, c, d);
             cust::launch!(function<<<grid_size, 256, 0, stream>>>(*ptr, *a, *b, *c, *d))
                 .expect("Kernel 5 args");
+            //println!("Kernel 5 args finished");
         }
-        [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b), KernelArg::F64(t), KernelArg::F64(p), KernelArg::F64(l)] => {
+        [KernelArg::Ptr(ptr), KernelArg::I32(a), KernelArg::I32(b), KernelArg::F64(t), KernelArg::F64(p), KernelArg::F64(l)] =>
+        {
+            assert!(!ptr.is_null(), "ptr is null");
+            //println!("Launching kernel with ptr = {:?}, a = {:?}, b = {:?}, t = {:?}, p = {:?}, l = {:?}", ptr, a, b, t, p, l);
             cust::launch!(function<<<grid_size, 256, 0, stream>>>(*ptr, *a, *b, *t, *p, *l))
                 .expect("Kernel 6 args");
+            //println!("Kernel 6 args finished");
         }
         _ => panic!("Número de argumentos não suportado"),
     }
+
+    stream.synchronize().expect("CUDA stream sync failed");
 }

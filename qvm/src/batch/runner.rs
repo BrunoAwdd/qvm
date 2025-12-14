@@ -1,10 +1,6 @@
-
+use super::{circuit_job::CircuitJob, errors::BatchRunnerError};
 use crate::qlang::QLang;
 use crate::qvm::QVM;
-use super::{
-    circuit_job::CircuitJob, 
-    errors::BatchRunnerError
-};
 use rayon::prelude::*;
 
 /// Executes multiple quantum circuit jobs in parallel.
@@ -25,9 +21,7 @@ pub struct BatchRunner {
 /// # Parameters
 /// - `jobs`: A list of `CircuitJob` instances to execute.
 impl BatchRunner {
-    pub fn new(jobs: Vec<CircuitJob>) -> Self {
-        Self { jobs }
-    }
+    pub fn new(jobs: Vec<CircuitJob>) -> Self { Self { jobs } }
 
     /// Runs all circuit jobs in parallel and returns their resulting `QVM`s.
     ///
@@ -43,7 +37,10 @@ impl BatchRunner {
             .par_iter()
             .map(|job| {
                 let mut qlang = QLang::new(job.num_qubits);
-                job.commands.iter().cloned().for_each(|cmd| qlang.append(cmd));
+                job.commands
+                    .iter()
+                    .cloned()
+                    .for_each(|cmd| qlang.append(cmd));
                 qlang.run();
                 qlang.qvm.clone()
             })
@@ -65,27 +62,28 @@ impl BatchRunner {
     /// - Returns `BatchRunnerError::IoError` for unreadable files
     ///
     /// # Example
-    /// ```no_run
+    /// ```ignore
     /// let runner = BatchRunner::from_files(vec!["circuits/job1.qlang", "circuits/job2.qlang"])?;
     /// let results = runner.run_all();
     /// ```
     pub fn from_files(paths: Vec<&str>) -> Result<Self, BatchRunnerError> {
-        let jobs: Result<Vec<CircuitJob>, BatchRunnerError> = paths.into_iter().map(|path| {
-            let content = std::fs::read_to_string(path)
-                .map_err(|e| BatchRunnerError::IoError(e))?;
-            let mut qlang = QLang::new(1); 
-            qlang.run_from_str(&content);
-            Ok(CircuitJob {
-                num_qubits: qlang.qvm.num_qubits(),
-                commands: qlang.ast.clone(),
+        let jobs: Result<Vec<CircuitJob>, BatchRunnerError> = paths
+            .into_iter()
+            .map(|path| {
+                let content =
+                    std::fs::read_to_string(path).map_err(|e| BatchRunnerError::IoError(e))?;
+                let mut qlang = QLang::new(1);
+                qlang.run_from_str(&content);
+                Ok(CircuitJob {
+                    num_qubits: qlang.qvm.num_qubits(),
+                    commands: qlang.ast.clone(),
+                })
             })
-        }).collect();
+            .collect();
 
         let runner = Self { jobs: jobs? };
         Ok(runner)
     }
-
-
 }
 #[cfg(test)]
 mod tests {
@@ -108,7 +106,10 @@ mod tests {
     fn test_batch_runner_run_all() {
         let job = CircuitJob {
             num_qubits: 1,
-            commands: vec![QLangCommand::ApplyGate("hadamard".to_string(), vec!["0".into()])],
+            commands: vec![QLangCommand::ApplyGate(
+                "hadamard".to_string(),
+                vec!["0".into()],
+            )],
         };
 
         let runner = BatchRunner::new(vec![job]);

@@ -1,10 +1,9 @@
 // src/qvm/cuda_backend/measure.rs
-#![cfg(feature = "cuda")]
+//#![cfg(feature = "cuda")]
 use super::CudaBackend;
 use crate::types::qlang_complex::QLangComplex;
-use rand::Rng;
 use cust::memory::CopyDestination;
-
+use rand::Rng;
 
 impl CudaBackend {
     pub fn measure_all(&mut self) -> Vec<u8> {
@@ -25,7 +24,9 @@ impl CudaBackend {
     pub fn measure(&mut self, qubit: usize) -> u8 {
         let dim = self.state.len();
         let mut host = vec![QLangComplex::default(); dim];
-        self.state.copy_to(&mut host).unwrap();
+        self.state
+            .copy_to(&mut host)
+            .expect("Failed to copy CUDA device buffer to host");
 
         let prob_0: f64 = host
             .iter()
@@ -50,7 +51,9 @@ impl CudaBackend {
             *amp /= QLangComplex::new(norm, 0.0);
         }
 
-        self.state.copy_from(&host).unwrap();
+        self.state
+            .copy_from(&host)
+            .expect("Failed to copy host to CUDA device buffer");
         measured as u8
     }
 }

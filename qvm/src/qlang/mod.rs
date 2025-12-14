@@ -2,8 +2,8 @@ pub mod aliases;
 pub mod apply;
 pub mod ast;
 pub mod errors;
-pub mod parser;
 pub mod interpreter;
+pub mod parser;
 pub mod validators;
 
 use ast::AstController;
@@ -11,8 +11,13 @@ use regex::Regex;
 use std::fs;
 use std::str::Lines;
 
-use crate::qlang::{ast::QLangCommand, parser::{QLangParser, QLangLine}, interpreter::run_ast, validators::validate_gate_arity};
-use crate::qvm::{QVM, backend::QuantumBackend};
+use crate::qlang::{
+    ast::QLangCommand,
+    interpreter::run_ast,
+    parser::{QLangLine, QLangParser},
+    validators::validate_gate_arity,
+};
+use crate::qvm::QVM;
 
 /// The main interpreter and runtime for the QLang quantum programming language.
 ///
@@ -75,10 +80,8 @@ impl QLang {
     ///
     /// Each command is formatted using its `Display` implementation,
     /// and separated by newlines.
-    pub fn to_source(&self) -> String {
-        self.ast_controller.to_source()
-    }
-            
+    pub fn to_source(&self) -> String { self.ast_controller.to_source() }
+
     /// Appends a command to the AST.
     ///
     /// If the command is `MeasureAll`, it marks the program as collapsed (executed).
@@ -92,9 +95,7 @@ impl QLang {
     /// Executes the current AST using the QVM.
     ///
     /// This function does not clear the AST after execution.
-    pub fn run(&mut self) {
-        run_ast(&mut self.qvm, &self.ast);
-    }
+    pub fn run(&mut self) { run_ast(&mut self.qvm, &self.ast); }
 
     /// Parses and runs QLang code from a raw multi-line string.
     ///
@@ -105,9 +106,9 @@ impl QLang {
     /// Panics if parsing fails or the code is malformed.
     pub fn run_from_str(&mut self, code: &str) {
         self.append_from_lines(code.lines());
-        let _ =self.run_parsed_commands();
+        let _ = self.run_parsed_commands();
 
-        self.run(); 
+        self.run();
     }
 
     /// Validates and executes all commands previously parsed by the parser.
@@ -136,7 +137,11 @@ impl QLang {
                     self.push_ast(QLangCommand::ApplyGate(name.clone(), args.clone()));
                 }
                 QLangLine::Command(QLangCommand::Create(n)) => {
-                    if self.ast.iter().any(|cmd| matches!(cmd, QLangCommand::Create(_))) {
+                    if self
+                        .ast
+                        .iter()
+                        .any(|cmd| matches!(cmd, QLangCommand::Create(_)))
+                    {
                         continue;
                     }
                     self.reset();
@@ -178,11 +183,10 @@ impl QLang {
     /// # Panics
     /// Panics if the file cannot be read.
     pub fn run_qlang_from_file(&mut self, file_path: &str) {
-        let program = fs::read_to_string(file_path)
-            .expect("Erro ao ler o arquivo");
-        
+        let program = fs::read_to_string(file_path).expect("Erro ao ler o arquivo");
+
         self.append_from_lines(program.lines());
-        let _ =self.run_parsed_commands();
+        let _ = self.run_parsed_commands();
     }
 
     /// Appends a single source line to the parser if it's not empty or a comment.
@@ -199,7 +203,7 @@ impl QLang {
     /// Appends multiple lines (from a string iterator) to the parser.
     ///
     /// This is typically used to prepare the code for validation and execution.
-    pub fn append_from_lines(&mut self, lines:Lines ) {
+    pub fn append_from_lines(&mut self, lines: Lines) {
         for line in lines {
             self.parser.append(line);
         }
@@ -209,16 +213,14 @@ impl QLang {
     ///
     /// Also clears the collapsed flag.
     pub fn reset(&mut self) {
-        let qubits = self.qvm.backend.num_qubits();
-        self.qvm = QVM::new(qubits);
         self.clear_ast();
         self.collapsed = false;
+        self.parser = QLangParser::new();
+        self.qvm.reset();
     }
 
     /// Clears the current AST without affecting the QVM.
-    pub fn clear_ast(&mut self) {
-        self.ast.clear();
-    }
+    pub fn clear_ast(&mut self) { self.ast.clear(); }
 
     /// Internal helper to push a command to the AST.
     ///
@@ -228,7 +230,10 @@ impl QLang {
         self.ast_controller.append(&cmd);
     }
 
-} 
+    pub fn teardown(&mut self) {
+        self.qvm.teardown(); // criaremos esse método também
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -243,7 +248,10 @@ mod tests {
         qlang.parser.validate_lines();
         let _ = qlang.run_parsed_commands();
 
-        assert!(matches!(qlang.ast.last().unwrap(), QLangCommand::ApplyGate(_, _)));
+        assert!(matches!(
+            qlang.ast.last().unwrap(),
+            QLangCommand::ApplyGate(_, _)
+        ));
     }
 
     #[test]
@@ -314,7 +322,10 @@ mod tests {
         parser.append("measure_all()");
         parser.validate_lines();
         let cmds = parser.get_commands();
-        assert!(matches!(cmds[0], QLangLine::Command(QLangCommand::MeasureAll)));
+        assert!(matches!(
+            cmds[0],
+            QLangLine::Command(QLangCommand::MeasureAll)
+        ));
     }
 
     #[test]
@@ -326,11 +337,11 @@ mod tests {
 
         let src = qlang.to_source();
 
-        println!("Src:\n{}", src);
-
         assert!(src.contains("create(2)"));
         assert!(src.contains("paulix(0)"));
         assert!(src.contains("rx(1,3.14)"));
         assert!(src.contains("measure_all()"));
+
+        qlang.teardown();
     }
 }

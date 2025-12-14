@@ -1,14 +1,13 @@
 // src/qvm/tensor_backend/apply.rs
 
-use ndarray::{Array2, Array4, Array5, s};
-use ndarray_linalg::SVD;
 use super::TensorBackend;
+use ndarray::{s, Array2, Array4, Array5};
+use ndarray_linalg::SVD;
 use num_complex::Complex64;
 
 use crate::{
-    gates::quantum_gate_abstract::QuantumGateAbstract, types::qlang_complex::{
-        QLangComplex, to_complex64, from_complex64
-    }
+    gates::quantum_gate_abstract::QuantumGateAbstract,
+    types::qlang_complex::{from_complex64, to_complex64, QLangComplex},
 };
 
 impl TensorBackend {
@@ -97,10 +96,21 @@ impl TensorBackend {
         self.network.nodes[q0].tensor = u_tensor.map(|z| QLangComplex::new(z.re, z.im));
         self.network.nodes[q1].tensor = vt_tensor.map(|z| QLangComplex::new(z.re, z.im));
 
-        println!("Aplicado gate 2Q entre q{} e q{} com SVD (χ = {})", q0, q1 + 1, chi);
+        println!(
+            "Aplicado gate 2Q entre q{} e q{} com SVD (χ = {})",
+            q0,
+            q1 + 1,
+            chi
+        );
     }
 
-    pub fn apply_gate_3q(&mut self, gate: &dyn QuantumGateAbstract, q0: usize, q1: usize, q2: usize) {
+    pub fn apply_gate_3q(
+        &mut self,
+        gate: &dyn QuantumGateAbstract,
+        q0: usize,
+        q1: usize,
+        q2: usize,
+    ) {
         let a = &self.network.nodes[q0].tensor;
         let b = &self.network.nodes[q1].tensor;
         let c = &self.network.nodes[q2].tensor;
@@ -119,7 +129,8 @@ impl TensorBackend {
                         for i in 0..2 {
                             for j in 0..2 {
                                 for k in 0..2 {
-                                    theta[[l, i, j, k, o]] += a[[l, i, m]] * b[[m, j, n]] * c[[n, k, o]];
+                                    theta[[l, i, j, k, o]] +=
+                                        a[[l, i, m]] * b[[m, j, n]] * c[[n, k, o]];
                                 }
                             }
                         }
@@ -157,7 +168,6 @@ impl TensorBackend {
         self.reshape_3q(q0, q1, q2, d0, d3, &theta_applied);
     }
 
-
     fn reshape_3q(
         &mut self,
         q0: usize,
@@ -194,16 +204,14 @@ impl TensorBackend {
                 d3
             );
         }
-        
+
         let vt1_trunc = vt1.slice(s![0..chi1, 0..expected_cols]).to_owned();
         let m2 = from_complex64(&vt1_trunc)
             .into_shape((chi1, 2, 2, d3))
             .expect("reshape m2");
 
         // 2ª SVD: reshape m2 → [chi1 * 2, 2 * d3]
-        let reshaped_2 = m2
-            .into_shape((chi1 * 2, 2 * d3))
-            .expect("reshape 2 failed");
+        let reshaped_2 = m2.into_shape((chi1 * 2, 2 * d3)).expect("reshape 2 failed");
 
         let reshaped_2_c64 = to_complex64(&reshaped_2);
         let (u2_opt, _s2, vt2_opt) = reshaped_2_c64.svd(true, true).expect("SVD 2 failed");
@@ -221,10 +229,12 @@ impl TensorBackend {
         let shape_vt2 = vt2.shape(); // [2, 2]
         let required_len = chi2 * 2 * d3;
         let current_len = vt2.len();
-        
+
         let vt2_padded_c64 = if current_len < required_len {
             let mut padded = Array2::<Complex64>::zeros((chi2, 2 * d3));
-            padded.slice_mut(s![..shape_vt2[0], ..shape_vt2[1]]).assign(&vt2);
+            padded
+                .slice_mut(s![..shape_vt2[0], ..shape_vt2[1]])
+                .assign(&vt2);
             padded
         } else {
             vt2.to_owned()
@@ -238,6 +248,5 @@ impl TensorBackend {
         self.network.nodes[q0].tensor = u1_tensor;
         self.network.nodes[q1].tensor = b_tensor;
         self.network.nodes[q2].tensor = c_tensor;
-
     }
 }

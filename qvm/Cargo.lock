@@ -935,8 +935,9 @@ dependencies = [
 
 [[package]]
 name = "qlang"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
+ "bytemuck",
  "cc",
  "clap",
  "cust",

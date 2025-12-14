@@ -1,9 +1,9 @@
 // src/qvm/cuda_backend/apply.rs
-#![cfg(feature = "cuda")]
+//#![cfg(feature = "cuda")]
 use super::CudaBackend;
 use crate::{
     gates::quantum_gate_abstract::QuantumGateAbstract,
-    qvm::{ 
+    qvm::{
         cuda::executor::{launch_cuda_gate_kernel, KernelArg},
         util::{get_cuda_gate_kernel, infer_theta_from_matrix},
     },
@@ -47,10 +47,19 @@ impl CudaBackend {
         self.execute_fallback(&gate.matrix(), &[q1, q2]);
     }
 
-    pub fn apply_gate_3q(&mut self, gate: &dyn QuantumGateAbstract, q0: usize, q1: usize, q2: usize) {
+    pub fn apply_gate_3q(
+        &mut self,
+        gate: &dyn QuantumGateAbstract,
+        q0: usize,
+        q1: usize,
+        q2: usize,
+    ) {
         let n = self.num_qubits;
-        assert!(q0 < n && q1 < n && q2 < n && q0 != q1 && q0 != q2 && q1 != q2,
-            "Gate de 3 qubits requer índices distintos e válidos (0..{})", n - 1);
+        assert!(
+            q0 < n && q1 < n && q2 < n && q0 != q1 && q0 != q2 && q1 != q2,
+            "Gate de 3 qubits requer índices distintos e válidos (0..{})",
+            n - 1
+        );
 
         if let Some(kernel) = get_cuda_gate_kernel(gate.name()) {
             let mut args = vec![

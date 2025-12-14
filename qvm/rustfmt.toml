@@ -1,0 +1,11 @@
+max_width = 100               # Largura máxima da linha (padrão é 100)
+tab_spaces = 4                # Tamanho da indentação
+hard_tabs = false             # Usa espaços em vez de tabs
+newline_style = "Unix"        # Força quebra de linha estilo Unix (\n)
+reorder_imports = true        # Ordena automaticamente os imports
+reorder_modules = true        # Ordena declarações de módulos
+use_field_init_shorthand = true # Usa x ao invés de x: x em structs
+
+# Outras opções úteis
+fn_single_line = true         # Tenta manter funções curtas em uma linha
+format_code_in_doc_comments = true  # Formata código dentro de comentários /// e /** */

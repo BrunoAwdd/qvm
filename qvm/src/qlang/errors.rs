@@ -1,9 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum QLangError {
-
-}
+pub enum QLangError {}
 
 #[derive(Error, Debug)]
 pub enum QLangParserError {

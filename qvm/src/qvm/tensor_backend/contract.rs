@@ -1,7 +1,6 @@
 // src/state/tensor_network.rs
-use ndarray::Array2;
 use crate::types::qlang_complex::QLangComplex;
-
+use ndarray::Array2;
 
 pub fn contract(a: Array2<QLangComplex>, b: Array2<QLangComplex>) -> Array2<QLangComplex> {
     let (m, k1) = a.dim();

@@ -1,21 +1,18 @@
 // src/qvm/cuda_backend/fallback.rs
-#![cfg(feature = "cuda")]
+//#![cfg(feature = "cuda")]
 use super::CudaBackend;
 use crate::types::qlang_complex::QLangComplex;
 use ndarray::Array2;
 
 use cust::memory::CopyDestination;
 
-
 impl CudaBackend {
-    pub fn execute_fallback(
-        &mut self,
-        matrix: &Array2<QLangComplex>,
-        qubits: &[usize],
-    ) {
+    pub fn execute_fallback(&mut self, matrix: &Array2<QLangComplex>, qubits: &[usize]) {
         let dim = 1 << self.num_qubits;
         let mut host = vec![QLangComplex::default(); dim];
-        self.state.copy_to(&mut host).expect("Erro ao copiar do device");
+        self.state
+            .copy_to(&mut host)
+            .expect("Erro ao copiar do device");
         let mut new_state = host.clone();
 
         match qubits.len() {
@@ -75,6 +72,8 @@ impl CudaBackend {
             _ => panic!("Fallback suportado apenas para até 3 qubits."),
         }
 
-        self.state.copy_from(&new_state).expect("Erro ao copiar para o device");
+        self.state
+            .copy_from(&new_state)
+            .expect("Erro ao copiar para o device");
     }
 }

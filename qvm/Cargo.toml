@@ -1,9 +1,10 @@
 [package]
 name = "qlang"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 
 [dependencies]
+bytemuck = "1.13"
 clap = { version = "4.0", features = ["derive"] }
 ndarray = "0.15"
 ndarray-linalg = { version = "0.16", features = ["openblas-system"] }
@@ -36,8 +37,8 @@ path = "src/lib.rs"
 crate-type = ["lib","cdylib"]
 
 [features]
-cpu = []
+cpu = ["cust"]
 cuda = ["cust"] 
-wgpu = []
-tensor= []
-default = ["cpu"]
+wgpu = ["cust"]
+tensor= ["cust"]
+default = []

@@ -10,10 +10,7 @@ pub enum BatchRunnerError {
     IoError(#[from] std::io::Error),
 
     #[error("Validation failed in job {job_index}: {reason}")]
-    ValidationError {
-        job_index: usize,
-        reason: String,
-    },
+    ValidationError { job_index: usize, reason: String },
 }
 
 #[cfg(test)]
@@ -30,7 +27,10 @@ mod tests {
         let batch_error = BatchRunnerError::IoError(io_error);
 
         // Assert that the error matches the expected type and message
-        assert_eq!(format!("{}", batch_error), "Error reading file: File not found");
+        assert_eq!(
+            format!("{}", batch_error),
+            "Error reading file: File not found"
+        );
     }
 
     #[test]
@@ -44,10 +44,17 @@ mod tests {
         };
 
         // Assert that the error message is correctly formatted
-        assert_eq!(format!("{}", validation_error), "Validation failed in job 1: Missing qubit specification");
+        assert_eq!(
+            format!("{}", validation_error),
+            "Validation failed in job 1: Missing qubit specification"
+        );
 
         // Ensure the job_index and reason are correctly set in the error
-        if let BatchRunnerError::ValidationError { job_index: idx, reason: r } = validation_error {
+        if let BatchRunnerError::ValidationError {
+            job_index: idx,
+            reason: r,
+        } = validation_error
+        {
             assert_eq!(idx, job_index);
             assert_eq!(r, reason);
         } else {

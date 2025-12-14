@@ -1,20 +1,19 @@
 pub mod batch;
 pub mod gates;
-pub mod qvm;
 pub mod qlang;
+pub mod qvm;
 pub mod state;
 pub mod types;
 
-use crate::qvm::QVM;
 use crate::qlang::QLang;
-use libc::c_char;
-use std::sync::Mutex;
-use std::ffi::{CStr, CString};
-use once_cell::sync::OnceCell;
 use crate::qvm::backend::QuantumBackend;
+use crate::qvm::QVM;
+use libc::c_char;
+use once_cell::sync::OnceCell;
+use std::ffi::{CStr, CString};
+use std::sync::Mutex;
 
 static QLANG_INSTANCE: OnceCell<Mutex<QLang>> = OnceCell::new();
-
 
 #[no_mangle]
 pub extern "C" fn create_qvm(num_qubits: usize) {
@@ -68,7 +67,13 @@ pub extern "C" fn display_qvm() -> *mut c_char {
         let mut output = format!("Quantum State with {} qubits:\n", num_qubits);
 
         for (i, amp) in state.iter().enumerate() {
-            output += &format!("|{:0width$b}⟩: {:.4} + {:.4}i\n", i, amp.re, amp.im, width = num_qubits);
+            output += &format!(
+                "|{:0width$b}⟩: {:.4} + {:.4}i\n",
+                i,
+                amp.re,
+                amp.im,
+                width = num_qubits
+            );
         }
 
         let c_str = CString::new(output).unwrap();
@@ -85,7 +90,11 @@ pub extern "C" fn measure(indices: *const usize, len: usize) -> *const usize {
         let mut qlang = mutex.lock().unwrap();
         let input = unsafe { slice::from_raw_parts(indices, len) };
 
-        let joined = input.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(", ");
+        let joined = input
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
         let line = format!("measure({})", joined);
 
         qlang.append_from_str(&line);
@@ -111,8 +120,6 @@ pub extern "C" fn measure(indices: *const usize, len: usize) -> *const usize {
     std::ptr::null()
 }
 
-
-
 #[no_mangle]
 pub extern "C" fn measure_all() -> *const u8 {
     if let Some(mutex) = QLANG_INSTANCE.get() {
@@ -133,7 +140,6 @@ pub extern "C" fn measure_all() -> *const u8 {
 
     std::ptr::null()
 }
-
 
 #[no_mangle]
 pub extern "C" fn free_measurement(ptr: *mut u8, len: usize) {
@@ -165,7 +171,9 @@ pub extern "C" fn get_num_qubits() -> usize {
 #[no_mangle]
 pub extern "C" fn get_qlang_source() -> *const c_char {
     let qlang = QLANG_INSTANCE.get().unwrap().lock().unwrap();
-    let source = qlang.ast.iter()
+    let source = qlang
+        .ast
+        .iter()
         .map(|cmd| cmd.to_string())
         .collect::<Vec<_>>()
         .join("\n");

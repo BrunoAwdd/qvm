@@ -15,8 +15,8 @@ use crate::qlang::ast::QLangCommand;
 ///
 /// # Example
 /// ```
-/// use qlang::qlang::ast::QLangCommand;
 /// use qlang::batch::circuit_job::CircuitJob;
+/// use qlang::qlang::ast::QLangCommand;
 ///
 /// let job = CircuitJob {
 ///     num_qubits: 2,
@@ -61,8 +61,12 @@ mod tests {
 
         // Check the type and order of commands
         assert!(matches!(job.commands[0], QLangCommand::Create(2)));
-        assert!(matches!(job.commands[1], QLangCommand::ApplyGate(ref gate, ref qubits) if gate == "h" && qubits == &vec!["0".to_string()]));
-        assert!(matches!(job.commands[2], QLangCommand::ApplyGate(ref gate, ref qubits) if gate == "cx" && qubits == &vec!["0".to_string(), "1".to_string()]));
+        assert!(
+            matches!(job.commands[1], QLangCommand::ApplyGate(ref gate, ref qubits) if gate == "h" && qubits == &vec!["0".to_string()])
+        );
+        assert!(
+            matches!(job.commands[2], QLangCommand::ApplyGate(ref gate, ref qubits) if gate == "cx" && qubits == &vec!["0".to_string(), "1".to_string()])
+        );
         assert!(matches!(job.commands[3], QLangCommand::MeasureAll));
     }
 
@@ -102,8 +106,12 @@ mod tests {
 
         // Check the integrity of the commands
         assert!(matches!(job.commands[0], QLangCommand::Create(3)));
-        assert!(matches!(job.commands[1], QLangCommand::ApplyGate(ref gate, ref qubits) if gate == "h" && qubits == &vec!["0".to_string()]));
-        assert!(matches!(job.commands[2], QLangCommand::ApplyGate(ref gate, ref qubits) if gate == "cx" && qubits == &vec!["0".to_string(), "2".to_string()]));
+        assert!(
+            matches!(job.commands[1], QLangCommand::ApplyGate(ref gate, ref qubits) if gate == "h" && qubits == &vec!["0".to_string()])
+        );
+        assert!(
+            matches!(job.commands[2], QLangCommand::ApplyGate(ref gate, ref qubits) if gate == "cx" && qubits == &vec!["0".to_string(), "2".to_string()])
+        );
         assert!(matches!(job.commands[3], QLangCommand::MeasureAll));
     }
 
@@ -113,12 +121,15 @@ mod tests {
         // Creating a CircuitJob with an invalid gate command
         let job = CircuitJob {
             num_qubits: 2,
-            commands: vec![
-                QLangCommand::ApplyGate("invalid_gate".into(), vec!["0".into()]),
-            ],
+            commands: vec![QLangCommand::ApplyGate(
+                "invalid_gate".into(),
+                vec!["0".into()],
+            )],
         };
 
         // Check if the invalid command was added
-        assert!(matches!(job.commands[0], QLangCommand::ApplyGate(ref gate, _) if gate == "invalid_gate"));
+        assert!(
+            matches!(job.commands[0], QLangCommand::ApplyGate(ref gate, _) if gate == "invalid_gate")
+        );
     }
 }

@@ -1,11 +1,8 @@
 // src/state/tensor_network.rs
+use crate::qvm::tensor_backend::contract::contract;
+use crate::types::qlang_complex::{from_complex64, to_complex64, QLangComplex};
 use ndarray::{Array1, Array2, Array3, Ix2};
 use ndarray_linalg::SVD;
-use crate::types::qlang_complex::{
-        QLangComplex, to_complex64, from_complex64
-    };
-use crate::qvm::tensor_backend::contract::contract;
-
 
 pub struct TensorNode {
     pub tensor: Array3<QLangComplex>,
@@ -14,7 +11,7 @@ pub struct TensorNode {
 impl TensorNode {
     pub fn identity() -> Self {
         let mut tensor = Array3::from_elem((1, 2, 1), QLangComplex::default());
-        tensor[[0, 0, 0]] = QLangComplex::one(); 
+        tensor[[0, 0, 0]] = QLangComplex::one();
         Self { tensor }
     }
 }
@@ -26,9 +23,7 @@ pub struct TensorNetwork {
 
 impl TensorNetwork {
     pub fn new(num_qubits: usize) -> Self {
-        let nodes = (0..num_qubits)
-            .map(|_| TensorNode::identity())
-            .collect();
+        let nodes = (0..num_qubits).map(|_| TensorNode::identity()).collect();
         Self { nodes }
     }
 
@@ -81,7 +76,9 @@ impl TensorNetwork {
         let n = (state.len() as f64).log2().round() as usize;
         self.nodes = Vec::with_capacity(n);
 
-        let mut reshaped = Array1::from(state.clone()).into_shape((1, state.len())).unwrap();
+        let mut reshaped = Array1::from(state.clone())
+            .into_shape((1, state.len()))
+            .unwrap();
         for _ in 0..n {
             let dim = reshaped.shape()[1];
             let reshaped_c64 = to_complex64(&reshaped.into_dimensionality::<Ix2>().unwrap());
@@ -93,9 +90,7 @@ impl TensorNetwork {
             let v = v_opt.unwrap();
 
             // cortar em [1, 2, D1]
-            let tensor = from_complex64(&u)
-                .into_shape((1, 2, u.shape()[1]))
-                .unwrap();
+            let tensor = from_complex64(&u).into_shape((1, 2, u.shape()[1])).unwrap();
 
             self.nodes.push(TensorNode { tensor });
 
@@ -110,16 +105,20 @@ impl TensorNetwork {
         if reshaped.len() == 1 {
             let mut final_tensor = Array3::zeros((1, 2, 1));
             final_tensor[[0, 0, 0]] = reshaped.iter().next().cloned().unwrap();
-            self.nodes.push(TensorNode { tensor: final_tensor });
+            self.nodes.push(TensorNode {
+                tensor: final_tensor,
+            });
         } else {
             assert_eq!(reshaped.len() % 2, 0, "❌ Último reshape inválido");
-            let final_tensor = reshaped.clone()
+            let final_tensor = reshaped
+                .clone()
                 .into_shape((reshaped.len() / 2, 2, 1))
                 .expect("❌ Último reshape do estado falhou");
-            self.nodes.push(TensorNode { tensor: final_tensor });
+            self.nodes.push(TensorNode {
+                tensor: final_tensor,
+            });
         }
     }
-
 
     pub fn debug_print_network_shapes(&self) {
         println!("🔎 Estado atual da rede de tensores (MPS):");
@@ -127,9 +126,5 @@ impl TensorNetwork {
             let shape = node.tensor.shape();
             println!("  Qubit {} → shape = {:?}", i, shape);
         }
+    }
 }
-
-}
-
-
-

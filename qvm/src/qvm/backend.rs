@@ -12,14 +12,11 @@ pub trait QuantumBackend {
     fn display(&self);
     fn reset(&mut self, num_qubits: usize);
     fn state_vector(&self) -> Vec<QLangComplex>;
-
     /// Clonagem dinâmica
     fn box_clone(&self) -> Box<dyn QuantumBackend>;
     fn name(&self) -> &'static str;
 }
 
 impl Clone for Box<dyn QuantumBackend> {
-    fn clone(&self) -> Box<dyn QuantumBackend> {
-        self.box_clone()
-    }
+    fn clone(&self) -> Box<dyn QuantumBackend> { self.box_clone() }
 }

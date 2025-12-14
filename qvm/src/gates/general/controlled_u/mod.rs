@@ -1,6 +1,6 @@
-use ndarray::Array2;
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::Array2;
 
 /// A two-qubit controlled gate for applying an arbitrary single-qubit unitary
 /// when the control qubit is `1`.
@@ -12,6 +12,7 @@ use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
 ///
 /// # Example
 /// ```
+/// use qlang::gates::general::controlled_u::ControlledU;
 /// let cu = ControlledU::new_real(0.0, 1.0, 1.0, 0.0); // acts like a controlled-X (CNOT)
 /// ```
 pub struct ControlledU {
@@ -21,14 +22,10 @@ pub struct ControlledU {
 
 impl QuantumGateAbstract for ControlledU {
     /// Returns the full 4x4 matrix representation of the gate.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the string identifier for this gate.
-    fn name(&self) -> &'static str {
-        "cu"
-    }
+    fn name(&self) -> &'static str { "cu" }
 }
 
 impl ControlledU {
@@ -78,56 +75,52 @@ impl ControlledU {
 
 #[cfg(test)]
 mod tests {
-    mod cpu {
-        use super::super::*;
-        use ndarray::array;
+    use super::*;
+    use ndarray::array;
 
-        #[test]
-        fn test_controlled_u_from_real() {
-            // Define a NOT (Pauli-X) matrix
-            let cu = ControlledU::new_real(0.0, 1.0, 1.0, 0.0);
-            let matrix = cu.matrix();
+    #[test]
+    fn test_controlled_u_from_real() {
+        // Define a NOT (Pauli-X) matrix
+        let cu = ControlledU::new_real(0.0, 1.0, 1.0, 0.0);
+        let matrix = cu.matrix();
 
-            // Identity on control=0
-            assert_eq!(matrix[[0, 0]], QLangComplex::one());
-            assert_eq!(matrix[[1, 1]], QLangComplex::one());
-            assert_eq!(matrix[[0, 1]], QLangComplex::zero());
-            assert_eq!(matrix[[1, 0]], QLangComplex::zero());
+        // Identity on control=0
+        assert_eq!(matrix[[0, 0]], QLangComplex::one());
+        assert_eq!(matrix[[1, 1]], QLangComplex::one());
+        assert_eq!(matrix[[0, 1]], QLangComplex::zero());
+        assert_eq!(matrix[[1, 0]], QLangComplex::zero());
 
-            // X gate on control=1
-            assert_eq!(matrix[[2, 3]], QLangComplex::one());
-            assert_eq!(matrix[[3, 2]], QLangComplex::one());
-            assert_eq!(matrix[[2, 2]], QLangComplex::zero());
-            assert_eq!(matrix[[3, 3]], QLangComplex::zero());
-        }
+        // X gate on control=1
+        assert_eq!(matrix[[2, 3]], QLangComplex::one());
+        assert_eq!(matrix[[3, 2]], QLangComplex::one());
+        assert_eq!(matrix[[2, 2]], QLangComplex::zero());
+        assert_eq!(matrix[[3, 3]], QLangComplex::zero());
+    }
 
-        #[test]
-        fn test_controlled_u_from_matrix() {
-            let u = array![
-                [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
-                [QLangComplex::new(0.0, 0.0), QLangComplex::new(-1.0, 0.0)],
-            ];
-            let cu = ControlledU::new(u.clone(), None);
-            let matrix = cu.matrix();
+    #[test]
+    fn test_controlled_u_from_matrix() {
+        let u = array![
+            [QLangComplex::new(1.0, 0.0), QLangComplex::new(0.0, 0.0)],
+            [QLangComplex::new(0.0, 0.0), QLangComplex::new(-1.0, 0.0)],
+        ];
+        let cu = ControlledU::new(u.clone(), None);
+        let matrix = cu.matrix();
 
-            // Identity on upper block
-            assert_eq!(matrix[[0, 0]], QLangComplex::one());
-            assert_eq!(matrix[[1, 1]], QLangComplex::one());
+        // Identity on upper block
+        assert_eq!(matrix[[0, 0]], QLangComplex::one());
+        assert_eq!(matrix[[1, 1]], QLangComplex::one());
 
-            // Inserted unitary on bottom-right block
-            for i in 0..2 {
-                for j in 0..2 {
-                    assert_eq!(matrix[[i + 2, j + 2]], u[[i, j]]);
-                }
+        // Inserted unitary on bottom-right block
+        for i in 0..2 {
+            for j in 0..2 {
+                assert_eq!(matrix[[i + 2, j + 2]], u[[i, j]]);
             }
-        }
-
-        #[test]
-        fn test_controlled_u_name() {
-            let cu = ControlledU::new_real(1.0, 0.0, 0.0, 1.0);
-            assert_eq!(cu.name(), "cu");
         }
     }
 
+    #[test]
+    fn test_controlled_u_name() {
+        let cu = ControlledU::new_real(1.0, 0.0, 0.0, 1.0);
+        assert_eq!(cu.name(), "cu");
+    }
 }
-
