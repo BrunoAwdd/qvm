@@ -1,7 +1,8 @@
+use ndarray::{Array2, ArrayBase, Data, Ix2, ScalarOperand};
 use num_complex::Complex64;
 use num_traits::{One, Zero};
-use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, Div, MulAssign, DivAssign, Neg};
-use ndarray::{Array2, ArrayBase, Data, Ix2, ScalarOperand};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use bytemuck::{Zeroable, Pod};
 
 #[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]
@@ -11,17 +12,11 @@ pub struct QLangComplex {
 }
 
 impl QLangComplex {
-    pub fn new(re: f64, im: f64) -> Self {
-        Self { re, im }
-    }
+    pub fn new(re: f64, im: f64) -> Self { Self { re, im } }
 
-    pub fn norm_sqr(&self) -> f64 {
-        self.re * self.re + self.im * self.im
-    }
+    pub fn norm_sqr(&self) -> f64 { self.re * self.re + self.im * self.im }
 
-    pub fn arg(&self) -> f64 {
-        self.im.atan2(self.re)
-    }
+    pub fn arg(&self) -> f64 { self.im.atan2(self.re) }
 
     pub fn from_polar(r: f64, theta: f64) -> Self {
         Self {
@@ -30,37 +25,23 @@ impl QLangComplex {
         }
     }
 
-    pub fn zero() -> Self {
-        QLangComplex { re: 0.0, im: 0.0 }
-    }
+    pub fn zero() -> Self { QLangComplex { re: 0.0, im: 0.0 } }
 
-    pub fn one() -> Self {
-        QLangComplex::new(1.0, 0.0)
-    }
-    
-    pub fn neg_one() -> Self {
-        QLangComplex::new(-1.0, 0.0)
-    }
+    pub fn one() -> Self { QLangComplex::new(1.0, 0.0) }
 
-    pub fn i() -> Self {
-        QLangComplex::new(0.0, 1.0)
-    }
+    pub fn neg_one() -> Self { QLangComplex::new(-1.0, 0.0) }
 
-    pub fn neg_i() -> Self {
-        QLangComplex::new(0.0, -1.0)
-    }
+    pub fn i() -> Self { QLangComplex::new(0.0, 1.0) }
+
+    pub fn neg_i() -> Self { QLangComplex::new(0.0, -1.0) }
 }
 
 impl From<Complex64> for QLangComplex {
-    fn from(c: Complex64) -> Self {
-        Self { re: c.re, im: c.im }
-    }
+    fn from(c: Complex64) -> Self { Self { re: c.re, im: c.im } }
 }
 
 impl From<QLangComplex> for Complex64 {
-    fn from(c: QLangComplex) -> Self {
-        Complex64::new(c.re, c.im)
-    }
+    fn from(c: QLangComplex) -> Self { Complex64::new(c.re, c.im) }
 }
 
 pub fn to_complex64<A: Data<Elem = QLangComplex>>(a: &ArrayBase<A, Ix2>) -> Array2<Complex64> {
@@ -89,7 +70,10 @@ impl Neg for QLangComplex {
 impl Add for QLangComplex {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {
-        Self { re: self.re + rhs.re, im: self.im + rhs.im }
+        Self {
+            re: self.re + rhs.re,
+            im: self.im + rhs.im,
+        }
     }
 }
 
@@ -103,7 +87,10 @@ impl AddAssign for QLangComplex {
 impl Sub for QLangComplex {
     type Output = Self;
     fn sub(self, rhs: Self) -> Self {
-        Self { re: self.re - rhs.re, im: self.im - rhs.im }
+        Self {
+            re: self.re - rhs.re,
+            im: self.im - rhs.im,
+        }
     }
 }
 
@@ -178,9 +165,7 @@ impl Div<f64> for QLangComplex {
 impl Div<f64> for &QLangComplex {
     type Output = QLangComplex;
 
-    fn div(self, rhs: f64) -> Self::Output {
-        QLangComplex::new(self.re / rhs, self.im / rhs)
-    }
+    fn div(self, rhs: f64) -> Self::Output { QLangComplex::new(self.re / rhs, self.im / rhs) }
 }
 
 impl DivAssign for QLangComplex {
@@ -192,9 +177,7 @@ impl DivAssign for QLangComplex {
 
 impl Mul<QLangComplex> for Complex64 {
     type Output = Complex64;
-    fn mul(self, rhs: QLangComplex) -> Complex64 {
-        self * Complex64::new(rhs.re, rhs.im)
-    }
+    fn mul(self, rhs: QLangComplex) -> Complex64 { self * Complex64::new(rhs.re, rhs.im) }
 }
 
 impl PartialEq for QLangComplex {
@@ -204,26 +187,24 @@ impl PartialEq for QLangComplex {
 }
 
 impl Zero for QLangComplex {
-    fn zero() -> Self {
-        QLangComplex { re: 0.0, im: 0.0 }
-    }
+    fn zero() -> Self { QLangComplex { re: 0.0, im: 0.0 } }
 
-    fn is_zero(&self) -> bool {
-        self.re == 0.0 && self.im == 0.0
-    }
+    fn is_zero(&self) -> bool { self.re == 0.0 && self.im == 0.0 }
 }
 
 impl One for QLangComplex {
-    fn one() -> Self {
-        QLangComplex::new(1.0, 0.0)
-    }
+    fn one() -> Self { QLangComplex::new(1.0, 0.0) }
 
-    fn is_one(&self) -> bool {
-        self.re == 1.0 && self.im == 0.0
-    }
+    fn is_one(&self) -> bool { self.re == 1.0 && self.im == 0.0 }
 }
 
 impl ScalarOperand for QLangComplex {}
 
-#[cfg(feature = "cuda")]
+//#[cfg(feature = "cuda")]
 unsafe impl cust::memory::DeviceCopy for QLangComplex {}
+
+// Implementação manual de Zeroable
+unsafe impl Zeroable for QLangComplex {}
+
+// Implementação manual de Pod
+unsafe impl Pod for QLangComplex {}
