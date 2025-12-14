@@ -6,6 +6,7 @@ pub mod interpreter;
 pub mod parser;
 pub mod validators;
 
+use std::collections::HashMap;
 use ast::AstController;
 use regex::Regex;
 use std::fs;
@@ -13,7 +14,7 @@ use std::str::Lines;
 
 use crate::qlang::{
     ast::QLangCommand,
-    interpreter::run_ast,
+    interpreter::{run_ast, Value},
     parser::{QLangLine, QLangParser},
     validators::validate_gate_arity,
 };
@@ -27,23 +28,23 @@ use crate::qvm::QVM;
 /// - Interfacing with the quantum virtual machine (QVM)
 /// - Executing quantum instructions
 pub struct QLang {
-    /// The underlying quantum virtual machine that executes commands.
+    /// The underlying Quantum Virtual Machine.
     pub qvm: QVM,
 
-    /// The abstract syntax tree built from parsed QLang commands.
-    pub ast: Vec<QLangCommand>,
-
-    /// The abstract syntax tree built from parsed QLang commands only for Controller.
-    pub ast_controller: AstController,
-
-    /// Flag to indicate that a `measure_all` has been issued (used to collapse execution).
-    pub collapsed: bool,
-
-    /// The parser that handles syntax and command resolution.
+    /// The parser instance.
     pub parser: QLangParser,
 
-    /// Regex used to extract function names and arguments from lines.
-    func_regex: Regex,
+    /// The Abstract Syntax Tree (list of commands).
+    pub ast: Vec<QLangCommand>,
+
+    /// Whether the quantum state has collapsed (measured).
+    pub collapsed: bool,
+
+    /// Symbol table for classical variables (control flow).
+    pub variables: HashMap<String, Value>,
+
+    /// Table for user-defined functions.
+    pub functions: HashMap<String, QLangCommand>,
 }
 
 impl Clone for QLang {
@@ -51,10 +52,10 @@ impl Clone for QLang {
         Self {
             qvm: self.qvm.clone(),
             ast: self.ast.clone(),
-            ast_controller: self.ast_controller.clone(),
             collapsed: self.collapsed,
-            func_regex: Regex::new(self.func_regex.as_str()).unwrap(),
             parser: self.parser.clone(),
+            variables: self.variables.clone(),
+            functions: self.functions.clone(),
         }
     }
 }
@@ -65,14 +66,13 @@ impl QLang {
     /// Initializes the QVM and inserts a `Create(n)` command into the AST.
     pub fn new(num_qubits: usize) -> Self {
         let qvm = QVM::new(num_qubits);
-        let func_regex = Regex::new(r"(\w+)\((.*)\)").unwrap();
         Self {
             qvm,
             ast: vec![QLangCommand::Create(num_qubits)],
-            ast_controller: AstController::new(num_qubits),
             collapsed: false,
-            func_regex,
             parser: QLangParser::new(),
+            variables: HashMap::new(),
+            functions: HashMap::new(),
         }
     }
 
@@ -80,7 +80,9 @@ impl QLang {
     ///
     /// Each command is formatted using its `Display` implementation,
     /// and separated by newlines.
-    pub fn to_source(&self) -> String { self.ast_controller.to_source() }
+    pub fn to_source(&self) -> String {
+        self.ast.iter().map(|cmd| cmd.to_string()).collect::<Vec<_>>().join("\n")
+    }
 
     /// Appends a command to the AST.
     ///
@@ -89,13 +91,13 @@ impl QLang {
         if matches!(cmd, QLangCommand::MeasureAll) {
             self.collapsed = true;
         }
-        self.push_ast(cmd);
+        self.ast.push(cmd);
     }
 
     /// Executes the current AST using the QVM.
     ///
     /// This function does not clear the AST after execution.
-    pub fn run(&mut self) { run_ast(&mut self.qvm, &self.ast); }
+    pub fn run(&mut self) { run_ast(&mut self.qvm, &self.ast, &mut self.variables, &mut self.functions); }
 
     /// Parses and runs QLang code from a raw multi-line string.
     ///
@@ -132,9 +134,52 @@ impl QLang {
         for cmd in commands {
             match cmd {
                 QLangLine::Command(QLangCommand::ApplyGate(ref name, ref args)) => {
-                    let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
-                    validate_gate_arity(name, self.qvm.num_qubits(), &args_refs)?;
                     self.push_ast(QLangCommand::ApplyGate(name.clone(), args.clone()));
+                }
+                QLangLine::Command(QLangCommand::Import { ref path }) => {
+                    // Resolve path
+                    let file_path = if path == "std" {
+                        "std.ql".to_string()
+                    } else {
+                        // If it doesn't end with .ql, append it?
+                        if path.ends_with(".ql") {
+                            path.clone()
+                        } else {
+                            format!("{}.ql", path)
+                        }
+                    };
+
+                    // Read file
+                    match fs::read_to_string(&file_path) {
+                        Ok(content) => {
+                            // Parse imported file
+                            let mut parser = QLangParser::new();
+                            for line in content.lines() {
+                                let trimmed = line.trim();
+                                if !trimmed.is_empty() && !trimmed.starts_with("//") {
+                                    parser.append(line);
+                                }
+                            }
+                            parser.validate_lines();
+                            
+                            // Merge functions
+                            for cmd in parser.get_commands() {
+                                if let QLangLine::Command(QLangCommand::FunctionDef { name, params, body }) = cmd {
+                                    self.functions.insert(name.clone(), QLangCommand::FunctionDef { name: name.clone(), params: params.clone(), body: body.clone() });
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            return Err(format!("Failed to import '{}': {}", path, e));
+                        }
+                    }
+                }
+                QLangLine::Command(QLangCommand::FunctionDef { ref name, ref params, ref body }) => {
+                     self.functions.insert(name.clone(), QLangCommand::FunctionDef { name: name.clone(), params: params.clone(), body: body.clone() });
+                     // Also push to AST if we want to keep record? 
+                     // Usually definitions are just stored. But let's push to AST so it can be displayed back or executed if needed (though execute_command handles it by inserting to map).
+                     // But run_ast iterates AST. If we push it, run_ast will see it and insert it again. That's fine.
+                     self.push_ast(QLangCommand::FunctionDef { name: name.clone(), params: params.clone(), body: body.clone() });
                 }
                 QLangLine::Command(QLangCommand::Create(n)) => {
                     if self
@@ -154,8 +199,15 @@ impl QLang {
                     self.clear_ast();
                     final_result = Some(results);
                 }
+                QLangLine::Command(QLangCommand::Measure(q)) => {
+                    self.push_ast(QLangCommand::Measure(q));
+                    self.run();
+                    let result = self.qvm.measure(q);
+                    self.clear_ast();
+                    final_result = Some(vec![result]);
+                }
                 QLangLine::Command(QLangCommand::MeasureAll) => {
-                    self.push_ast(QLangCommand::MeasureAll);
+                    self.append(QLangCommand::MeasureAll);
                     self.run();
                     let results = self.qvm.measure_all();
                     self.clear_ast();
@@ -217,6 +269,7 @@ impl QLang {
         self.collapsed = false;
         self.parser = QLangParser::new();
         self.qvm.reset();
+        self.variables.clear();
     }
 
     /// Clears the current AST without affecting the QVM.
@@ -227,7 +280,6 @@ impl QLang {
     /// Not exposed publicly.
     fn push_ast(&mut self, cmd: QLangCommand) {
         self.ast.push(cmd.clone());
-        self.ast_controller.append(&cmd);
     }
 
     pub fn teardown(&mut self) {
