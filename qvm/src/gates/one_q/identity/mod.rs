@@ -1,6 +1,6 @@
 // src/gates/identity.rs
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
 use ndarray::{array, Array2};
 
 /// The Identity gate (I) — a no-op quantum gate.
@@ -24,24 +24,17 @@ impl Identity {
         let zero = QLangComplex::zero();
         let one = QLangComplex::one();
 
-        let matrix = array![
-            [one, zero],
-            [zero, one],
-        ];
+        let matrix = array![[one, zero], [zero, one],];
         Self { matrix }
     }
 }
 
 impl QuantumGateAbstract for Identity {
     /// Returns the identity matrix.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the gate name.
-    fn name(&self) -> &'static str {
-        "Identity"
-    }
+    fn name(&self) -> &'static str { "Identity" }
 }
 #[cfg(test)]
 mod tests {

@@ -9,13 +9,9 @@ pub struct U1 {
 }
 
 impl QuantumGateAbstract for U1 {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "U1"
-    }
+    fn name(&self) -> &'static str { "U1" }
 }
 
 impl U1 {
@@ -25,10 +21,7 @@ impl U1 {
         let zero = QLangComplex::zero();
         let one = QLangComplex::one();
 
-        let matrix = array![
-            [one, zero],
-            [zero, e_i_lambda]
-        ];
+        let matrix = array![[one, zero], [zero, e_i_lambda]];
 
         Self { lambda, matrix }
     }
@@ -58,4 +51,3 @@ mod tests {
         assert_eq!(u1.name(), "U1");
     }
 }
-

@@ -1,6 +1,6 @@
-use ndarray::{array, Array2};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// CNOT gate — Controlled-NOT (CX) gate.
 ///
@@ -41,13 +41,9 @@ impl CNOT {
 }
 
 impl QuantumGateAbstract for CNOT {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "CNOT"
-    }
+    fn name(&self) -> &'static str { "CNOT" }
 }
 
 #[cfg(test)]

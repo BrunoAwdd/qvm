@@ -1,5 +1,5 @@
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
 use ndarray::{array, Array2};
 
 /// The T† gate (T-dagger) — the inverse of the T gate.
@@ -20,14 +20,10 @@ pub struct TDagger {
 
 impl QuantumGateAbstract for TDagger {
     /// Returns the matrix of the T† gate.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the gate's name: `"TDagger"`.
-    fn name(&self) -> &'static str {
-        "TDagger"
-    }
+    fn name(&self) -> &'static str { "TDagger" }
 }
 
 impl TDagger {
@@ -39,10 +35,7 @@ impl TDagger {
         // e^{-iπ/4} = cos(-π/4) + i·sin(-π/4)
         let phase = QLangComplex::from_polar(1.0, -std::f64::consts::FRAC_PI_4);
 
-        let matrix = array![
-            [one, zero],
-            [zero, phase],
-        ];
+        let matrix = array![[one, zero], [zero, phase],];
 
         Self { matrix }
     }
@@ -59,7 +52,10 @@ mod tests {
         let t_dagger = TDagger::new();
         let expected = array![
             [QLangComplex::one(), QLangComplex::zero()],
-            [QLangComplex::zero(), QLangComplex::from_polar(1.0, -FRAC_PI_4)]
+            [
+                QLangComplex::zero(),
+                QLangComplex::from_polar(1.0, -FRAC_PI_4)
+            ]
         ];
         assert_eq!(t_dagger.matrix, expected);
     }

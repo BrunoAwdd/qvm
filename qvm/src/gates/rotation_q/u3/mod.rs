@@ -1,6 +1,6 @@
-use ndarray::{array, Array2};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// U3(θ, φ, λ) gate — the most general single-qubit unitary gate.
 ///
@@ -41,24 +41,22 @@ impl U3 {
             [e_i_phi * sin, e_i_sum * cos]
         ];
 
-        Self { theta, phi, lambda, matrix }
+        Self {
+            theta,
+            phi,
+            lambda,
+            matrix,
+        }
     }
 }
 
 impl QuantumGateAbstract for U3 {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "U3"
-    }
+    fn name(&self) -> &'static str { "U3" }
 
-    fn as_u3_params(&self) -> Option<(f64, f64, f64)> {
-        Some((self.theta, self.phi, self.lambda))
-    }
+    fn as_u3_params(&self) -> Option<(f64, f64, f64)> { Some((self.theta, self.phi, self.lambda)) }
 }
-
 
 #[cfg(test)]
 mod tests {

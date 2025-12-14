@@ -1,6 +1,6 @@
-use ndarray::{Array2, array};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// Controlled-Z (CZ) gate.
 ///
@@ -40,13 +40,9 @@ impl ControlledZ {
 }
 
 impl QuantumGateAbstract for ControlledZ {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "cz"
-    }
+    fn name(&self) -> &'static str { "cz" }
 }
 
 #[cfg(test)]

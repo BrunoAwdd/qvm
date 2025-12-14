@@ -37,25 +37,25 @@ impl U2 {
             [e_i_phi * sqrt_2_inv, e_i_sum * sqrt_2_inv]
         ];
 
-        Self { phi, lambda, matrix }
+        Self {
+            phi,
+            lambda,
+            matrix,
+        }
     }
 }
 
 impl QuantumGateAbstract for U2 {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "U2"
-    }
+    fn name(&self) -> &'static str { "U2" }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ndarray::array;
     use crate::types::qlang_complex::QLangComplex;
+    use ndarray::array;
     use std::f64::consts::{FRAC_1_SQRT_2, PI};
 
     #[test]
@@ -69,7 +69,10 @@ mod tests {
         let e_i_sum = QLangComplex::from_polar(1.0, phi + lambda);
 
         let expected = array![
-            [QLangComplex::new(FRAC_1_SQRT_2, 0.0), -e_i_lambda * FRAC_1_SQRT_2],
+            [
+                QLangComplex::new(FRAC_1_SQRT_2, 0.0),
+                -e_i_lambda * FRAC_1_SQRT_2
+            ],
             [e_i_phi * FRAC_1_SQRT_2, e_i_sum * FRAC_1_SQRT_2]
         ];
 

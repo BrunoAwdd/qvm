@@ -1,6 +1,6 @@
-use ndarray::{Array2, array};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// iSWAP gate — swaps |01⟩ and |10⟩ with a phase of i.
 ///
@@ -27,9 +27,9 @@ impl ISwap {
         let i = QLangComplex::i();
 
         let matrix = array![
-            [one,  zero, zero, zero],
-            [zero, zero,   i,  zero],
-            [zero,   i,  zero, zero],
+            [one, zero, zero, zero],
+            [zero, zero, i, zero],
+            [zero, i, zero, zero],
             [zero, zero, zero, one],
         ];
 
@@ -38,13 +38,9 @@ impl ISwap {
 }
 
 impl QuantumGateAbstract for ISwap {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "iswap"
-    }
+    fn name(&self) -> &'static str { "iswap" }
 }
 
 #[cfg(test)]

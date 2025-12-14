@@ -1,6 +1,6 @@
-use ndarray::{array, Array2};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// The Pauli-Z gate — a fundamental single-qubit quantum gate.
 ///
@@ -20,14 +20,10 @@ pub struct PauliZ {
 
 impl QuantumGateAbstract for PauliZ {
     /// Returns the matrix representation of the Pauli-Z gate.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the name of the gate.
-    fn name(&self) -> &'static str {
-        "PauliZ"
-    }
+    fn name(&self) -> &'static str { "PauliZ" }
 }
 
 impl PauliZ {
@@ -37,15 +33,11 @@ impl PauliZ {
         let one = QLangComplex::one();
         let neg_one = QLangComplex::neg_one();
 
-        let matrix = array![
-            [one, zero],
-            [zero, neg_one]
-        ];
+        let matrix = array![[one, zero], [zero, neg_one]];
 
         Self { matrix }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

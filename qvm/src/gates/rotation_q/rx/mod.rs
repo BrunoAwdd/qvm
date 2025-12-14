@@ -1,6 +1,6 @@
-use ndarray::{array, Array2};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// RX(θ) gate — single-qubit rotation around the X-axis.
 ///
@@ -24,13 +24,9 @@ pub struct RX {
 }
 
 impl QuantumGateAbstract for RX {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "RX"
-    }
+    fn name(&self) -> &'static str { "RX" }
 }
 
 impl RX {

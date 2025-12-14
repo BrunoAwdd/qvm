@@ -1,6 +1,6 @@
-use ndarray::{array, Array2};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// The S gate — also known as the phase gate or √Z.
 ///
@@ -21,14 +21,10 @@ pub struct S {
 
 impl QuantumGateAbstract for S {
     /// Returns the matrix representation of the S gate.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the gate name: `"S"`.
-    fn name(&self) -> &'static str {
-        "S"
-    }
+    fn name(&self) -> &'static str { "S" }
 }
 
 impl S {
@@ -38,10 +34,7 @@ impl S {
         let one = QLangComplex::one();
         let i = QLangComplex::i();
 
-        let matrix = array![
-            [one, zero],
-            [zero, i]
-        ];
+        let matrix = array![[one, zero], [zero, i]];
         Self { matrix }
     }
 }

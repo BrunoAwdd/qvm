@@ -1,6 +1,6 @@
-use ndarray::{array, Array2};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// A generic Phase gate with an arbitrary angle θ.
 ///
@@ -26,14 +26,10 @@ pub struct Phase {
 
 impl QuantumGateAbstract for Phase {
     /// Returns the matrix representation of the Phase gate.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the name of the gate: `"phase"`.
-    fn name(&self) -> &'static str {
-        "phase"
-    }
+    fn name(&self) -> &'static str { "phase" }
 }
 
 impl Phase {
@@ -44,10 +40,7 @@ impl Phase {
         let zero = QLangComplex::zero();
         let one = QLangComplex::one();
 
-        let matrix = array![
-            [one, zero],
-            [zero, phase]
-        ];
+        let matrix = array![[one, zero], [zero, phase]];
 
         Self { theta, matrix }
     }

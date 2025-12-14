@@ -1,6 +1,6 @@
-use ndarray::{Array2, array};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// The Hadamard gate (H) — a one-qubit gate that creates superposition.
 ///
@@ -19,14 +19,10 @@ pub struct Hadamard {
 
 impl QuantumGateAbstract for Hadamard {
     /// Returns the matrix of the Hadamard gate.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the name of the gate.
-    fn name(&self) -> &'static str {
-        "Hadamard"
-    }
+    fn name(&self) -> &'static str { "Hadamard" }
 }
 
 impl Hadamard {
@@ -34,8 +30,14 @@ impl Hadamard {
     pub fn new() -> Self {
         let factor: f64 = 1.0 / (2.0_f64).sqrt();
         let matrix = array![
-            [QLangComplex::new(factor, 0.0), QLangComplex::new(factor, 0.0)],
-            [QLangComplex::new(factor, 0.0), QLangComplex::new(-factor, 0.0)]
+            [
+                QLangComplex::new(factor, 0.0),
+                QLangComplex::new(factor, 0.0)
+            ],
+            [
+                QLangComplex::new(factor, 0.0),
+                QLangComplex::new(-factor, 0.0)
+            ]
         ];
 
         Self { matrix }
@@ -46,9 +48,9 @@ impl Hadamard {
 mod tests {
     use super::*;
     use crate::gates::one_q::hadamard::Hadamard;
-    use crate::types::qlang_complex::QLangComplex;
-    use crate::qvm::QVM;
     use crate::qlang::QLang;
+    use crate::qvm::QVM;
+    use crate::types::qlang_complex::QLangComplex;
     use ndarray::array;
 
     #[test]
@@ -57,8 +59,14 @@ mod tests {
         let sqrt2_inv = 1.0 / (2.0_f64).sqrt();
 
         let expected = array![
-            [QLangComplex::new(sqrt2_inv, 0.0), QLangComplex::new(sqrt2_inv, 0.0)],
-            [QLangComplex::new(sqrt2_inv, 0.0), QLangComplex::new(-sqrt2_inv, 0.0)],
+            [
+                QLangComplex::new(sqrt2_inv, 0.0),
+                QLangComplex::new(sqrt2_inv, 0.0)
+            ],
+            [
+                QLangComplex::new(sqrt2_inv, 0.0),
+                QLangComplex::new(-sqrt2_inv, 0.0)
+            ],
         ];
 
         assert_eq!(h.matrix, expected);
@@ -73,15 +81,19 @@ mod tests {
     #[test]
     fn test_hadamard_apply() {
         let mut qvm = QVM::new(1);
-        qvm.apply_gate(&Hadamard::new(), 0);
-
         let mut count = 0;
-        for _ in 0..10 {
-            let mut copy = qvm.clone();
-            count += copy.measure(0) as usize;
+        let tests = 100;
+        for _ in 0..tests {
+            qvm.reset();
+            qvm.apply_gate(&Hadamard::new(), 0);
+            count += qvm.measure(0) as usize;
         }
 
-        println!("Probability of 1: {}", count as f64 / 10.0);
+        let prob = count as f64 / tests as f64;
+        qvm.teardown();
+        drop(qvm);
+        println!("Probability of 1: {}", prob);
+        assert!((0.4..=0.6).contains(&prob), "Probability of 0 out of range");
     }
 
     #[test]
@@ -90,12 +102,14 @@ mod tests {
         let mut count_1 = 0;
         let iterations = 100;
 
+        let mut qlang = QLang::new(1);
+
         for _ in 0..iterations {
-            let mut qlang = QLang::new(1);
+            qlang.reset();
             qlang.append_from_str("h(0)");
-            qlang.append_from_str( "run()");
 
             qlang.run_parsed_commands().unwrap();
+            qlang.run();
 
             let result = qlang.qvm.measure(0);
 
@@ -104,14 +118,27 @@ mod tests {
             } else {
                 count_1 += 1;
             }
+
+           
         }
+        qlang.qvm.teardown();
+        drop(qlang);
 
         let prob_0 = count_0 as f64 / iterations as f64;
         let prob_1 = count_1 as f64 / iterations as f64;
 
+        println!("Probability of 0: {}", prob_0);
+        println!("Probability of 1: {}", prob_1);
+
         // Assert that both probabilities are roughly close to 0.5 (±10%)
-        assert!((0.4..=0.6).contains(&prob_0), "Probability of 0 out of range");
-        assert!((0.4..=0.6).contains(&prob_1), "Probability of 1 out of range");
+        assert!(
+            (0.4..=0.6).contains(&prob_0),
+            "Probability of 0 out of range"
+        );
+        assert!(
+            (0.4..=0.6).contains(&prob_1),
+            "Probability of 1 out of range"
+        );
     }
 
     #[test]
@@ -119,24 +146,25 @@ mod tests {
         let mut qlang = QLang::new(3);
 
         qlang.append_from_str("measure(0, 1, 2)");
-        let _m0 = qlang.run_parsed_commands(); 
+        let _m0 = qlang.run_parsed_commands();
 
         qlang.append_from_str("h(0)");
         qlang.append_from_str("measure(0, 1, 2)");
-        let _m1 = qlang.run_parsed_commands(); 
+        let _m1 = qlang.run_parsed_commands();
         qlang.append_from_str("x(1)");
         qlang.append_from_str("measure(0, 1, 2)");
-        let _m2 = qlang.run_parsed_commands(); 
+        let _m2 = qlang.run_parsed_commands();
 
         qlang.append_from_str("measure_all()");
 
-        let _m_all = qlang.run_parsed_commands(); 
+        let _m_all = qlang.run_parsed_commands();
 
         qlang.run(); // Executa AST até esse ponto
 
         let result = qlang.qvm.measure_all();
+        qlang.qvm.teardown();
+        //drop(qlang);
 
         assert!(result[0] == 0 || result[0] == 1, "Invalid Result");
     }
-
 }

@@ -1,6 +1,6 @@
-use ndarray::Array2;
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::Array2;
 
 /// Fredkin gate (Controlled-SWAP).
 ///
@@ -42,13 +42,9 @@ impl Fredkin {
 }
 
 impl QuantumGateAbstract for Fredkin {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "Fredkin"
-    }
+    fn name(&self) -> &'static str { "Fredkin" }
 }
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,6 @@
-use ndarray::Array2;
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::Array2;
 
 /// Toffoli gate (CCNOT) — a universal 3-qubit logic gate.
 ///
@@ -33,13 +33,9 @@ impl Toffoli {
 }
 
 impl QuantumGateAbstract for Toffoli {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "Toffoli"
-    }
+    fn name(&self) -> &'static str { "Toffoli" }
 }
 
 #[cfg(test)]

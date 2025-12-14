@@ -1,6 +1,6 @@
-use ndarray::{Array2, array};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// Controlled-Y (CY) gate — applies Y to the target qubit if the control is 1.
 ///
@@ -39,13 +39,9 @@ impl ControlledY {
 }
 
 impl QuantumGateAbstract for ControlledY {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "cy"
-    }
+    fn name(&self) -> &'static str { "cy" }
 }
 
 #[cfg(test)]
@@ -79,4 +75,3 @@ mod tests {
         assert_eq!(cy.name(), "cy");
     }
 }
-

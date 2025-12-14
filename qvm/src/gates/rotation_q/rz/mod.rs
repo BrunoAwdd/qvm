@@ -1,6 +1,6 @@
-use ndarray::{array, Array2};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// RZ(θ) gate — single-qubit rotation around the Z-axis.
 ///
@@ -21,13 +21,9 @@ pub struct RZ {
 }
 
 impl QuantumGateAbstract for RZ {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "RZ"
-    }
+    fn name(&self) -> &'static str { "RZ" }
 }
 
 impl RZ {
@@ -39,21 +35,17 @@ impl RZ {
 
         let zero = QLangComplex::zero();
 
-        let matrix = array![
-            [phase_0, zero],
-            [zero, phase_1]
-        ];
+        let matrix = array![[phase_0, zero], [zero, phase_1]];
 
         Self { matrix, theta }
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ndarray::array;
     use crate::types::qlang_complex::QLangComplex;
+    use ndarray::array;
     use std::f64::consts::FRAC_PI_2;
 
     #[test]
@@ -76,4 +68,3 @@ mod tests {
         assert_eq!(rz.name(), "RZ");
     }
 }
-

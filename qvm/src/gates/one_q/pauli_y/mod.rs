@@ -1,6 +1,6 @@
-use ndarray::{array, Array2};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// The Pauli-Y gate — a fundamental single-qubit quantum gate.
 ///
@@ -19,27 +19,20 @@ pub struct PauliY {
 
 impl QuantumGateAbstract for PauliY {
     /// Returns the matrix representation of the Pauli-Y gate.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the gate's name.
-    fn name(&self) -> &'static str {
-        "pauliY"
-    }
+    fn name(&self) -> &'static str { "pauliY" }
 }
 
 impl PauliY {
     /// Constructs a new Pauli-Y gate.
     pub fn new() -> Self {
         let zero = QLangComplex::zero();
-        let i = QLangComplex::i();       // i = (0, 1)
+        let i = QLangComplex::i(); // i = (0, 1)
         let neg_i = QLangComplex::neg_i(); // -i = (0, -1)
 
-        let matrix = array![
-            [zero, neg_i],
-            [i, zero]
-        ];
+        let matrix = array![[zero, neg_i], [i, zero]];
 
         Self { matrix }
     }

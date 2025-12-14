@@ -1,6 +1,6 @@
-use ndarray::{array, Array2};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// The Pauli-X gate (also known as the X gate or quantum NOT gate).
 ///
@@ -21,14 +21,10 @@ pub struct PauliX {
 
 impl QuantumGateAbstract for PauliX {
     /// Returns the matrix of the Pauli-X gate.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the name of the gate.
-    fn name(&self) -> &'static str {
-        "PauliX"
-    }
+    fn name(&self) -> &'static str { "PauliX" }
 }
 
 impl PauliX {
@@ -37,10 +33,7 @@ impl PauliX {
         let zero = QLangComplex::zero();
         let one = QLangComplex::one();
 
-        let matrix = array![
-            [zero, one],
-            [one, zero]
-        ];
+        let matrix = array![[zero, one], [one, zero]];
 
         Self { matrix }
     }

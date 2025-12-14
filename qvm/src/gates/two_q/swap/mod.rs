@@ -1,6 +1,6 @@
-use ndarray::{array, Array2};
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// SWAP gate — swaps the states of two qubits.
 ///
@@ -39,13 +39,9 @@ impl Swap {
 }
 
 impl QuantumGateAbstract for Swap {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
-    fn name(&self) -> &'static str {
-        "SWAP"
-    }
+    fn name(&self) -> &'static str { "SWAP" }
 }
 
 #[cfg(test)]

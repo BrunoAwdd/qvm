@@ -1,8 +1,8 @@
 use ndarray::array;
 use ndarray::Array2;
 
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
 
 /// RY(θ) gate — single-qubit rotation around the Y-axis.
 ///
@@ -21,12 +21,8 @@ pub struct RY {
 }
 
 impl QuantumGateAbstract for RY {
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
-    fn name(&self) -> &'static str {
-        "RY"
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn name(&self) -> &'static str { "RY" }
 }
 
 impl RY {
@@ -42,9 +38,7 @@ impl RY {
 
         Self { matrix, theta }
     }
-
 }
-
 
 #[cfg(test)]
 mod tests {

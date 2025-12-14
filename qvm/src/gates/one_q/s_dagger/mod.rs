@@ -1,6 +1,6 @@
-use crate::types::qlang_complex::QLangComplex;
 use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
-use ndarray::{Array2, array};
+use crate::types::qlang_complex::QLangComplex;
+use ndarray::{array, Array2};
 
 /// The S-dagger gate (S†) — the inverse of the S (phase) gate.
 ///
@@ -24,24 +24,17 @@ impl SDagger {
         let one = QLangComplex::one();
         let neg_i = QLangComplex::neg_i();
 
-        let matrix = array![
-            [one, zero],
-            [zero, neg_i]
-        ];
+        let matrix = array![[one, zero], [zero, neg_i]];
         Self { matrix }
     }
 }
 
 impl QuantumGateAbstract for SDagger {
     /// Returns the matrix of the S† gate.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the name of the gate.
-    fn name(&self) -> &'static str {
-        "SDagger"
-    }
+    fn name(&self) -> &'static str { "SDagger" }
 }
 
 #[cfg(test)]

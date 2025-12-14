@@ -1,7 +1,7 @@
+use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
+use crate::types::qlang_complex::QLangComplex;
 use ndarray::{array, Array2};
 use std::f64::consts::PI;
-use crate::types::qlang_complex::QLangComplex;
-use crate::gates::quantum_gate_abstract::QuantumGateAbstract;
 
 /// The T gate — also known as the π/8 gate.
 ///
@@ -22,14 +22,10 @@ pub struct T {
 
 impl QuantumGateAbstract for T {
     /// Returns the matrix of the T gate.
-    fn matrix(&self) -> Array2<QLangComplex> {
-        self.matrix.clone()
-    }
+    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
 
     /// Returns the gate name.
-    fn name(&self) -> &'static str {
-        "T"
-    }
+    fn name(&self) -> &'static str { "T" }
 }
 
 impl T {
@@ -41,10 +37,7 @@ impl T {
         let zero = QLangComplex::zero();
         let one = QLangComplex::one();
 
-        let matrix = array![
-            [one, zero],
-            [zero, phase]
-        ];
+        let matrix = array![[one, zero], [zero, phase]];
 
         Self { matrix }
     }
