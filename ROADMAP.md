@@ -122,6 +122,7 @@ This document defines the milestones for QLang version 0.1, including basic quan
 - [ ] Benchmark: `tensor vs full-state` in time and RAM usage
 - [ ] Create `estimate_entanglement(&Circuit)`
 - [ ] Measure-X and Measure-Y
+- [ ] Fix CUDA Backend. Device should never to be dropped, but we can play with context and stream.
 
 ## 🔬 Version 0.4 — Scientific Expansion and Interoperability
 
