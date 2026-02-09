@@ -1,0 +1,21 @@
+[package]
+name = "qvm"
+version = "0.3.0"
+edition = "2021"
+
+[dependencies]
+qlang_core = { path = "../core" }
+ndarray = "0.15"
+ndarray-linalg = { version = "0.16", features = ["openblas-system"] }
+num-complex = "0.4"
+rand = "0.8"
+rayon = "1.10"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+cust = { version = "0.3.2", optional = true }
+
+[features]
+cpu = ["cust"]
+cuda = ["cust", "qlang_core/cuda"] 
+tensor= ["cust"]
+default = []

@@ -667,12 +667,12 @@ checksum = "c19937216e9d3aa9956d9bb8dfc0b0c8beb6058fc4f7a4dc4d850edf86a237d6"
 
 [[package]]
 name = "libloading"
-version = "0.8.6"
+version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
+checksum = "d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-link",
 ]
 
 [[package]]
@@ -937,24 +937,30 @@ dependencies = [
 name = "qlang"
 version = "0.3.0"
 dependencies = [
- "bytemuck",
- "cc",
  "clap",
- "cust",
- "glob",
- "libc",
- "libloading",
- "ndarray",
- "ndarray-linalg",
  "num-complex",
- "num-traits",
- "once_cell",
- "rand",
+ "qlang_core",
+ "qvm",
  "rayon",
  "regex",
  "serde",
  "serde_yaml",
  "tempfile",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "qlang_core"
+version = "0.3.0"
+dependencies = [
+ "bytemuck",
+ "cust",
+ "libloading",
+ "ndarray",
+ "ndarray-linalg",
+ "num-complex",
+ "num-traits",
+ "serde",
  "thiserror 1.0.69",
 ]
 
@@ -965,6 +971,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1885c039570dc00dcb4ff087a89e185fd56bae234ddc7f056a945bf36467248d"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "qvm"
+version = "0.3.0"
+dependencies = [
+ "cust",
+ "ndarray",
+ "ndarray-linalg",
+ "num-complex",
+ "qlang_core",
+ "rand",
+ "rayon",
+ "serde",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1424,6 +1445,12 @@ checksum = "9683f9a5a998d873c0d21fcbe3c083009670149a8fab228644b8bd36b2c48cb3"
 dependencies = [
  "wit-bindgen-rt",
 ]
+
+[[package]]
+name = "windows-link"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
 
 [[package]]
 name = "windows-sys"
