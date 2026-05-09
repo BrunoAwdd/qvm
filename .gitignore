@@ -1,6 +1,7 @@
 __pycache__
 .pytest_cache
 .vscode
+.history
 myfile.ql
 qlang.zip
 benchmark.py
