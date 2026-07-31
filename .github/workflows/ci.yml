@@ -88,7 +88,14 @@ jobs:
           wasm-pack build qlang-wasm --target web \
             --out-dir ../../qlang-viewer/src/wasm --out-name qlang_wasm
           rm -f ../qlang-viewer/src/wasm/.gitignore
-          git diff --exit-code -- ../qlang-viewer/src/wasm
+          # The binary embeds Rust toolchain paths and version metadata. Verify
+          # the deterministic generated API surface; the viewer build below
+          # still compiles and consumes the freshly generated binary.
+          git diff --exit-code -- \
+            ../qlang-viewer/src/wasm/package.json \
+            ../qlang-viewer/src/wasm/qlang_wasm.d.ts \
+            ../qlang-viewer/src/wasm/qlang_wasm.js \
+            ../qlang-viewer/src/wasm/qlang_wasm_bg.wasm.d.ts
         working-directory: qvm
       - run: pnpm install --frozen-lockfile
         working-directory: qlang-viewer
