@@ -63,6 +63,7 @@ pub struct TypeChecker {
     expected_return: Option<QLangType>,
     loop_depth: usize,
     in_qif: bool,
+    qif_control: Option<Expression>,
     pub errors: Vec<QLangError>,
 }
 
@@ -80,6 +81,7 @@ impl TypeChecker {
             expected_return: None,
             loop_depth: 0,
             in_qif: false,
+            qif_control: None,
             errors: Vec::new(),
         }
     }
@@ -137,6 +139,11 @@ impl TypeChecker {
     }
 
     fn check_command(&mut self, command: &QLangCommand) {
+        if self.in_qif && !matches!(command, QLangCommand::ApplyGate(name, _) if is_qif_gate(name))
+        {
+            self.errors.push(QLangError::NonGateInQif);
+            return;
+        }
         match command {
             QLangCommand::Create(size) => self.reset_register(*size),
             QLangCommand::Let {
@@ -183,9 +190,11 @@ impl TypeChecker {
                     ));
                 }
                 let previous = self.in_qif;
+                let previous_control = self.qif_control.replace(condition.clone());
                 self.in_qif = true;
                 self.check_branches(then_branch, else_branch.as_deref());
                 self.in_qif = previous;
+                self.qif_control = previous_control;
             }
             QLangCommand::While { condition, body } => {
                 self.check_condition(condition, "while");
@@ -331,7 +340,7 @@ impl TypeChecker {
     }
 
     fn check_call(&mut self, name: &str, args: &[Expression], statement: bool) -> QLangType {
-        if self.in_qif && !is_native_gate(name) && !self.functions.contains_key(name) {
+        if self.in_qif && !is_qif_gate(name) {
             self.errors.push(QLangError::NonGateInQif);
         }
         if let Some(signature) = self.functions.get(name).cloned() {
@@ -390,6 +399,7 @@ impl TypeChecker {
                     }
                 }
             }
+            self.check_distinct_gate_qubits(name, args, &parameter_types);
             return QLangType::Void;
         }
         for argument in args {
@@ -602,6 +612,43 @@ impl TypeChecker {
         }
     }
 
+    fn check_distinct_gate_qubits(
+        &mut self,
+        name: &str,
+        args: &[Expression],
+        parameter_types: &[QLangType],
+    ) {
+        let qubits: Vec<_> = args
+            .iter()
+            .zip(parameter_types)
+            .filter_map(|(argument, parameter_type)| {
+                (parameter_type == &QLangType::Qubit).then_some(argument)
+            })
+            .collect();
+        let duplicate = qubits.iter().enumerate().any(|(index, left)| {
+            qubits[index + 1..]
+                .iter()
+                .any(|right| self.same_qubit(left, right))
+        });
+        let reuses_control = self.qif_control.as_ref().is_some_and(|control| {
+            qubits
+                .iter()
+                .any(|argument| self.same_qubit(control, argument))
+        });
+        if duplicate || reuses_control {
+            self.errors
+                .push(QLangError::DuplicateQubitArguments(name.to_string()));
+        }
+    }
+
+    fn same_qubit(&self, left: &Expression, right: &Expression) -> bool {
+        left == right
+            || matches!(
+                (self.resolve_qubit_slot(left), self.resolve_qubit_slot(right)),
+                (Some(left), Some(right)) if left == right
+            )
+    }
+
     fn consume_qubit_argument(&mut self, expression: &Expression) {
         if let Expression::Variable(name) = expression {
             if !self.consumed_vars.insert(name.clone()) {
@@ -734,8 +781,27 @@ fn extract_qubit_slot(expression: &Expression) -> Option<usize> {
     }
 }
 
-fn is_native_gate(name: &str) -> bool {
-    native_gate_signature(name).is_some()
+fn is_qif_gate(name: &str) -> bool {
+    matches!(
+        name,
+        "hadamard"
+            | "paulix"
+            | "pauliy"
+            | "pauliz"
+            | "s"
+            | "sdagger"
+            | "t"
+            | "tdagger"
+            | "rx"
+            | "ry"
+            | "rz"
+            | "phase"
+            | "u1"
+            | "u2"
+            | "u3"
+            | "cnot"
+            | "swap"
+    )
 }
 
 fn native_gate_signature(name: &str) -> Option<Vec<QLangType>> {

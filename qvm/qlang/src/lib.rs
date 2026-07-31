@@ -86,13 +86,16 @@ impl QLang {
                 .collect::<Vec<_>>()
                 .join("\n"));
         }
-        let _ = run_ast(
+        let result = run_ast(
             &mut self.qvm,
             &self.ast,
             &mut self.variables,
             &mut self.functions,
         );
-        Ok(())
+        match result {
+            interpreter::ControlFlow::Error(error) => Err(error),
+            _ => Ok(()),
+        }
     }
 
     pub fn run_from_str(&mut self, code: &str) {

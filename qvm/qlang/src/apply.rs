@@ -145,7 +145,7 @@ pub fn apply_three_q_gate<G: QuantumGateAbstract>(qvm: &mut QVM, gate: &G, args:
 /// - `name`: The name of the gate to be controlled.
 /// - `args`: Arguments for the gate, PREPENDED with the control qubit index.
 ///           e.g. if `x(0)` becomes `cx(c, 0)`, args should be `[c, 0]`.
-pub fn apply_controlled_gate(qvm: &mut QVM, name: &str, args: &[String]) {
+pub fn apply_controlled_gate(qvm: &mut QVM, name: &str, args: &[String]) -> Result<(), String> {
     let control = parse_usize(&args[0]);
     let target_args = &args[1..];
 
@@ -255,12 +255,12 @@ pub fn apply_controlled_gate(qvm: &mut QVM, name: &str, args: &[String]) {
             qvm.apply_gate_3q(&Fredkin::new(), control, q1, q2);
         }
         _ => {
-            println!(
-                "Warning: Controlled version of gate '{}' not implemented.",
-                name
-            );
+            return Err(format!(
+                "controlled version of gate '{name}' is not implemented"
+            ));
         }
     }
+    Ok(())
 }
 
 /// Parses a `&str` into `usize`, panicking with context on failure.

@@ -82,7 +82,13 @@ jobs:
           cache-dependency-path: qlang-viewer/pnpm-lock.yaml
       - run: cargo test -p qlang-wasm
         working-directory: qvm
-      - run: cargo build -p qlang-wasm --target wasm32-unknown-unknown --release
+      - run: cargo install wasm-pack --version 0.13.1 --locked
+      - name: Regenerate WASM bindings
+        run: |
+          wasm-pack build qlang-wasm --target web \
+            --out-dir ../../qlang-viewer/src/wasm --out-name qlang_wasm
+          rm -f ../qlang-viewer/src/wasm/.gitignore
+          git diff --exit-code -- ../qlang-viewer/src/wasm
         working-directory: qvm
       - run: pnpm install --frozen-lockfile
         working-directory: qlang-viewer

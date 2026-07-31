@@ -1,4 +1,10 @@
-use qlang::{ast::QLangCommand, QLang};
+use std::collections::HashMap;
+
+use qlang::{
+    ast::{Expression, QLangCommand},
+    interpreter::{run_ast, ControlFlow},
+    QLang,
+};
 
 #[test]
 fn measurement_alias_is_parsed_as_measurement() {
@@ -40,4 +46,47 @@ fn run_from_str_executes_measurement_only_once() {
     let state = qlang.qvm.state_vector();
     assert!(state[0].norm_sqr() < 1e-12);
     assert!((state[1].norm_sqr() - 1.0).abs() < 1e-12);
+}
+
+#[test]
+fn runtime_reports_duplicate_qubits_without_panicking() {
+    let mut qvm = qvm::QVM::new(2);
+    let result = run_ast(
+        &mut qvm,
+        &[QLangCommand::ApplyGate(
+            "cnot".into(),
+            vec![Expression::Number(0.0), Expression::Number(0.0)],
+        )],
+        &mut HashMap::new(),
+        &mut HashMap::new(),
+    );
+
+    assert!(matches!(
+        result,
+        ControlFlow::Error(error) if error.contains("must be different")
+    ));
+}
+
+#[test]
+fn runtime_rejects_non_gates_in_qif_and_restores_else_control() {
+    let mut qvm = qvm::QVM::new(2);
+    let result = run_ast(
+        &mut qvm,
+        &[QLangCommand::QIf {
+            condition: Expression::Number(0.0),
+            then_branch: vec![],
+            else_branch: Some(vec![QLangCommand::Let {
+                name: "value".into(),
+                type_ann: None,
+                value: Expression::Number(1.0),
+            }]),
+        }],
+        &mut HashMap::new(),
+        &mut HashMap::new(),
+    );
+
+    assert!(matches!(result, ControlFlow::Error(_)));
+    let state = qvm.state_vector();
+    assert!((state[0].re - 1.0).abs() < 1e-12);
+    assert!(state[1].norm_sqr() < 1e-12);
 }

@@ -2,6 +2,11 @@
   "name": "qlang-wasm",
   "type": "module",
   "version": "0.3.0",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BrunoAwdd/qvm"
+  },
   "files": [
     "qlang_wasm_bg.wasm",
     "qlang_wasm.js",

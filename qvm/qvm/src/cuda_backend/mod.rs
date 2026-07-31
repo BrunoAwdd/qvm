@@ -89,8 +89,7 @@ impl QuantumBackend for CudaBackend {
     }
 
     fn box_clone(&self) -> Box<dyn QuantumBackend> {
-        let cuda_backend = CudaBackend::new(self.num_qubits);
-        Box::new(cuda_backend)
+        Box::new(self.clone())
     }
 
     fn name(&self) -> &'static str {

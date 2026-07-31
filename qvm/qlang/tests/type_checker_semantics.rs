@@ -219,3 +219,96 @@ fn reports_unknown_variables() {
         .iter()
         .any(|error| error.contains("unknown variable")));
 }
+
+#[test]
+fn rejects_non_unitary_commands_inside_qif() {
+    let commands = vec![QLangCommand::QIf {
+        condition: number(0.0),
+        then_branch: vec![QLangCommand::Measure(1)],
+        else_branch: Some(vec![QLangCommand::Let {
+            name: "value".into(),
+            type_ann: None,
+            value: number(1.0),
+        }]),
+    }];
+
+    let errors = messages(&commands);
+    assert_eq!(
+        errors
+            .iter()
+            .filter(|error| error.contains("inside qif"))
+            .count(),
+        2
+    );
+}
+
+#[test]
+fn rejects_user_functions_inside_qif_until_they_have_unitary_effects() {
+    let commands = vec![
+        QLangCommand::FunctionDef {
+            name: "flip".into(),
+            params: vec!["q".into()],
+            param_types: vec![Some(TypeAnnotation::Qubit)],
+            return_type: Some(TypeAnnotation::Void),
+            body: vec![QLangCommand::ApplyGate(
+                "paulix".into(),
+                vec![variable("q")],
+            )],
+        },
+        QLangCommand::QIf {
+            condition: number(0.0),
+            then_branch: vec![QLangCommand::ApplyGate("flip".into(), vec![number(1.0)])],
+            else_branch: None,
+        },
+    ];
+
+    assert!(messages(&commands)
+        .iter()
+        .any(|error| error.contains("inside qif")));
+}
+
+#[test]
+fn accepts_a_supported_unitary_gate_inside_qif() {
+    let commands = vec![QLangCommand::QIf {
+        condition: number(0.0),
+        then_branch: vec![QLangCommand::ApplyGate(
+            "hadamard".into(),
+            vec![number(1.0)],
+        )],
+        else_branch: None,
+    }];
+
+    assert!(messages(&commands).is_empty());
+}
+
+#[test]
+fn rejects_duplicate_qubits_in_multi_qubit_gates() {
+    let commands = vec![
+        QLangCommand::ApplyGate("cnot".into(), vec![number(0.0), number(0.0)]),
+        QLangCommand::ApplyGate(
+            "toffoli".into(),
+            vec![number(0.0), number(1.0), number(1.0)],
+        ),
+    ];
+
+    assert_eq!(
+        messages(&commands)
+            .iter()
+            .filter(|error| error.contains("distinct qubit"))
+            .count(),
+        2
+    );
+}
+
+#[test]
+fn rejects_a_qif_gate_that_reuses_its_control() {
+    let commands = vec![QLangCommand::QIf {
+        condition: number(0.0),
+        then_branch: vec![QLangCommand::ApplyGate("paulix".into(), vec![number(0.0)])],
+        else_branch: None,
+    }];
+
+    assert!(messages(&commands)
+        .iter()
+        .any(|error| error.contains("distinct qubit")));
+}

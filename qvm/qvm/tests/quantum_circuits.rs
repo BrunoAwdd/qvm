@@ -81,3 +81,15 @@ fn cloning_preserves_the_quantum_state() {
     let cloned = qvm.clone();
     assert_eq!(qvm.state_vector(), cloned.state_vector());
 }
+
+#[cfg(feature = "cuda")]
+#[test]
+fn cuda_box_clone_preserves_the_quantum_state() {
+    use qvm::{backend::QuantumBackend, cuda_backend::CudaBackend};
+
+    let mut backend = CudaBackend::new(1);
+    backend.apply_gate(&PauliX::new(), 0);
+    let cloned = QuantumBackend::box_clone(&backend);
+
+    assert_eq!(backend.state_vector(), cloned.state_vector());
+}

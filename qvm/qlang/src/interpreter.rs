@@ -4,6 +4,7 @@ use std::fmt;
 use crate::{
     apply::*,
     ast::{Expression, Operator, QLangCommand},
+    validators::validate_gate_arity,
 };
 use qlang_core::gates::{
     one_q::{
@@ -83,6 +84,7 @@ pub enum ControlFlow {
     Return(Value),
     Break,
     Continue,
+    Error(String),
 }
 
 pub fn run_ast(
@@ -140,12 +142,19 @@ fn execute_command(
                     ControlFlow::Break | ControlFlow::Continue => {
                         eprintln!("Warning: break/continue cannot escape a function body");
                     }
+                    error @ ControlFlow::Error(_) => return error,
                     _ => {}
                 }
             } else {
                 let resolved = resolve_args(name, args, variables, qvm, functions);
                 if let Some(args) = resolved {
-                    apply_gate_dispatch(qvm, name, &args);
+                    if let Err(error) = apply_gate_dispatch(qvm, name, &args) {
+                        return ControlFlow::Error(error);
+                    }
+                } else {
+                    return ControlFlow::Error(format!(
+                        "gate '{name}' arguments could not be resolved"
+                    ));
                 }
             }
         }
@@ -197,29 +206,19 @@ fn execute_command(
         } => {
             let control =
                 evaluate_expression(condition, variables, qvm, functions).as_qubit_index();
-            for cmd in then_branch {
-                if let QLangCommand::ApplyGate(gate, args) = cmd {
-                    let mut new_args = vec![control.to_string()];
-                    if let Some(rest) = resolve_args(gate, args, variables, qvm, functions) {
-                        new_args.extend(rest);
-                        apply_controlled_gate(qvm, gate, &new_args);
-                    }
-                } else {
-                    eprintln!("Warning: only quantum gate calls are allowed inside qif");
-                }
+            if let Err(error) =
+                execute_controlled_branch(qvm, control, then_branch, variables, functions)
+            {
+                return ControlFlow::Error(error);
             }
             if let Some(else_cmds) = else_branch {
                 qvm.apply_gate(&PauliX::new(), control);
-                for cmd in else_cmds {
-                    if let QLangCommand::ApplyGate(gate, args) = cmd {
-                        let mut new_args = vec![control.to_string()];
-                        if let Some(rest) = resolve_args(gate, args, variables, qvm, functions) {
-                            new_args.extend(rest);
-                            apply_controlled_gate(qvm, gate, &new_args);
-                        }
-                    }
-                }
+                let result =
+                    execute_controlled_branch(qvm, control, else_cmds, variables, functions);
                 qvm.apply_gate(&PauliX::new(), control);
+                if let Err(error) = result {
+                    return ControlFlow::Error(error);
+                }
             }
         }
 
@@ -242,6 +241,7 @@ fn execute_command(
                 ControlFlow::Break => break,
                 ControlFlow::Continue => continue,
                 ControlFlow::Return(v) => return ControlFlow::Return(v),
+                error @ ControlFlow::Error(_) => return error,
                 ControlFlow::None => {}
             }
         },
@@ -260,6 +260,7 @@ fn execute_command(
                     ControlFlow::Break => break 'outer,
                     ControlFlow::Continue => continue 'outer,
                     ControlFlow::Return(v) => return ControlFlow::Return(v),
+                    error @ ControlFlow::Error(_) => return error,
                     ControlFlow::None => {}
                 }
             }
@@ -421,11 +422,17 @@ fn evaluate_expression(
                         eprintln!("Warning: break/continue cannot escape a function body");
                         Value::Number(0.0)
                     }
+                    ControlFlow::Error(error) => {
+                        eprintln!("Error: {error}");
+                        Value::Number(0.0)
+                    }
                     ControlFlow::None => Value::Number(0.0),
                 };
             }
             if let Some(resolved) = resolve_args(name, args, variables, qvm, functions) {
-                apply_gate_dispatch(qvm, name, &resolved);
+                if let Err(error) = apply_gate_dispatch(qvm, name, &resolved) {
+                    eprintln!("Error: {error}");
+                }
             }
             Value::Number(0.0)
         }
@@ -457,7 +464,9 @@ fn resolve_args(
     Some(out)
 }
 
-fn apply_gate_dispatch(qvm: &mut QVM, name: &str, args: &[String]) {
+fn apply_gate_dispatch(qvm: &mut QVM, name: &str, args: &[String]) -> Result<(), String> {
+    let borrowed: Vec<_> = args.iter().map(String::as_str).collect();
+    validate_gate_arity(name, qvm.num_qubits(), &borrowed)?;
     match name {
         "controlled_u" | "cu" => apply_controlled_u(qvm, args),
         "hadamard" | "h" => apply_one_q_gate(qvm, &Hadamard::new(), args),
@@ -484,6 +493,55 @@ fn apply_gate_dispatch(qvm: &mut QVM, name: &str, args: &[String]) {
         "toffoli" => apply_three_q_gate(qvm, &Toffoli::new(), args),
         "fredkin" => apply_three_q_gate(qvm, &Fredkin::new(), args),
         "alloc" => {}
-        _ => eprintln!("Unknown gate: '{}'", name),
+        _ => return Err(format!("unknown gate '{name}'")),
     }
+    Ok(())
+}
+
+fn validate_controlled_gate_call(qvm: &QVM, name: &str, args: &[String]) -> Result<(), String> {
+    let Some((control, gate_args)) = args.split_first() else {
+        return Err("controlled gate requires a control qubit".into());
+    };
+    let borrowed: Vec<_> = gate_args.iter().map(String::as_str).collect();
+    validate_gate_arity(name, qvm.num_qubits(), &borrowed)?;
+    let control = control
+        .parse::<usize>()
+        .map_err(|_| "invalid qif control qubit".to_string())?;
+    let target_count = match name {
+        "cnot" | "cx" | "swap" => 2,
+        _ => 1,
+    };
+    for target in gate_args.iter().take(target_count) {
+        let target = target
+            .parse::<usize>()
+            .map_err(|_| format!("invalid target qubit '{target}'"))?;
+        if target == control {
+            return Err(format!(
+                "controlled gate '{name}' requires distinct control and target qubits"
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn execute_controlled_branch(
+    qvm: &mut QVM,
+    control: usize,
+    commands: &[QLangCommand],
+    variables: &HashMap<String, Value>,
+    functions: &mut HashMap<String, QLangCommand>,
+) -> Result<(), String> {
+    for command in commands {
+        let QLangCommand::ApplyGate(gate, args) = command else {
+            return Err("only supported unitary gate calls are allowed inside qif".into());
+        };
+        let mut resolved = vec![control.to_string()];
+        resolved.extend(
+            resolve_args(gate, args, variables, qvm, functions)
+                .ok_or_else(|| format!("gate '{gate}' arguments could not be resolved"))?,
+        );
+        validate_controlled_gate_call(qvm, gate, &resolved)?;
+        apply_controlled_gate(qvm, gate, &resolved)?;
+    }
+    Ok(())
 }

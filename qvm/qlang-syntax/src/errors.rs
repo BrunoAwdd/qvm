@@ -30,6 +30,9 @@ pub enum QLangError {
     #[error("only quantum gate calls are allowed inside qif blocks; measurements collapse state")]
     NonGateInQif,
 
+    #[error("gate '{0}' requires distinct qubit arguments")]
+    DuplicateQubitArguments(String),
+
     #[error("type error: {0}")]
     TypeError(String),
 
