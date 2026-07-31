@@ -241,17 +241,25 @@ impl QVM {
         self.backend.display(); // Mostra o estado atual do backend
     }
 
-    pub fn num_qubits(&self) -> usize { self.backend.num_qubits() }
+    pub fn num_qubits(&self) -> usize {
+        self.backend.num_qubits()
+    }
 
-    pub fn state_vector(&self) -> Vec<QLangComplex> { self.backend.state_vector() }
+    pub fn state_vector(&self) -> Vec<QLangComplex> {
+        self.backend.state_vector()
+    }
 
     pub fn teardown(&mut self) {
         self.backend = BackendType::from_compiled_features(self.backend.num_qubits());
     }
 
-    pub fn reset(&mut self) { self.backend.reset(self.backend.num_qubits()); }
+    pub fn reset(&mut self) {
+        self.backend.reset(self.backend.num_qubits());
+    }
 
-    pub fn box_clone(&self) -> Box<dyn QuantumBackend> { self.backend.box_clone() }
+    pub fn box_clone(&self) -> Box<dyn QuantumBackend> {
+        self.backend.box_clone()
+    }
 
     pub fn estimate_entanglement(&self) -> f64 {
         let state = self.state_vector();

@@ -31,10 +31,14 @@ impl SDagger {
 
 impl QuantumGateAbstract for SDagger {
     /// Returns the matrix of the S† gate.
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
     /// Returns the name of the gate.
-    fn name(&self) -> &'static str { "SDagger" }
+    fn name(&self) -> &'static str {
+        "SDagger"
+    }
 }
 
 #[cfg(test)]

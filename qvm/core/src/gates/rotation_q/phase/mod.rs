@@ -26,10 +26,14 @@ pub struct Phase {
 
 impl QuantumGateAbstract for Phase {
     /// Returns the matrix representation of the Phase gate.
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
     /// Returns the name of the gate: `"phase"`.
-    fn name(&self) -> &'static str { "phase" }
+    fn name(&self) -> &'static str {
+        "phase"
+    }
 }
 
 impl Phase {

@@ -21,8 +21,12 @@ pub struct RY {
 }
 
 impl QuantumGateAbstract for RY {
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
-    fn name(&self) -> &'static str { "RY" }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
+    fn name(&self) -> &'static str {
+        "RY"
+    }
 }
 
 impl RY {

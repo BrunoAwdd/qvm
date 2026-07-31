@@ -281,7 +281,9 @@ mod tests {
     use qlang_core::gates::one_q::pauli_y::PauliY;
     use qvm::QVM;
 
-    fn str_args(args: &[&str]) -> Vec<String> { args.iter().map(|s| s.to_string()).collect() }
+    fn str_args(args: &[&str]) -> Vec<String> {
+        args.iter().map(|s| s.to_string()).collect()
+    }
 
     #[test]
     fn test_apply_one_q_gate_valid() {

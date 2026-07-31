@@ -675,7 +675,9 @@ impl TypeChecker {
         }
     }
 
-    fn type_error(&mut self, message: String) { self.errors.push(QLangError::TypeError(message)); }
+    fn type_error(&mut self, message: String) {
+        self.errors.push(QLangError::TypeError(message));
+    }
 }
 
 fn guarantees_return(commands: &[QLangCommand]) -> bool {
@@ -732,7 +734,9 @@ fn extract_qubit_slot(expression: &Expression) -> Option<usize> {
     }
 }
 
-fn is_native_gate(name: &str) -> bool { native_gate_signature(name).is_some() }
+fn is_native_gate(name: &str) -> bool {
+    native_gate_signature(name).is_some()
+}
 
 fn native_gate_signature(name: &str) -> Option<Vec<QLangType>> {
     let qubits = match name {

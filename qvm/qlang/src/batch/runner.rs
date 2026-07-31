@@ -21,7 +21,9 @@ pub struct BatchRunner {
 /// # Parameters
 /// - `jobs`: A list of `CircuitJob` instances to execute.
 impl BatchRunner {
-    pub fn new(jobs: Vec<CircuitJob>) -> Self { Self { jobs } }
+    pub fn new(jobs: Vec<CircuitJob>) -> Self {
+        Self { jobs }
+    }
 
     /// Runs all circuit jobs in parallel and returns their resulting `QVM`s.
     ///

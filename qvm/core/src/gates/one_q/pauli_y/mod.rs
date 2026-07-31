@@ -19,10 +19,14 @@ pub struct PauliY {
 
 impl QuantumGateAbstract for PauliY {
     /// Returns the matrix representation of the Pauli-Y gate.
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
     /// Returns the gate's name.
-    fn name(&self) -> &'static str { "pauliY" }
+    fn name(&self) -> &'static str {
+        "pauliY"
+    }
 }
 
 impl PauliY {

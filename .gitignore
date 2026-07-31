@@ -13,3 +13,4 @@ test
 todo.txt
 qlang/*
 graphify-out/
+*.egg-info/

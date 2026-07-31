@@ -39,9 +39,13 @@ impl ControlledY {
 }
 
 impl QuantumGateAbstract for ControlledY {
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
-    fn name(&self) -> &'static str { "cy" }
+    fn name(&self) -> &'static str {
+        "cy"
+    }
 }
 
 #[cfg(test)]

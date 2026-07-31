@@ -39,9 +39,13 @@ impl Swap {
 }
 
 impl QuantumGateAbstract for Swap {
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
-    fn name(&self) -> &'static str { "SWAP" }
+    fn name(&self) -> &'static str {
+        "SWAP"
+    }
 }
 
 #[cfg(test)]

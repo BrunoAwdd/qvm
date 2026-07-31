@@ -41,9 +41,13 @@ impl CNOT {
 }
 
 impl QuantumGateAbstract for CNOT {
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
-    fn name(&self) -> &'static str { "CNOT" }
+    fn name(&self) -> &'static str {
+        "CNOT"
+    }
 }
 
 #[cfg(test)]

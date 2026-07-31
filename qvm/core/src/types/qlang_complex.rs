@@ -12,11 +12,17 @@ pub struct QLangComplex {
 }
 
 impl QLangComplex {
-    pub fn new(re: f64, im: f64) -> Self { Self { re, im } }
+    pub fn new(re: f64, im: f64) -> Self {
+        Self { re, im }
+    }
 
-    pub fn norm_sqr(&self) -> f64 { self.re * self.re + self.im * self.im }
+    pub fn norm_sqr(&self) -> f64 {
+        self.re * self.re + self.im * self.im
+    }
 
-    pub fn arg(&self) -> f64 { self.im.atan2(self.re) }
+    pub fn arg(&self) -> f64 {
+        self.im.atan2(self.re)
+    }
 
     pub fn from_polar(r: f64, theta: f64) -> Self {
         Self {
@@ -25,23 +31,37 @@ impl QLangComplex {
         }
     }
 
-    pub fn zero() -> Self { QLangComplex { re: 0.0, im: 0.0 } }
+    pub fn zero() -> Self {
+        QLangComplex { re: 0.0, im: 0.0 }
+    }
 
-    pub fn one() -> Self { QLangComplex::new(1.0, 0.0) }
+    pub fn one() -> Self {
+        QLangComplex::new(1.0, 0.0)
+    }
 
-    pub fn neg_one() -> Self { QLangComplex::new(-1.0, 0.0) }
+    pub fn neg_one() -> Self {
+        QLangComplex::new(-1.0, 0.0)
+    }
 
-    pub fn i() -> Self { QLangComplex::new(0.0, 1.0) }
+    pub fn i() -> Self {
+        QLangComplex::new(0.0, 1.0)
+    }
 
-    pub fn neg_i() -> Self { QLangComplex::new(0.0, -1.0) }
+    pub fn neg_i() -> Self {
+        QLangComplex::new(0.0, -1.0)
+    }
 }
 
 impl From<Complex64> for QLangComplex {
-    fn from(c: Complex64) -> Self { Self { re: c.re, im: c.im } }
+    fn from(c: Complex64) -> Self {
+        Self { re: c.re, im: c.im }
+    }
 }
 
 impl From<QLangComplex> for Complex64 {
-    fn from(c: QLangComplex) -> Self { Complex64::new(c.re, c.im) }
+    fn from(c: QLangComplex) -> Self {
+        Complex64::new(c.re, c.im)
+    }
 }
 
 pub fn to_complex64<A: Data<Elem = QLangComplex>>(a: &ArrayBase<A, Ix2>) -> Array2<Complex64> {
@@ -165,7 +185,9 @@ impl Div<f64> for QLangComplex {
 impl Div<f64> for &QLangComplex {
     type Output = QLangComplex;
 
-    fn div(self, rhs: f64) -> Self::Output { QLangComplex::new(self.re / rhs, self.im / rhs) }
+    fn div(self, rhs: f64) -> Self::Output {
+        QLangComplex::new(self.re / rhs, self.im / rhs)
+    }
 }
 
 impl DivAssign for QLangComplex {
@@ -177,7 +199,9 @@ impl DivAssign for QLangComplex {
 
 impl Mul<QLangComplex> for Complex64 {
     type Output = Complex64;
-    fn mul(self, rhs: QLangComplex) -> Complex64 { self * Complex64::new(rhs.re, rhs.im) }
+    fn mul(self, rhs: QLangComplex) -> Complex64 {
+        self * Complex64::new(rhs.re, rhs.im)
+    }
 }
 
 impl PartialEq for QLangComplex {
@@ -187,15 +211,23 @@ impl PartialEq for QLangComplex {
 }
 
 impl Zero for QLangComplex {
-    fn zero() -> Self { QLangComplex { re: 0.0, im: 0.0 } }
+    fn zero() -> Self {
+        QLangComplex { re: 0.0, im: 0.0 }
+    }
 
-    fn is_zero(&self) -> bool { self.re == 0.0 && self.im == 0.0 }
+    fn is_zero(&self) -> bool {
+        self.re == 0.0 && self.im == 0.0
+    }
 }
 
 impl One for QLangComplex {
-    fn one() -> Self { QLangComplex::new(1.0, 0.0) }
+    fn one() -> Self {
+        QLangComplex::new(1.0, 0.0)
+    }
 
-    fn is_one(&self) -> bool { self.re == 1.0 && self.im == 0.0 }
+    fn is_one(&self) -> bool {
+        self.re == 1.0 && self.im == 0.0
+    }
 }
 
 impl ScalarOperand for QLangComplex {}

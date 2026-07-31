@@ -309,9 +309,15 @@ impl QLangParser {
             Err(e) => self.errors.push(e),
         }
     }
-    pub fn has_errors(&self) -> bool { !self.errors.is_empty() }
-    pub fn get_errors(&self) -> &[String] { &self.errors }
-    pub fn get_commands(&self) -> &[QLangLine] { &self.parsed_commands }
+    pub fn has_errors(&self) -> bool {
+        !self.errors.is_empty()
+    }
+    pub fn get_errors(&self) -> &[String] {
+        &self.errors
+    }
+    pub fn get_commands(&self) -> &[QLangLine] {
+        &self.parsed_commands
+    }
 }
 
 struct ParserInternal {
@@ -320,7 +326,9 @@ struct ParserInternal {
 }
 
 impl ParserInternal {
-    fn new(tokens: Vec<Token>) -> Self { Self { tokens, current: 0 } }
+    fn new(tokens: Vec<Token>) -> Self {
+        Self { tokens, current: 0 }
+    }
 
     fn parse(&mut self) -> Result<Vec<QLangLine>, String> {
         let mut out = Vec::new();
@@ -598,7 +606,9 @@ impl ParserInternal {
         Ok(cmds)
     }
 
-    fn parse_expression(&mut self) -> Result<Expression, String> { self.parse_logic_or() }
+    fn parse_expression(&mut self) -> Result<Expression, String> {
+        self.parse_logic_or()
+    }
 
     fn parse_logic_or(&mut self) -> Result<Expression, String> {
         let mut l = self.parse_logic_and()?;
@@ -806,7 +816,13 @@ impl ParserInternal {
         self.previous()
     }
 
-    fn is_at_end(&self) -> bool { matches!(self.peek(), Token::Eof) }
-    fn peek(&self) -> &Token { &self.tokens[self.current] }
-    fn previous(&self) -> &Token { &self.tokens[self.current - 1] }
+    fn is_at_end(&self) -> bool {
+        matches!(self.peek(), Token::Eof)
+    }
+    fn peek(&self) -> &Token {
+        &self.tokens[self.current]
+    }
+    fn previous(&self) -> &Token {
+        &self.tokens[self.current - 1]
+    }
 }

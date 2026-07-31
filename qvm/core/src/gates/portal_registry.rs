@@ -23,7 +23,9 @@ impl PortalRegistry {
         self.gates.insert(name, gate);
     }
 
-    pub fn list(&self) -> Vec<String> { self.gates.keys().cloned().collect() }
+    pub fn list(&self) -> Vec<String> {
+        self.gates.keys().cloned().collect()
+    }
 
     pub fn get(&self, name: &str) -> Option<Arc<dyn QuantumGateAbstract>> {
         self.gates.get(name).cloned()

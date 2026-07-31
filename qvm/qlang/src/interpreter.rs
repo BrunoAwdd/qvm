@@ -63,7 +63,9 @@ impl Value {
         }
     }
 
-    pub fn as_usize(&self) -> usize { self.as_qubit_index() }
+    pub fn as_usize(&self) -> usize {
+        self.as_qubit_index()
+    }
 
     pub fn is_truthy(&self) -> bool {
         match self {

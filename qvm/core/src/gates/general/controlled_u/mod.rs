@@ -22,10 +22,14 @@ pub struct ControlledU {
 
 impl QuantumGateAbstract for ControlledU {
     /// Returns the full 4x4 matrix representation of the gate.
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
     /// Returns the string identifier for this gate.
-    fn name(&self) -> &'static str { "cu" }
+    fn name(&self) -> &'static str {
+        "cu"
+    }
 }
 
 impl ControlledU {

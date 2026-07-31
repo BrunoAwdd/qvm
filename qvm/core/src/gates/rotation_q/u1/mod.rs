@@ -9,9 +9,13 @@ pub struct U1 {
 }
 
 impl QuantumGateAbstract for U1 {
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
-    fn name(&self) -> &'static str { "U1" }
+    fn name(&self) -> &'static str {
+        "U1"
+    }
 }
 
 impl U1 {

@@ -46,9 +46,13 @@ impl U2 {
 }
 
 impl QuantumGateAbstract for U2 {
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
-    fn name(&self) -> &'static str { "U2" }
+    fn name(&self) -> &'static str {
+        "U2"
+    }
 }
 
 #[cfg(test)]

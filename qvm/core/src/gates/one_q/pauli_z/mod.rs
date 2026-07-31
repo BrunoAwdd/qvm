@@ -20,10 +20,14 @@ pub struct PauliZ {
 
 impl QuantumGateAbstract for PauliZ {
     /// Returns the matrix representation of the Pauli-Z gate.
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
     /// Returns the name of the gate.
-    fn name(&self) -> &'static str { "PauliZ" }
+    fn name(&self) -> &'static str {
+        "PauliZ"
+    }
 }
 
 impl PauliZ {

@@ -18,5 +18,7 @@ pub trait QuantumBackend {
 }
 
 impl Clone for Box<dyn QuantumBackend> {
-    fn clone(&self) -> Box<dyn QuantumBackend> { self.box_clone() }
+    fn clone(&self) -> Box<dyn QuantumBackend> {
+        self.box_clone()
+    }
 }

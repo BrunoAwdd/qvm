@@ -21,10 +21,14 @@ pub struct S {
 
 impl QuantumGateAbstract for S {
     /// Returns the matrix representation of the S gate.
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
     /// Returns the gate name: `"S"`.
-    fn name(&self) -> &'static str { "S" }
+    fn name(&self) -> &'static str {
+        "S"
+    }
 }
 
 impl S {

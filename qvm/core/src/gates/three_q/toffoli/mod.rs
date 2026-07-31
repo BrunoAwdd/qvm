@@ -33,9 +33,13 @@ impl Toffoli {
 }
 
 impl QuantumGateAbstract for Toffoli {
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
-    fn name(&self) -> &'static str { "Toffoli" }
+    fn name(&self) -> &'static str {
+        "Toffoli"
+    }
 }
 
 #[cfg(test)]

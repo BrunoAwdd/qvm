@@ -20,10 +20,14 @@ pub struct TDagger {
 
 impl QuantumGateAbstract for TDagger {
     /// Returns the matrix of the T† gate.
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
     /// Returns the gate's name: `"TDagger"`.
-    fn name(&self) -> &'static str { "TDagger" }
+    fn name(&self) -> &'static str {
+        "TDagger"
+    }
 }
 
 impl TDagger {

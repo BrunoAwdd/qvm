@@ -21,7 +21,9 @@ thread_local! {
     static LAST_ERROR: RefCell<Option<CString>> = const { RefCell::new(None) };
 }
 
-fn instance() -> &'static Mutex<Option<QLang>> { INSTANCE.get_or_init(|| Mutex::new(None)) }
+fn instance() -> &'static Mutex<Option<QLang>> {
+    INSTANCE.get_or_init(|| Mutex::new(None))
+}
 
 fn set_error(message: impl Into<String>) {
     let message = message.into().replace('\0', "\\0");

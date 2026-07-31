@@ -51,11 +51,17 @@ impl U3 {
 }
 
 impl QuantumGateAbstract for U3 {
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
-    fn name(&self) -> &'static str { "U3" }
+    fn name(&self) -> &'static str {
+        "U3"
+    }
 
-    fn as_u3_params(&self) -> Option<(f64, f64, f64)> { Some((self.theta, self.phi, self.lambda)) }
+    fn as_u3_params(&self) -> Option<(f64, f64, f64)> {
+        Some((self.theta, self.phi, self.lambda))
+    }
 }
 
 #[cfg(test)]

@@ -22,7 +22,9 @@ pub struct CudaBackend {
 }
 
 impl QuantumBackend for CudaBackend {
-    fn num_qubits(&self) -> usize { self.num_qubits }
+    fn num_qubits(&self) -> usize {
+        self.num_qubits
+    }
 
     fn state_vector(&self) -> Vec<QLangComplex> {
         let mut host = vec![QLangComplex::default(); self.state.len()];
@@ -44,11 +46,17 @@ impl QuantumBackend for CudaBackend {
         self.apply_gate_3q(gate, q0, q1, q2);
     }
 
-    fn measure(&mut self, qubit: usize) -> u8 { self.measure(qubit) }
+    fn measure(&mut self, qubit: usize) -> u8 {
+        self.measure(qubit)
+    }
 
-    fn measure_many(&mut self, qubits: &Vec<usize>) -> Vec<u8> { self.measure_many(qubits) }
+    fn measure_many(&mut self, qubits: &Vec<usize>) -> Vec<u8> {
+        self.measure_many(qubits)
+    }
 
-    fn measure_all(&mut self) -> Vec<u8> { self.measure_all() }
+    fn measure_all(&mut self) -> Vec<u8> {
+        self.measure_all()
+    }
 
     fn display(&self) {
         let state = self.state_vector();
@@ -85,7 +93,9 @@ impl QuantumBackend for CudaBackend {
         Box::new(cuda_backend)
     }
 
-    fn name(&self) -> &'static str { "CUDA" }
+    fn name(&self) -> &'static str {
+        "CUDA"
+    }
 }
 impl Drop for CudaBackend {
     fn drop(&mut self) {

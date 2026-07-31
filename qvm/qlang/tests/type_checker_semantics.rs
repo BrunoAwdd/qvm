@@ -3,11 +3,17 @@ use qlang::{
     type_checker::TypeChecker,
 };
 
-fn number(value: f64) -> Expression { Expression::Number(value) }
+fn number(value: f64) -> Expression {
+    Expression::Number(value)
+}
 
-fn variable(name: &str) -> Expression { Expression::Variable(name.into()) }
+fn variable(name: &str) -> Expression {
+    Expression::Variable(name.into())
+}
 
-fn alloc(slot: usize) -> Expression { Expression::Call("alloc".into(), vec![number(slot as f64)]) }
+fn alloc(slot: usize) -> Expression {
+    Expression::Call("alloc".into(), vec![number(slot as f64)])
+}
 
 fn messages(commands: &[QLangCommand]) -> Vec<String> {
     TypeChecker::new(4)

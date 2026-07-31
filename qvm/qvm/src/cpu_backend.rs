@@ -166,13 +166,21 @@ impl QuantumBackend for CpuBackend {
         }
     }
 
-    fn num_qubits(&self) -> usize { self.state.num_qubits }
+    fn num_qubits(&self) -> usize {
+        self.state.num_qubits
+    }
 
-    fn state_vector(&self) -> Vec<QLangComplex> { self.state.state_vector.to_vec() }
+    fn state_vector(&self) -> Vec<QLangComplex> {
+        self.state.state_vector.to_vec()
+    }
 
-    fn box_clone(&self) -> Box<dyn QuantumBackend> { Box::new(self.clone()) }
+    fn box_clone(&self) -> Box<dyn QuantumBackend> {
+        Box::new(self.clone())
+    }
 
-    fn name(&self) -> &'static str { "CPU" }
+    fn name(&self) -> &'static str {
+        "CPU"
+    }
 }
 
 impl Clone for CpuBackend {

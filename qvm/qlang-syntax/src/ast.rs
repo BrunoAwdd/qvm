@@ -305,8 +305,16 @@ impl AstController {
             ast: vec![QLangCommand::Create(num_qubits)],
         }
     }
-    pub fn append(&mut self, cmd: &QLangCommand) { self.ast.push(cmd.clone()); }
-    pub fn to_source(&self) -> String { self.ast.iter().map(|c| c.to_string()).collect() }
-    pub fn commands(&self) -> &[QLangCommand] { &self.ast }
-    pub fn clear(&mut self) { self.ast.clear(); }
+    pub fn append(&mut self, cmd: &QLangCommand) {
+        self.ast.push(cmd.clone());
+    }
+    pub fn to_source(&self) -> String {
+        self.ast.iter().map(|c| c.to_string()).collect()
+    }
+    pub fn commands(&self) -> &[QLangCommand] {
+        &self.ast
+    }
+    pub fn clear(&mut self) {
+        self.ast.clear();
+    }
 }

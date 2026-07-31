@@ -19,10 +19,14 @@ pub struct Hadamard {
 
 impl QuantumGateAbstract for Hadamard {
     /// Returns the matrix of the Hadamard gate.
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
     /// Returns the name of the gate.
-    fn name(&self) -> &'static str { "Hadamard" }
+    fn name(&self) -> &'static str {
+        "Hadamard"
+    }
 }
 
 impl Hadamard {

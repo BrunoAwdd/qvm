@@ -222,9 +222,15 @@ impl QLang {
         self.collapsed = false;
     }
 
-    pub fn clear_ast(&mut self) { self.ast.clear(); }
+    pub fn clear_ast(&mut self) {
+        self.ast.clear();
+    }
 
-    fn push_ast(&mut self, cmd: QLangCommand) { self.ast.push(cmd.clone()); }
+    fn push_ast(&mut self, cmd: QLangCommand) {
+        self.ast.push(cmd.clone());
+    }
 
-    pub fn teardown(&mut self) { self.qvm.teardown(); }
+    pub fn teardown(&mut self) {
+        self.qvm.teardown();
+    }
 }

@@ -38,9 +38,13 @@ impl ISwap {
 }
 
 impl QuantumGateAbstract for ISwap {
-    fn matrix(&self) -> Array2<QLangComplex> { self.matrix.clone() }
+    fn matrix(&self) -> Array2<QLangComplex> {
+        self.matrix.clone()
+    }
 
-    fn name(&self) -> &'static str { "iswap" }
+    fn name(&self) -> &'static str {
+        "iswap"
+    }
 }
 
 #[cfg(test)]
