@@ -1,4 +1,8 @@
 /target
 projeto.zip
 zip.sh
-/examples
+/examples/*
+!/examples/bell.ql
+!/examples/ghz.ql
+!/examples/teleportation.ql
+!/examples/type_error.ql

@@ -1,5 +1,8 @@
 # QLang
 
+[![CI](https://github.com/BrunoAwdd/qvm/actions/workflows/ci.yml/badge.svg)](https://github.com/BrunoAwdd/qvm/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 QLang is an experimental typed quantum language and simulator written in Rust. The active implementation is a Cargo workspace under `qvm/` with a shared syntax crate, CPU/CUDA/tensor backends, a command-line interface, C ABI, Python wrapper, and a React viewer powered by WebAssembly.
 
 ## Current status
@@ -32,6 +35,8 @@ cd qvm
 cargo run -p qlang -- check examples/teleportation.ql
 cargo run -p qlang -- run examples/teleportation.ql
 ```
+
+Additional tracked examples include `bell.ql`, `ghz.ql`, and an intentionally invalid `type_error.ql` for demonstrating static diagnostics.
 
 QLang source example:
 
@@ -123,3 +128,7 @@ PYTHONPATH=python python -m pytest tests/python/test_ffi_runtime.py -q
 GitHub Actions runs the CPU workspace on Linux, macOS, and Windows; tensor, CUDA compilation, WASM/viewer, and Python/FFI have dedicated jobs. CUDA runtime tests are available as a manually triggered workflow for a self-hosted GPU runner.
 
 See [ROADMAP.md](ROADMAP.md) for planned work.
+
+## License
+
+QLang is licensed under the [Apache License 2.0](LICENSE).

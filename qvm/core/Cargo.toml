@@ -2,6 +2,8 @@
 name = "qlang_core"
 version = "0.3.0"
 edition = "2021"
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 ndarray = "0.15"

@@ -1,8 +1,0 @@
-create(2)
-display()
-hadamard(0)
-display()
-paulix(1)
-display()
-measure_all()
-display()

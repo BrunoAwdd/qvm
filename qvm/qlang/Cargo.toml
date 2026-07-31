@@ -2,6 +2,8 @@
 name = "qlang"
 version = "0.3.0"
 edition = "2021"
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 qlang_core = { path = "../core" }

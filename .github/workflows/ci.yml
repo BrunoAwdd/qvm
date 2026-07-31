@@ -29,6 +29,11 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets
       - run: cargo test --workspace
+      - name: Verify README quick start
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cargo run -p qlang -- check examples/teleportation.ql
+          cargo run -p qlang -- run examples/teleportation.ql
 
   tensor:
     runs-on: ubuntu-latest
