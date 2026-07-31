@@ -1,3 +1,3 @@
-pub mod types;
-pub mod state;
 pub mod gates;
+pub mod state;
+pub mod types;

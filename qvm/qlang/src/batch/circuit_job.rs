@@ -15,15 +15,18 @@ use crate::ast::QLangCommand;
 ///
 /// # Example
 /// ```
+/// use qlang::ast::{Expression, QLangCommand};
 /// use qlang::batch::circuit_job::CircuitJob;
-/// use qlang::ast::{QLangCommand, Expression};
 ///
 /// let job = CircuitJob {
 ///     num_qubits: 2,
 ///     commands: vec![
 ///         QLangCommand::Create(2),
 ///         QLangCommand::ApplyGate("h".into(), vec![Expression::Number(0.0)]),
-///         QLangCommand::ApplyGate("cx".into(), vec![Expression::Number(0.0), Expression::Number(1.0)]),
+///         QLangCommand::ApplyGate(
+///             "cx".into(),
+///             vec![Expression::Number(0.0), Expression::Number(1.0)],
+///         ),
 ///         QLangCommand::MeasureAll,
 ///     ],
 /// };
@@ -38,7 +41,7 @@ pub struct CircuitJob {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::{QLangCommand, Expression};
+    use crate::ast::{Expression, QLangCommand};
 
     #[test]
     fn test_create_circuit_job() {
@@ -48,7 +51,10 @@ mod tests {
             commands: vec![
                 QLangCommand::Create(2),
                 QLangCommand::ApplyGate("h".into(), vec![Expression::Number(0.0)]),
-                QLangCommand::ApplyGate("cx".into(), vec![Expression::Number(0.0), Expression::Number(1.0)]),
+                QLangCommand::ApplyGate(
+                    "cx".into(),
+                    vec![Expression::Number(0.0), Expression::Number(1.0)],
+                ),
                 QLangCommand::MeasureAll,
             ],
         };
@@ -93,7 +99,10 @@ mod tests {
             commands: vec![
                 QLangCommand::Create(3),
                 QLangCommand::ApplyGate("h".into(), vec![Expression::Number(0.0)]),
-                QLangCommand::ApplyGate("cx".into(), vec![Expression::Number(0.0), Expression::Number(2.0)]),
+                QLangCommand::ApplyGate(
+                    "cx".into(),
+                    vec![Expression::Number(0.0), Expression::Number(2.0)],
+                ),
                 QLangCommand::MeasureAll,
             ],
         };

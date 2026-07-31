@@ -1,12 +1,9 @@
 use ndarray::Array1;
 use rand::{thread_rng, Rng};
 
-use crate::{
-    backend::QuantumBackend,
-};
+use crate::backend::QuantumBackend;
 use qlang_core::{
-    gates::quantum_gate_abstract::QuantumGateAbstract,
-    state::quantum_state::QuantumState,
+    gates::quantum_gate_abstract::QuantumGateAbstract, state::quantum_state::QuantumState,
     types::qlang_complex::QLangComplex,
 };
 
@@ -79,7 +76,7 @@ impl QuantumBackend for CpuBackend {
 
         let dim = 1 << n;
         let matrix = gate.matrix();
-        let mut new_state = self.state.clone();
+        let mut new_state = Array1::zeros(dim);
 
         for i in 0..dim {
             let input = ((i >> q0) & 1) << 2 | ((i >> q1) & 1) << 1 | ((i >> q2) & 1);
@@ -92,11 +89,11 @@ impl QuantumBackend for CpuBackend {
                 j = (j & !(1 << q1)) | (bits[1] << q1);
                 j = (j & !(1 << q2)) | (bits[2] << q2);
 
-                new_state.state_vector[j] += matrix[[output, input]] * self.state.state_vector[i];
+                new_state[j] += matrix[[output, input]] * self.state.state_vector[i];
             }
         }
 
-        self.state = new_state;
+        self.state.state_vector = new_state;
     }
 
     fn measure(&mut self, qubit: usize) -> u8 {

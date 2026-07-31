@@ -1,10 +1,10 @@
 use qlang_core::gates::{
-    quantum_gate_abstract::QuantumGateAbstract,
-    two_q::{cnot::*, cy::*, cz::*, iswap::*, swap::*},
     general::controlled_u::ControlledU,
-    one_q::{hadamard::*, identity::*, pauli_x::*, pauli_y::*, pauli_z::*, s::*, s_dagger::*, t::*, t_dagger::*},
-    rotation_q::{phase::*, rx::*, ry::*, rz::*, u1::*, u2::*, u3::*},
-    three_q::{fredkin::*, toffoli::*},
+    one_q::{hadamard::Hadamard, s::S, s_dagger::SDagger, t::T, t_dagger::TDagger},
+    quantum_gate_abstract::QuantumGateAbstract,
+    rotation_q::{phase::Phase, rx::RX, ry::RY, rz::RZ, u1::U1, u2::U2, u3::U3},
+    three_q::{fredkin::Fredkin, toffoli::Toffoli},
+    two_q::{cnot::CNOT, cy::ControlledY, cz::ControlledZ},
 };
 use qvm::QVM;
 
@@ -255,7 +255,10 @@ pub fn apply_controlled_gate(qvm: &mut QVM, name: &str, args: &[String]) {
             qvm.apply_gate_3q(&Fredkin::new(), control, q1, q2);
         }
         _ => {
-            println!("Warning: Controlled version of gate '{}' not implemented.", name);
+            println!(
+                "Warning: Controlled version of gate '{}' not implemented.",
+                name
+            );
         }
     }
 }

@@ -88,7 +88,7 @@ impl BatchRunner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::{QLangCommand, Expression};
+    use crate::ast::{Expression, QLangCommand};
     use std::io::Write;
     use tempfile::NamedTempFile;
 

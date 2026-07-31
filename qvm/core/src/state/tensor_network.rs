@@ -1,9 +1,10 @@
 // src/state/tensor_network.rs
-use crate::state::contract::contract;
-use crate::types::qlang_complex::{from_complex64, to_complex64, QLangComplex};
-use ndarray::{Array1, Array2, Array3, Ix2};
-use ndarray_linalg::SVD;
+use crate::types::qlang_complex::QLangComplex;
+use nalgebra::DMatrix;
+use ndarray::{s, Array2, Array3};
+use num_complex::Complex64;
 
+#[derive(Clone)]
 pub struct TensorNode {
     pub tensor: Array3<QLangComplex>,
 }
@@ -17,6 +18,7 @@ impl TensorNode {
 }
 
 /// Representa uma cadeia de tensores conectados para simulação de estado quântico.
+#[derive(Clone)]
 pub struct TensorNetwork {
     pub nodes: Vec<TensorNode>,
 }
@@ -28,96 +30,86 @@ impl TensorNetwork {
     }
 
     pub fn to_state_vector(&self) -> Vec<QLangComplex> {
-        //self.debug_print_network_shapes();
-
-        let mut state: Option<Array2<QLangComplex>> = None;
-
-        for (i, node) in self.nodes.iter().enumerate() {
-            let t = &node.tensor;
-            let shape = t.shape(); // [D0, 2, D1]
-
-            let reshaped = if i == 0 {
-                t.clone()
-                    .into_shape((shape[1], shape[2])) // (2, D)
-                    .expect("reshape do primeiro tensor falhou")
-            } else if i == self.nodes.len() - 1 {
-                // Último tensor
-                t.clone()
-                    .into_shape((shape[0] * shape[1], shape[2])) // (D×2, D)
-                    .expect("reshape do último tensor falhou")
-            } else {
-                t.clone()
-                    .into_shape((shape[0], shape[1] * shape[2])) // (D, 2×D)
-                    .expect("reshape do tensor falhou")
-            };
-
-            if let Some(current_state) = state {
-                if current_state.shape()[1] != reshaped.shape()[0] {
-                    panic!(
-                        "❌ Erro de contração {}: state = {:?}, tensor = {:?} — dim compartilhada não bate: {} != {}",
-                        i,
-                        current_state.dim(),
-                        reshaped.dim(),
-                        current_state.shape()[1],
-                        reshaped.shape()[0]
-                    );
-                }
-
-                state = Some(contract(current_state, reshaped));
-            } else {
-                state = Some(reshaped);
-            }
+        if self.nodes.is_empty() {
+            return vec![QLangComplex::one()];
         }
-
-        state.expect("rede vazia").iter().cloned().collect()
+        let mut partial = Array2::from_elem((1, 1), QLangComplex::one());
+        for node in &self.nodes {
+            let (basis_count, left_bond) = partial.dim();
+            let shape = node.tensor.shape();
+            assert_eq!(left_bond, shape[0], "incompatible MPS bond dimensions");
+            let mut next = Array2::from_elem((basis_count * 2, shape[2]), QLangComplex::default());
+            for basis in 0..basis_count {
+                for left in 0..left_bond {
+                    for physical in 0..2 {
+                        for right in 0..shape[2] {
+                            next[[basis * 2 + physical, right]] +=
+                                partial[[basis, left]] * node.tensor[[left, physical, right]];
+                        }
+                    }
+                }
+            }
+            partial = next;
+        }
+        assert_eq!(partial.shape()[1], 1, "MPS must end with a unit right bond");
+        let mps_order: Vec<_> = partial.column(0).iter().copied().collect();
+        bit_reverse_order(&mps_order, self.nodes.len())
     }
 
     pub fn overwrite_from_state_vector(&mut self, state: Vec<QLangComplex>) {
-        let n = (state.len() as f64).log2().round() as usize;
-        self.nodes = Vec::with_capacity(n);
+        assert!(
+            state.len().is_power_of_two(),
+            "state length must be a power of two"
+        );
+        let n = state.len().trailing_zeros() as usize;
+        if n == 0 {
+            self.nodes.clear();
+            return;
+        }
+        let reordered = bit_reverse_order(&state, n);
+        let mut remainder = Array2::from_shape_vec((1, reordered.len()), reordered).unwrap();
+        let mut left_bond = 1;
+        self.nodes.clear();
 
-        let mut reshaped = Array1::from(state.clone())
-            .into_shape((1, state.len()))
-            .unwrap();
-        for _ in 0..n {
-            let dim = reshaped.shape()[1];
-            let reshaped_c64 = to_complex64(&reshaped.into_dimensionality::<Ix2>().unwrap());
-
-            // reshape para [2, rest] e aplicar SVD
-            let reshaped2 = reshaped_c64.into_shape((2, dim / 2)).unwrap();
-            let (u_opt, _, v_opt) = reshaped2.svd(true, true).unwrap();
-            let u = u_opt.unwrap();
-            let v = v_opt.unwrap();
-
-            // cortar em [1, 2, D1]
-            let tensor = from_complex64(&u).into_shape((1, 2, u.shape()[1])).unwrap();
-
+        for site in 0..n - 1 {
+            let remaining_qubits = n - site - 1;
+            let matrix = remainder
+                .into_shape((left_bond * 2, 1 << remaining_qubits))
+                .unwrap();
+            let (rows, columns) = matrix.dim();
+            let values: Vec<_> = matrix
+                .iter()
+                .map(|value| Complex64::new(value.re, value.im))
+                .collect();
+            let decomposition = DMatrix::from_row_slice(rows, columns, &values).svd(true, true);
+            let u = decomposition.u.unwrap();
+            let vt = decomposition.v_t.unwrap();
+            let singular = decomposition.singular_values;
+            let rank = singular.len();
+            let thin_u = Array2::from_shape_fn((rows, rank), |(row, column)| {
+                let value = u[(row, column)];
+                QLangComplex::new(value.re, value.im)
+            });
+            let tensor = thin_u.into_shape((left_bond, 2, rank)).unwrap();
             self.nodes.push(TensorNode { tensor });
 
-            reshaped = from_complex64(&v)
-                .into_shape((1, v.shape()[0] * v.shape()[1]))
-                .unwrap();
+            let mut weighted_vt = Array2::from_shape_fn((rank, columns), |(row, column)| {
+                let value = vt[(row, column)];
+                QLangComplex::new(value.re, value.im)
+            });
+            for row in 0..rank {
+                weighted_vt
+                    .slice_mut(s![row, ..])
+                    .mapv_inplace(|value| value * singular[row]);
+            }
+            remainder = weighted_vt;
+            left_bond = rank;
         }
-        let reshaped = reshaped; // garante que é o mesmo tipo
 
-        println!("🔎 Último reshape: reshaped.len() = {}", reshaped.len());
-        // Último tensor: se sobrar apenas um escalar, finalize
-        if reshaped.len() == 1 {
-            let mut final_tensor = Array3::zeros((1, 2, 1));
-            final_tensor[[0, 0, 0]] = reshaped.iter().next().cloned().unwrap();
-            self.nodes.push(TensorNode {
-                tensor: final_tensor,
-            });
-        } else {
-            assert_eq!(reshaped.len() % 2, 0, "❌ Último reshape inválido");
-            let final_tensor = reshaped
-                .clone()
-                .into_shape((reshaped.len() / 2, 2, 1))
-                .expect("❌ Último reshape do estado falhou");
-            self.nodes.push(TensorNode {
-                tensor: final_tensor,
-            });
-        }
+        let final_tensor = remainder.into_shape((left_bond, 2, 1)).unwrap();
+        self.nodes.push(TensorNode {
+            tensor: final_tensor,
+        });
     }
 
     pub fn debug_print_network_shapes(&self) {
@@ -127,4 +119,21 @@ impl TensorNetwork {
             println!("  Qubit {} → shape = {:?}", i, shape);
         }
     }
+}
+
+fn bit_reverse_order(values: &[QLangComplex], qubits: usize) -> Vec<QLangComplex> {
+    let mut reordered = vec![QLangComplex::default(); values.len()];
+    for (index, value) in values.iter().enumerate() {
+        reordered[reverse_bits(index, qubits)] = *value;
+    }
+    reordered
+}
+
+fn reverse_bits(mut value: usize, width: usize) -> usize {
+    let mut reversed = 0;
+    for _ in 0..width {
+        reversed = (reversed << 1) | (value & 1);
+        value >>= 1;
+    }
+    reversed
 }

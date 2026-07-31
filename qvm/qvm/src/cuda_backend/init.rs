@@ -1,13 +1,13 @@
 // src/qvm/cuda_backend/init.rs
 //#![cfg(feature = "cuda")]
 use super::CudaBackend;
-use crate::types::qlang_complex::QLangComplex;
 use cust::{
     context::Context,
     device::Device,
     memory::*,
     stream::{Stream, StreamFlags},
 };
+use qlang_core::types::qlang_complex::QLangComplex;
 
 impl CudaBackend {
     pub fn new(num_qubits: usize) -> Self {

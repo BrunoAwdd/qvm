@@ -24,11 +24,9 @@ mod selected_backend {
 }
 use selected_backend::Backend;*/
 
-
-
 // traits
-use qlang_core::gates::quantum_gate_abstract::QuantumGateAbstract;
 use crate::backend::QuantumBackend;
+use qlang_core::gates::quantum_gate_abstract::QuantumGateAbstract;
 use qlang_core::types::qlang_complex::QLangComplex;
 
 #[derive(Clone)]
@@ -262,34 +260,32 @@ impl QVM {
             return 0.0;
         }
 
-        // Matriz densidade reduzida do primeiro qubit (2x2)
+        // Matriz densidade reduzida do primeiro qubit (2x2). Agrupar os
+        // pares por ambiente evita o antigo laço quadrático sobre o estado.
         let mut rho = ndarray::Array2::<QLangComplex>::zeros((2, 2));
-        for i in 0..state.len() {
-            for j in 0..state.len() {
-                // Se os bits 1..N-1 forem iguais, some
-                if (i & !1) == (j & !1) {
-                    let a = state[i];
-                    let b = state[j];
-                    let idx_i = i & 1;
-                    let idx_j = j & 1;
-                    // a * b.conj()
-                    let prod = QLangComplex {
-                        re: a.re * b.re + a.im * b.im,
-                        im: a.im * b.re - a.re * b.im,
-                    };
-                    rho[[idx_i, idx_j]] += prod;
-                }
-            }
+        for environment in 0..(state.len() / 2) {
+            let a = state[environment << 1];
+            let b = state[(environment << 1) | 1];
+            rho[[0, 0]].re += a.norm_sqr();
+            rho[[1, 1]].re += b.norm_sqr();
+            rho[[0, 1]] += QLangComplex {
+                re: a.re * b.re + a.im * b.im,
+                im: a.im * b.re - a.re * b.im,
+            };
         }
+        rho[[1, 0]] = QLangComplex {
+            re: rho[[0, 1]].re,
+            im: -rho[[0, 1]].im,
+        };
 
-        // Converta para Complex64 para autovalores
-        let rho_c64 = qlang_core::types::qlang_complex::to_complex64(&rho);
-        let (vals, _vecs) = ndarray_linalg::eig::Eig::eig(&rho_c64).unwrap();
+        // A 2x2 Hermitian density matrix has analytic eigenvalues.
+        let trace = rho[[0, 0]].re + rho[[1, 1]].re;
+        let determinant = rho[[0, 0]].re * rho[[1, 1]].re - rho[[0, 1]].norm_sqr();
+        let discriminant = (trace * trace - 4.0 * determinant).max(0.0).sqrt();
+        let eigenvalues = [(trace + discriminant) / 2.0, (trace - discriminant) / 2.0];
 
-        // Entropia de von Neumann: -Tr(rho log2 rho)
         let mut entropy = 0.0;
-        for val in vals.iter() {
-            let p = val.re;
+        for p in eigenvalues {
             if p > 1e-12 {
                 entropy -= p * p.log2();
             }
@@ -307,8 +303,8 @@ impl Clone for QVM {
 }
 #[cfg(test)]
 mod tests {
-    use qlang_core::gates::{one_q::{hadamard::Hadamard, pauli_x::PauliX}, quantum_gate_abstract::QuantumGateAbstract};
     use crate::QVM;
+    use qlang_core::gates::one_q::pauli_x::PauliX;
 
     #[test]
     fn test_qvm_basic() {

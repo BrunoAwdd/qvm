@@ -1,8 +1,8 @@
 // src/qvm/cuda_backend/fallback.rs
 //#![cfg(feature = "cuda")]
 use super::CudaBackend;
-use crate::types::qlang_complex::QLangComplex;
 use ndarray::Array2;
+use qlang_core::types::qlang_complex::QLangComplex;
 
 use cust::memory::CopyDestination;
 
@@ -13,7 +13,7 @@ impl CudaBackend {
         self.state
             .copy_to(&mut host)
             .expect("Erro ao copiar do device");
-        let mut new_state = host.clone();
+        let mut new_state = vec![QLangComplex::zero(); dim];
 
         match qubits.len() {
             1 => {

@@ -55,128 +55,150 @@ impl QLang {
     }
 
     pub fn to_source(&self) -> String {
-        self.ast.iter().map(|cmd| cmd.to_string()).collect::<Vec<_>>().join("\n")
+        self.ast
+            .iter()
+            .map(|cmd| cmd.to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 
     pub fn append(&mut self, cmd: QLangCommand) {
-        if matches!(cmd, QLangCommand::MeasureAll) { self.collapsed = true; }
+        if matches!(cmd, QLangCommand::MeasureAll) {
+            self.collapsed = true;
+        }
         self.ast.push(cmd);
     }
 
     /// Runs the type-checker first; aborts with typed errors if any are found.
     pub fn run(&mut self) {
+        if let Err(error) = self.try_run() {
+            eprintln!("{error}");
+        }
+    }
+
+    pub fn try_run(&mut self) -> Result<(), String> {
         let mut tc = type_checker::TypeChecker::new(self.qvm.num_qubits());
         let errors = tc.check(&self.ast);
         if !errors.is_empty() {
-            for e in &errors { eprintln!("[QLang type error] {}", e); }
-            return;
+            return Err(errors
+                .into_iter()
+                .map(|error| format!("[QLang type error] {error}"))
+                .collect::<Vec<_>>()
+                .join("\n"));
         }
-        let _ = run_ast(&mut self.qvm, &self.ast, &mut self.variables, &mut self.functions);
+        let _ = run_ast(
+            &mut self.qvm,
+            &self.ast,
+            &mut self.variables,
+            &mut self.functions,
+        );
+        Ok(())
     }
 
     pub fn run_from_str(&mut self, code: &str) {
         self.append_from_lines(code.lines());
-        let _ = self.run_parsed_commands();
-        self.run();
+        if let Err(error) = self.run_parsed_commands().and_then(|_| self.try_run()) {
+            eprintln!("{error}");
+        }
     }
 
     pub fn run_parsed_commands(&mut self) -> Result<Option<Vec<u8>>, String> {
         self.parser.validate_lines();
+        if self.parser.has_errors() {
+            return Err(self.parser.get_errors().join("\n"));
+        }
         let commands = self.parser.get_commands().to_vec();
-        let mut final_result: Option<Vec<u8>> = None;
-
         for cmd in commands {
             match cmd {
-                QLangLine::Command(QLangCommand::ApplyGate(ref name, ref args)) => {
-                    self.push_ast(QLangCommand::ApplyGate(name.clone(), args.clone()));
-                }
-                QLangLine::Command(QLangCommand::Import { ref path }) => {
-                    let file_path = if path == "std" { "std.ql".to_string() }
-                    else if path.ends_with(".ql") { path.clone() }
-                    else { format!("{}.ql", path) };
-                    match fs::read_to_string(&file_path) {
-                        Ok(content) => {
-                            let mut parser = QLangParser::new();
-                            for line in content.lines() {
-                                let trimmed = line.trim();
-                                if !trimmed.is_empty() && !trimmed.starts_with("//") {
-                                    parser.append(line);
-                                }
-                            }
-                            parser.validate_lines();
-                            for cmd in parser.get_commands() {
-                                if let QLangLine::Command(QLangCommand::FunctionDef { name, params, param_types, return_type, body }) = cmd {
-                                    self.functions.insert(name.clone(), QLangCommand::FunctionDef {
-                                        name: name.clone(), params: params.clone(),
-                                        param_types: param_types.clone(), return_type: return_type.clone(),
-                                        body: body.clone(),
-                                    });
-                                }
-                            }
+                QLangLine::Command(QLangCommand::Import { path }) => {
+                    let file_path = if path == "std" {
+                        "std.ql".to_string()
+                    } else if path.ends_with(".ql") {
+                        path.clone()
+                    } else {
+                        format!("{}.ql", path)
+                    };
+                    let content = fs::read_to_string(&file_path)
+                        .map_err(|error| format!("Failed to import '{}': {}", path, error))?;
+                    let mut parser = QLangParser::new();
+                    for line in content.lines() {
+                        parser.append(line);
+                    }
+                    parser.validate_lines();
+                    if parser.has_errors() {
+                        return Err(format!(
+                            "Failed to import '{}': {}",
+                            path,
+                            parser.get_errors().join("\n")
+                        ));
+                    }
+                    for imported in parser.get_commands() {
+                        if let QLangLine::Command(command @ QLangCommand::FunctionDef { .. }) =
+                            imported
+                        {
+                            self.push_ast(command.clone());
                         }
-                        Err(e) => { return Err(format!("Failed to import '{}': {}", path, e)); }
                     }
                 }
-                QLangLine::Command(QLangCommand::FunctionDef { ref name, ref params, ref param_types, ref return_type, ref body }) => {
-                    self.functions.insert(name.clone(), QLangCommand::FunctionDef {
-                        name: name.clone(), params: params.clone(),
-                        param_types: param_types.clone(), return_type: return_type.clone(),
-                        body: body.clone(),
-                    });
-                    self.push_ast(QLangCommand::FunctionDef {
-                        name: name.clone(), params: params.clone(),
-                        param_types: param_types.clone(), return_type: return_type.clone(),
-                        body: body.clone(),
-                    });
-                }
                 QLangLine::Command(QLangCommand::Create(n)) => {
-                    if self.ast.iter().any(|cmd| matches!(cmd, QLangCommand::Create(_))) { continue; }
-                    self.reset();
+                    self.qvm = QVM::new(n);
+                    self.ast.clear();
+                    self.variables.clear();
+                    self.functions.clear();
+                    self.collapsed = false;
                     self.push_ast(QLangCommand::Create(n));
                 }
-                QLangLine::Command(QLangCommand::MeasureMany(qs)) => {
-                    self.push_ast(QLangCommand::MeasureMany(qs.clone()));
-                    self.run();
-                    let results = self.qvm.measure_many(&qs);
+                QLangLine::Run => {
+                    self.try_run()?;
                     self.clear_ast();
-                    final_result = Some(results);
                 }
-                QLangLine::Command(QLangCommand::Measure(q)) => {
-                    self.push_ast(QLangCommand::Measure(q));
-                    self.run();
-                    let result = self.qvm.measure(q);
-                    self.clear_ast();
-                    final_result = Some(vec![result]);
+                QLangLine::Reset => {
+                    self.reset();
+                    println!("Reset");
                 }
-                QLangLine::Command(QLangCommand::MeasureAll) => {
-                    self.append(QLangCommand::MeasureAll);
-                    self.run();
-                    let results = self.qvm.measure_all();
-                    self.clear_ast();
-                    final_result = Some(results);
+                QLangLine::Command(cmd) => {
+                    if matches!(
+                        cmd,
+                        QLangCommand::Measure(_)
+                            | QLangCommand::MeasureMany(_)
+                            | QLangCommand::MeasureAll
+                    ) {
+                        self.collapsed = true;
+                    }
+                    self.push_ast(cmd.clone());
                 }
-                QLangLine::Run => { self.run(); self.clear_ast(); }
-                QLangLine::Reset => { self.reset(); println!("Reset"); }
-                QLangLine::Command(cmd) => { self.push_ast(cmd.clone()); }
             }
         }
-        Ok(final_result)
+        Ok(None)
     }
 
     pub fn run_qlang_from_file(&mut self, file_path: &str) {
-        let program = fs::read_to_string(file_path).expect("Erro ao ler o arquivo");
+        if let Err(error) = self.try_run_qlang_from_file(file_path) {
+            eprintln!("{error}");
+        }
+    }
+
+    pub fn try_run_qlang_from_file(&mut self, file_path: &str) -> Result<Option<Vec<u8>>, String> {
+        let program = fs::read_to_string(file_path)
+            .map_err(|e| format!("Failed to read '{}': {}", file_path, e))?;
         self.append_from_lines(program.lines());
-        let _ = self.run_parsed_commands();
+        self.run_parsed_commands()?;
+        self.try_run()?;
+        Ok(None)
     }
 
     pub fn append_from_str(&mut self, line: &str) {
         let trimmed = line.trim();
-        if trimmed.is_empty() || trimmed.starts_with("//") { return; }
+        if trimmed.is_empty() || trimmed.starts_with("//") {
+            return;
+        }
         self.parser.append(line)
     }
 
     pub fn append_from_lines(&mut self, lines: Lines) {
-        for line in lines { self.parser.append(line); }
+        for line in lines {
+            self.parser.append(line);
+        }
     }
 
     pub fn reset(&mut self) {
@@ -185,6 +207,19 @@ impl QLang {
         self.parser = QLangParser::new();
         self.qvm.reset();
         self.variables.clear();
+    }
+
+    /// Discards the parsed program while preserving the current quantum state.
+    ///
+    /// This is useful for embedding APIs where each submitted source string is
+    /// a new unit of execution, but gates should continue from the current QVM
+    /// state.
+    pub fn clear_program(&mut self) {
+        self.ast.clear();
+        self.parser = QLangParser::new();
+        self.variables.clear();
+        self.functions.clear();
+        self.collapsed = false;
     }
 
     pub fn clear_ast(&mut self) { self.ast.clear(); }

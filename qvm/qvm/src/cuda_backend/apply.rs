@@ -2,17 +2,19 @@
 //#![cfg(feature = "cuda")]
 use super::CudaBackend;
 use crate::{
-    gates::quantum_gate_abstract::QuantumGateAbstract,
-    qvm::{
-        cuda::executor::{launch_cuda_gate_kernel, KernelArg},
-        util::{get_cuda_gate_kernel, infer_theta_from_matrix},
-    },
+    cuda::executor::{launch_cuda_gate_kernel, KernelArg},
+    util::{get_cuda_gate_kernel, infer_theta_from_matrix},
 };
+use qlang_core::gates::quantum_gate_abstract::QuantumGateAbstract;
 
 impl CudaBackend {
     pub fn apply_gate(&mut self, gate: &dyn QuantumGateAbstract, qubit: usize) {
         let name = gate.name();
-        if let Some(kernel) = get_cuda_gate_kernel(name) {
+        if cfg!(feature = "cuda-kernels") {
+            let Some(kernel) = get_cuda_gate_kernel(name) else {
+                self.execute_fallback(&gate.matrix(), &[qubit]);
+                return;
+            };
             let mut args = vec![
                 KernelArg::Ptr(self.state.as_device_ptr()),
                 KernelArg::I32(qubit as i32),
@@ -38,9 +40,9 @@ impl CudaBackend {
                 &self._stream,
                 &self.context,
             );
-        } else {
-            self.execute_fallback(&gate.matrix(), &[qubit]);
+            return;
         }
+        self.execute_fallback(&gate.matrix(), &[qubit]);
     }
 
     pub fn apply_gate_2q(&mut self, gate: &dyn QuantumGateAbstract, q1: usize, q2: usize) {
@@ -61,7 +63,11 @@ impl CudaBackend {
             n - 1
         );
 
-        if let Some(kernel) = get_cuda_gate_kernel(gate.name()) {
+        if cfg!(feature = "cuda-kernels") {
+            let Some(kernel) = get_cuda_gate_kernel(gate.name()) else {
+                self.execute_fallback(&gate.matrix(), &[q0, q1, q2]);
+                return;
+            };
             let mut args = vec![
                 KernelArg::Ptr(self.state.as_device_ptr()),
                 KernelArg::I32(q0 as i32),
@@ -82,8 +88,8 @@ impl CudaBackend {
                 &self._stream,
                 &self.context,
             );
-        } else {
-            self.execute_fallback(&gate.matrix(), &[q0, q1, q2]);
+            return;
         }
+        self.execute_fallback(&gate.matrix(), &[q0, q1, q2]);
     }
 }

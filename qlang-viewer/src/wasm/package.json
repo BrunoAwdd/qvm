@@ -1,0 +1,15 @@
+{
+  "name": "qlang-wasm",
+  "type": "module",
+  "version": "0.3.0",
+  "files": [
+    "qlang_wasm_bg.wasm",
+    "qlang_wasm.js",
+    "qlang_wasm.d.ts"
+  ],
+  "main": "qlang_wasm.js",
+  "types": "qlang_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

@@ -99,8 +99,8 @@ export const GATE_VISUALS: Record<string, GateVisual> = {
     shape: "connector",
     color: "#4B5563",
   },
-  m: {
-    name: "m",
+  measure: {
+    name: "measure",
     label: "M",
     qubits: 1,
     shape: "measure",

@@ -1,0 +1,19 @@
+name: CUDA runtime
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gpu-tests:
+    runs-on: [self-hosted, linux, x64, gpu]
+    defaults:
+      run:
+        working-directory: qvm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: nvidia-smi
+      - run: cargo test -p qvm --features cuda --test quantum_circuits -- --test-threads=1

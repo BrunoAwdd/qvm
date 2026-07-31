@@ -1,5 +1,5 @@
-use qlang_core::types::qlang_complex::QLangComplex;
 use ndarray::Array2;
+use qlang_core::types::qlang_complex::QLangComplex;
 
 pub struct GateKernel {
     pub kernel_name: &'static str,

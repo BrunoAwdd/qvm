@@ -1,8 +1,8 @@
 // src/qvm/cuda_backend/measure.rs
 //#![cfg(feature = "cuda")]
 use super::CudaBackend;
-use crate::types::qlang_complex::QLangComplex;
 use cust::memory::CopyDestination;
+use qlang_core::types::qlang_complex::QLangComplex;
 use rand::Rng;
 
 impl CudaBackend {

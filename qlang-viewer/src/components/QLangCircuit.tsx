@@ -18,10 +18,6 @@ const QLangCircuit: React.FC<Props> = ({ circuit }) => {
   const width = (gates.length + 2) * spacingX;
   const height = (qubits + 1) * spacingY;
 
-  gates.forEach((gate) => {
-    console.log("Gate:", gate.name, gate.targets);
-  });
-
   return (
     <svg
       width={width}
@@ -62,12 +58,11 @@ const QLangCircuit: React.FC<Props> = ({ circuit }) => {
         return gate.targets.map((q, j) => {
           const y = (q + 1) * spacingY;
           if (visual.shape === "measure") {
-            const y = (qubits * spacingY) / 2;
             return (
               <g key={`${idx}-${j}`}>
                 <rect
-                  x={x - gateSize / 3}
-                  y={y}
+                  x={x - gateSize / 2}
+                  y={y - gateSize / 2}
                   width={gateSize}
                   height={gateSize}
                   fill={visual.color}
@@ -75,8 +70,8 @@ const QLangCircuit: React.FC<Props> = ({ circuit }) => {
                   rx={4}
                 />
                 <text
-                  x={x + 5}
-                  y={y + 20}
+                  x={x}
+                  y={y + 5}
                   textAnchor="middle"
                   fontSize={14}
                   fill={visual.textColor ?? "#000"}
@@ -87,7 +82,6 @@ const QLangCircuit: React.FC<Props> = ({ circuit }) => {
               </g>
             );
           }
-          console.log("gateSize", visual.label, y);
           return (
             <g key={`${idx}-${j}`}>
               {visual.shape === "rect" && (

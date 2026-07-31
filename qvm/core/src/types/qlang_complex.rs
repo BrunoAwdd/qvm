@@ -1,8 +1,8 @@
+use bytemuck::{Pod, Zeroable};
 use ndarray::{Array2, ArrayBase, Data, Ix2, ScalarOperand};
 use num_complex::Complex64;
 use num_traits::{One, Zero};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-use bytemuck::{Zeroable, Pod};
 
 #[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]

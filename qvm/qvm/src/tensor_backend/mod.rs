@@ -1,16 +1,14 @@
 // src/qvm/tensor_backend/mod.rs
 
 pub mod apply;
-pub mod fallback;
 pub mod init;
 pub mod measure;
 
+use crate::backend::QuantumBackend;
 use qlang_core::{
-    gates::quantum_gate_abstract::QuantumGateAbstract,
-    state::tensor_network::TensorNetwork,
+    gates::quantum_gate_abstract::QuantumGateAbstract, state::tensor_network::TensorNetwork,
     types::qlang_complex::QLangComplex,
 };
-use crate::backend::QuantumBackend;
 
 pub struct TensorBackend {
     pub network: TensorNetwork,
@@ -62,8 +60,10 @@ impl QuantumBackend for TensorBackend {
 
 impl Clone for TensorBackend {
     fn clone(&self) -> Self {
-        // Clonagem ingênua por enquanto
-        TensorBackend::new(self.num_qubits)
+        Self {
+            network: self.network.clone(),
+            num_qubits: self.num_qubits,
+        }
     }
 }
 

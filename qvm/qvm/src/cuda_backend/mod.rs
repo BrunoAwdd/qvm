@@ -6,11 +6,11 @@ pub mod fallback;
 pub mod init;
 pub mod measure;
 
-use crate::{
-    gates::quantum_gate_abstract::QuantumGateAbstract, qvm::backend::QuantumBackend,
-    types::qlang_complex::QLangComplex,
-};
+use crate::backend::QuantumBackend;
 use cust::{context::Context, device::Device, memory::*, stream::Stream};
+use qlang_core::{
+    gates::quantum_gate_abstract::QuantumGateAbstract, types::qlang_complex::QLangComplex,
+};
 
 pub struct CudaBackend {
     // Context must be dropped last

@@ -2,5 +2,9 @@
 members = [
     "core",
     "qvm",
-    "qlang"
+    "qlang-syntax",
+    "qlang",
+    "qlang-ffi",
+    "qlang-wasm"
 ]
+resolver = "2"

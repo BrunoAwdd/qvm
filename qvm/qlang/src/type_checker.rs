@@ -16,16 +16,15 @@ pub enum QLangType {
 }
 
 impl QLangType {
-    pub fn from_annotation(ann: &TypeAnnotation) -> Self {
-        match ann {
-            TypeAnnotation::Qubit       => QLangType::Qubit,
-            TypeAnnotation::Bit         => QLangType::Bit,
-            TypeAnnotation::Int         => QLangType::Int,
-            TypeAnnotation::Float       => QLangType::Float,
-            TypeAnnotation::Bool        => QLangType::Bool,
-            TypeAnnotation::Void        => QLangType::Void,
-            TypeAnnotation::Array(inner)=>
-                QLangType::Array(Box::new(QLangType::from_annotation(inner))),
+    pub fn from_annotation(annotation: &TypeAnnotation) -> Self {
+        match annotation {
+            TypeAnnotation::Qubit => Self::Qubit,
+            TypeAnnotation::Bit => Self::Bit,
+            TypeAnnotation::Int => Self::Int,
+            TypeAnnotation::Float => Self::Float,
+            TypeAnnotation::Bool => Self::Bool,
+            TypeAnnotation::Void => Self::Void,
+            TypeAnnotation::Array(inner) => Self::Array(Box::new(Self::from_annotation(inner))),
         }
     }
 }
@@ -33,25 +32,36 @@ impl QLangType {
 impl std::fmt::Display for QLangType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            QLangType::Qubit    => write!(f, "qubit"),
-            QLangType::Bit      => write!(f, "bit"),
-            QLangType::Int      => write!(f, "int"),
-            QLangType::Float    => write!(f, "float"),
-            QLangType::Bool     => write!(f, "bool"),
-            QLangType::Array(t) => write!(f, "[{}]", t),
-            QLangType::Void     => write!(f, "void"),
-            QLangType::Unknown  => write!(f, "unknown"),
+            Self::Qubit => write!(f, "qubit"),
+            Self::Bit => write!(f, "bit"),
+            Self::Int => write!(f, "int"),
+            Self::Float => write!(f, "float"),
+            Self::Bool => write!(f, "bool"),
+            Self::Array(inner) => write!(f, "[{}]", inner),
+            Self::Void => write!(f, "void"),
+            Self::Unknown => write!(f, "unknown"),
         }
     }
 }
 
+#[derive(Clone)]
+struct FunctionSignature {
+    params: Vec<QLangType>,
+    return_type: QLangType,
+}
+
+#[derive(Clone)]
 pub struct TypeChecker {
     env: HashMap<String, QLangType>,
     consumed_slots: HashSet<usize>,
     qubit_vars: HashMap<String, usize>,
+    slot_owners: HashMap<usize, String>,
     moved_vars: HashSet<String>,
-    functions: HashMap<String, (usize, Vec<QLangType>, QLangType)>,
+    consumed_vars: HashSet<String>,
+    functions: HashMap<String, FunctionSignature>,
     num_qubits: usize,
+    expected_return: Option<QLangType>,
+    loop_depth: usize,
     in_qif: bool,
     pub errors: Vec<QLangError>,
 }
@@ -62,9 +72,13 @@ impl TypeChecker {
             env: HashMap::new(),
             consumed_slots: HashSet::new(),
             qubit_vars: HashMap::new(),
+            slot_owners: HashMap::new(),
             moved_vars: HashSet::new(),
+            consumed_vars: HashSet::new(),
             functions: HashMap::new(),
             num_qubits,
+            expected_return: None,
+            loop_depth: 0,
             in_qif: false,
             errors: Vec::new(),
         }
@@ -72,183 +86,681 @@ impl TypeChecker {
 
     pub fn check(&mut self, ast: &[QLangCommand]) -> Vec<QLangError> {
         self.errors.clear();
-        for cmd in ast { self.check_command(cmd); }
+        self.env.clear();
+        self.consumed_slots.clear();
+        self.qubit_vars.clear();
+        self.slot_owners.clear();
+        self.moved_vars.clear();
+        self.consumed_vars.clear();
+        self.functions.clear();
+        self.predeclare_functions(ast);
+        for command in ast {
+            self.check_command(command);
+        }
         self.errors.clone()
     }
 
-    fn check_command(&mut self, cmd: &QLangCommand) {
-        match cmd {
-            QLangCommand::Create(n) => {
-                self.num_qubits = *n;
-                self.consumed_slots.clear();
-                self.qubit_vars.clear();
-                self.moved_vars.clear();
-                self.env.clear();
-            }
-            QLangCommand::Let { name, type_ann, value } => {
-                let inferred = self.infer_type(value);
-                let declared = type_ann.as_ref().map(QLangType::from_annotation);
-                if let (Some(decl), ref inf) = (&declared, &inferred) {
-                    if !types_compatible(decl, inf) {
-                        self.errors.push(QLangError::TypeError(format!(
-                            "variable '{}' declared as {} but assigned {}", name, decl, inf
-                        )));
-                    }
-                }
-                let final_type = declared.unwrap_or(inferred.clone());
-                if let QLangType::Qubit = &final_type {
-                    if let Some(slot) = extract_qubit_slot(value) {
-                        self.qubit_vars.insert(name.clone(), slot);
-                    }
-                }
-                if let Expression::Variable(src) = value {
-                    if self.env.get(src) == Some(&QLangType::Qubit) {
-                        self.moved_vars.insert(src.clone());
-                    }
-                }
-                self.env.insert(name.clone(), final_type);
-            }
-            QLangCommand::Assign { name, value } => {
-                let inferred = self.infer_type(value);
-                if let Expression::Variable(src) = value {
-                    if self.env.get(src) == Some(&QLangType::Qubit) {
-                        self.moved_vars.insert(src.clone());
-                    }
-                }
-                self.env.insert(name.clone(), inferred);
-            }
-            QLangCommand::FunctionDef { name, params, param_types, return_type, body } => {
-                let p_types: Vec<QLangType> = param_types.iter()
-                    .map(|t| t.as_ref().map(QLangType::from_annotation).unwrap_or(QLangType::Unknown))
+    fn predeclare_functions(&mut self, ast: &[QLangCommand]) {
+        for command in ast {
+            if let QLangCommand::FunctionDef {
+                name,
+                params,
+                param_types,
+                return_type,
+                ..
+            } = command
+            {
+                let types = params
+                    .iter()
+                    .enumerate()
+                    .map(|(index, _)| {
+                        param_types
+                            .get(index)
+                            .and_then(Option::as_ref)
+                            .map(QLangType::from_annotation)
+                            .unwrap_or(QLangType::Unknown)
+                    })
                     .collect();
-                let r_type = return_type.as_ref().map(QLangType::from_annotation).unwrap_or(QLangType::Void);
-                self.functions.insert(name.clone(), (params.len(), p_types.clone(), r_type));
-                let mut inner = TypeChecker {
-                    env: params.iter().zip(p_types.iter()).map(|(p, t)| (p.clone(), t.clone())).collect(),
-                    consumed_slots: self.consumed_slots.clone(),
-                    qubit_vars: HashMap::new(),
-                    moved_vars: HashSet::new(),
-                    functions: self.functions.clone(),
-                    num_qubits: self.num_qubits,
-                    in_qif: false,
-                    errors: Vec::new(),
-                };
-                inner.check(body);
-                self.errors.extend(inner.errors);
+                let return_type = return_type
+                    .as_ref()
+                    .map(QLangType::from_annotation)
+                    .unwrap_or(QLangType::Void);
+                self.functions.insert(
+                    name.clone(),
+                    FunctionSignature {
+                        params: types,
+                        return_type,
+                    },
+                );
             }
-            QLangCommand::Measure(q) => self.check_qubit_slot(*q, true),
-            QLangCommand::MeasureMany(qs) => { for &q in qs { self.check_qubit_slot(q, true); } }
-            QLangCommand::MeasureAll => { for i in 0..self.num_qubits { self.consumed_slots.insert(i); } }
+        }
+    }
+
+    fn check_command(&mut self, command: &QLangCommand) {
+        match command {
+            QLangCommand::Create(size) => self.reset_register(*size),
+            QLangCommand::Let {
+                name,
+                type_ann,
+                value,
+            } => self.check_let(name, type_ann.as_ref(), value),
+            QLangCommand::Assign { name, value } => self.check_assignment(name, value),
+            QLangCommand::FunctionDef {
+                name, params, body, ..
+            } => self.check_function(name, params, body),
             QLangCommand::ApplyGate(name, args) => {
-                for arg in args { self.check_expression_qubit_use(arg); }
-                if let Some((expected, _, _)) = self.functions.get(name) {
-                    if args.len() != *expected {
-                        self.errors.push(QLangError::ArityMismatch { name: name.clone(), expected: *expected, got: args.len() });
+                self.check_call(name, args, true);
+            }
+            QLangCommand::Measure(slot) => self.check_qubit_slot(*slot, true),
+            QLangCommand::MeasureMany(slots) => {
+                for slot in slots {
+                    self.check_qubit_slot(*slot, true);
+                }
+            }
+            QLangCommand::MeasureAll => {
+                self.consumed_slots.extend(0..self.num_qubits);
+            }
+            QLangCommand::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                self.check_condition(condition, "if");
+                self.check_branches(then_branch, else_branch.as_deref());
+            }
+            QLangCommand::QIf {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                let condition_type = self.check_expression(condition);
+                if !matches!(
+                    condition_type,
+                    QLangType::Qubit | QLangType::Int | QLangType::Unknown
+                ) {
+                    self.type_error(format!(
+                        "qif condition must be a qubit, found {condition_type}"
+                    ));
+                }
+                let previous = self.in_qif;
+                self.in_qif = true;
+                self.check_branches(then_branch, else_branch.as_deref());
+                self.in_qif = previous;
+            }
+            QLangCommand::While { condition, body } => {
+                self.check_condition(condition, "while");
+                self.check_loop(body);
+            }
+            QLangCommand::For {
+                var,
+                start,
+                end,
+                body,
+            } => {
+                self.expect_type(start, &QLangType::Int, "for range start");
+                self.expect_type(end, &QLangType::Int, "for range end");
+                let previous = self.env.insert(var.clone(), QLangType::Int);
+                self.check_loop(body);
+                if let Some(previous) = previous {
+                    self.env.insert(var.clone(), previous);
+                } else {
+                    self.env.remove(var);
+                }
+            }
+            QLangCommand::Return(expression) => self.check_return(expression),
+            QLangCommand::Break | QLangCommand::Continue => {
+                if self.loop_depth == 0 {
+                    self.type_error("break/continue may only be used inside a loop".into());
+                }
+            }
+            QLangCommand::Display | QLangCommand::ListFunctions | QLangCommand::Import { .. } => {}
+        }
+    }
+
+    fn reset_register(&mut self, size: usize) {
+        self.num_qubits = size;
+        self.env.clear();
+        self.consumed_slots.clear();
+        self.qubit_vars.clear();
+        self.slot_owners.clear();
+        self.moved_vars.clear();
+        self.consumed_vars.clear();
+    }
+
+    fn check_let(&mut self, name: &str, annotation: Option<&TypeAnnotation>, value: &Expression) {
+        let inferred = self.check_expression(value);
+        let declared = annotation.map(QLangType::from_annotation);
+        if let Some(declared) = &declared {
+            if !types_compatible(declared, &inferred) {
+                self.type_error(format!(
+                    "variable '{name}' declared as {declared} but assigned {inferred}"
+                ));
+            }
+        }
+        let final_type = declared.unwrap_or(inferred);
+        self.bind_value(name, value, &final_type);
+        self.env.insert(name.to_string(), final_type);
+    }
+
+    fn check_assignment(&mut self, name: &str, value: &Expression) {
+        let Some(existing) = self.env.get(name).cloned() else {
+            self.errors
+                .push(QLangError::UnknownVariable(name.to_string()));
+            self.check_expression(value);
+            return;
+        };
+        let inferred = self.check_expression(value);
+        if !types_compatible(&existing, &inferred) {
+            self.type_error(format!(
+                "cannot assign {inferred} to variable '{name}' of type {existing}"
+            ));
+            return;
+        }
+        self.release_qubit_binding(name);
+        self.bind_value(name, value, &existing);
+    }
+
+    fn bind_value(&mut self, name: &str, value: &Expression, value_type: &QLangType) {
+        if value_type != &QLangType::Qubit {
+            return;
+        }
+        let slot = match value {
+            Expression::Variable(source) => {
+                let slot = self.qubit_vars.get(source).copied();
+                if slot.is_some() {
+                    self.moved_vars.insert(source.clone());
+                    self.qubit_vars.remove(source);
+                }
+                if self.consumed_vars.contains(source) {
+                    self.consumed_vars.insert(name.to_string());
+                }
+                slot
+            }
+            _ => extract_qubit_slot(value),
+        };
+        let Some(slot) = slot else { return };
+        if slot >= self.num_qubits {
+            self.errors.push(QLangError::QubitOutOfRange(slot));
+            return;
+        }
+        if let Some(owner) = self.slot_owners.get(&slot) {
+            if owner != name && !self.moved_vars.contains(owner) {
+                self.type_error(format!(
+                    "qubit {slot} is already owned by variable '{owner}'"
+                ));
+                return;
+            }
+        }
+        self.slot_owners.insert(slot, name.to_string());
+        self.qubit_vars.insert(name.to_string(), slot);
+        self.moved_vars.remove(name);
+    }
+
+    fn release_qubit_binding(&mut self, name: &str) {
+        if let Some(slot) = self.qubit_vars.remove(name) {
+            if self
+                .slot_owners
+                .get(&slot)
+                .is_some_and(|owner| owner == name)
+            {
+                self.slot_owners.remove(&slot);
+            }
+        }
+    }
+
+    fn check_function(&mut self, name: &str, params: &[String], body: &[QLangCommand]) {
+        let Some(signature) = self.functions.get(name).cloned() else {
+            return;
+        };
+        let mut inner = Self::new(self.num_qubits);
+        inner.functions = self.functions.clone();
+        inner.expected_return = Some(signature.return_type.clone());
+        for (param, param_type) in params.iter().zip(signature.params.iter()) {
+            inner.env.insert(param.clone(), param_type.clone());
+        }
+        for command in body {
+            inner.check_command(command);
+        }
+        if signature.return_type != QLangType::Void && !guarantees_return(body) {
+            inner.type_error(format!(
+                "function '{name}' declares return type {} but does not return on every path",
+                signature.return_type
+            ));
+        }
+        self.errors.extend(inner.errors);
+    }
+
+    fn check_call(&mut self, name: &str, args: &[Expression], statement: bool) -> QLangType {
+        if self.in_qif && !is_native_gate(name) && !self.functions.contains_key(name) {
+            self.errors.push(QLangError::NonGateInQif);
+        }
+        if let Some(signature) = self.functions.get(name).cloned() {
+            if args.len() != signature.params.len() {
+                self.errors.push(QLangError::ArityMismatch {
+                    name: name.to_string(),
+                    expected: signature.params.len(),
+                    got: args.len(),
+                });
+            }
+            for (index, argument) in args.iter().enumerate() {
+                let actual = self.check_expression(argument);
+                if let Some(expected) = signature.params.get(index) {
+                    if !gate_argument_compatible(expected, &actual) {
+                        self.type_error(format!(
+                            "argument {} of '{name}' expects {expected}, found {actual}",
+                            index + 1
+                        ));
                     }
                 }
             }
-            QLangCommand::QIf { condition, then_branch, else_branch } => {
-                self.check_expression_qubit_use(condition);
-                let prev = self.in_qif;
-                self.in_qif = true;
-                for cmd in then_branch { self.check_qif_cmd(cmd); }
-                if let Some(else_cmds) = else_branch { for cmd in else_cmds { self.check_qif_cmd(cmd); } }
-                self.in_qif = prev;
+            return signature.return_type;
+        }
+        if name == "alloc" {
+            if args.len() != 1 {
+                self.errors.push(QLangError::ArityMismatch {
+                    name: name.into(),
+                    expected: 1,
+                    got: args.len(),
+                });
             }
-            QLangCommand::If { then_branch, else_branch, .. } => {
-                for cmd in then_branch { self.check_command(cmd); }
-                if let Some(cmds) = else_branch { for cmd in cmds { self.check_command(cmd); } }
+            for argument in args {
+                self.expect_type(argument, &QLangType::Int, "alloc argument");
             }
-            QLangCommand::While { body, .. } => { for cmd in body { self.check_command(cmd); } }
-            QLangCommand::For { var, body, .. } => {
-                self.env.insert(var.clone(), QLangType::Int);
-                for cmd in body { self.check_command(cmd); }
+            return QLangType::Qubit;
+        }
+        if let Some(parameter_types) = native_gate_signature(name) {
+            if args.len() != parameter_types.len() {
+                self.errors.push(QLangError::ArityMismatch {
+                    name: name.into(),
+                    expected: parameter_types.len(),
+                    got: args.len(),
+                });
             }
-            QLangCommand::Return(expr) => { self.infer_type(expr); }
-            QLangCommand::Display | QLangCommand::ListFunctions | QLangCommand::Import { .. }
-            | QLangCommand::Break | QLangCommand::Continue => {}
+            for (index, argument) in args.iter().enumerate() {
+                let actual = self.check_expression(argument);
+                if let Some(expected) = parameter_types.get(index) {
+                    if expected == &QLangType::Qubit {
+                        self.check_qubit_argument(argument);
+                    }
+                    if !gate_argument_compatible(expected, &actual) {
+                        self.type_error(format!(
+                            "argument {} of gate '{name}' expects {expected}, found {actual}",
+                            index + 1
+                        ));
+                    }
+                }
+            }
+            return QLangType::Void;
+        }
+        for argument in args {
+            self.check_expression(argument);
+        }
+        self.errors.push(QLangError::UnknownGate(name.to_string()));
+        if statement {
+            QLangType::Void
+        } else {
+            QLangType::Unknown
         }
     }
 
-    fn check_qif_cmd(&mut self, cmd: &QLangCommand) {
-        match cmd {
-            QLangCommand::Measure(_) | QLangCommand::MeasureMany(_) | QLangCommand::MeasureAll => {
-                self.errors.push(QLangError::NonGateInQif);
-            }
-            QLangCommand::ApplyGate(_, args) => { for arg in args { self.check_expression_qubit_use(arg); } }
-            other => self.check_command(other),
-        }
-    }
-
-    fn check_expression_qubit_use(&mut self, expr: &Expression) {
-        match expr {
-            Expression::Number(n) => {
-                let slot = *n as usize;
-                if self.consumed_slots.contains(&slot) { self.errors.push(QLangError::QubitAlreadyMeasured(slot)); }
-            }
-            Expression::Variable(v) => {
-                if self.moved_vars.contains(v) {
-                    self.errors.push(QLangError::TypeError(format!("qubit variable '{}' has been moved and cannot be used again", v)));
-                }
-                if let Some(&slot) = self.qubit_vars.get(v) {
-                    if self.consumed_slots.contains(&slot) { self.errors.push(QLangError::QubitAlreadyMeasured(slot)); }
+    fn check_expression(&mut self, expression: &Expression) -> QLangType {
+        match expression {
+            Expression::Number(number) => {
+                if number.is_finite() && *number == number.floor() {
+                    QLangType::Int
+                } else {
+                    QLangType::Float
                 }
             }
-            Expression::Call(_, args) | Expression::Array(args) => { for a in args { self.check_expression_qubit_use(a); } }
-            Expression::Index(arr, idx) => { self.check_expression_qubit_use(arr); self.check_expression_qubit_use(idx); }
+            Expression::Variable(name) => {
+                if self.moved_vars.contains(name) {
+                    self.type_error(format!(
+                        "qubit variable '{name}' has been moved and cannot be used again"
+                    ));
+                }
+                if self.consumed_vars.contains(name) {
+                    self.type_error(format!("qubit variable '{name}' has already been measured"));
+                }
+                self.env.get(name).cloned().unwrap_or_else(|| {
+                    self.errors.push(QLangError::UnknownVariable(name.clone()));
+                    QLangType::Unknown
+                })
+            }
             Expression::Measure(inner) => {
-                if let Expression::Number(n) = inner.as_ref() { self.check_qubit_slot(*n as usize, true); }
-                self.check_expression_qubit_use(inner);
+                let inner_type = self.check_expression(inner);
+                if !matches!(
+                    inner_type,
+                    QLangType::Qubit | QLangType::Int | QLangType::Unknown
+                ) {
+                    self.type_error(format!("measure expects a qubit, found {inner_type}"));
+                }
+                self.consume_qubit_argument(inner);
+                QLangType::Bit
             }
-            Expression::BinaryOp { left, right, .. } => { self.check_expression_qubit_use(left); self.check_expression_qubit_use(right); }
+            Expression::Array(elements) => self.check_array(elements),
+            Expression::Index(array, index) => {
+                self.expect_type(index, &QLangType::Int, "array index");
+                match self.check_expression(array) {
+                    QLangType::Array(element) => *element,
+                    QLangType::Unknown => QLangType::Unknown,
+                    other => {
+                        self.type_error(format!("cannot index value of type {other}"));
+                        QLangType::Unknown
+                    }
+                }
+            }
+            Expression::BinaryOp { left, op, right } => self.check_binary(left, op, right),
+            Expression::Call(name, args) => self.check_call(name, args, false),
+        }
+    }
+
+    fn check_array(&mut self, elements: &[Expression]) -> QLangType {
+        let Some(first) = elements.first() else {
+            return QLangType::Array(Box::new(QLangType::Unknown));
+        };
+        let element_type = self.check_expression(first);
+        for element in &elements[1..] {
+            let actual = self.check_expression(element);
+            if !types_compatible(&element_type, &actual) {
+                self.type_error(format!(
+                    "array elements must have one type, found {element_type} and {actual}"
+                ));
+            }
+        }
+        QLangType::Array(Box::new(element_type))
+    }
+
+    fn check_binary(
+        &mut self,
+        left: &Expression,
+        operator: &Operator,
+        right: &Expression,
+    ) -> QLangType {
+        let left_type = self.check_expression(left);
+        let right_type = self.check_expression(right);
+        match operator {
+            Operator::Add | Operator::Sub | Operator::Mul | Operator::Div => {
+                if !is_numeric(&left_type) || !is_numeric(&right_type) {
+                    self.type_error(format!(
+                        "operator '{operator}' requires numbers, found {left_type} and {right_type}"
+                    ));
+                    QLangType::Unknown
+                } else if left_type == QLangType::Float || right_type == QLangType::Float {
+                    QLangType::Float
+                } else {
+                    QLangType::Int
+                }
+            }
+            Operator::And | Operator::Or => {
+                if !is_condition_type(&left_type) || !is_condition_type(&right_type) {
+                    self.type_error(format!(
+                        "operator '{operator}' requires boolean-compatible operands"
+                    ));
+                }
+                QLangType::Bool
+            }
+            Operator::Eq | Operator::Neq => {
+                if !types_compatible(&left_type, &right_type) {
+                    self.type_error(format!("cannot compare {left_type} with {right_type}"));
+                }
+                QLangType::Bool
+            }
+            Operator::Lt | Operator::Gt | Operator::Le | Operator::Ge => {
+                if !is_numeric(&left_type) || !is_numeric(&right_type) {
+                    self.type_error(format!("operator '{operator}' requires numeric operands"));
+                }
+                QLangType::Bool
+            }
+        }
+    }
+
+    fn check_condition(&mut self, condition: &Expression, context: &str) {
+        let condition_type = self.check_expression(condition);
+        if !is_condition_type(&condition_type) {
+            self.type_error(format!(
+                "{context} condition must be boolean-compatible, found {condition_type}"
+            ));
+        }
+    }
+
+    fn check_branches(
+        &mut self,
+        then_branch: &[QLangCommand],
+        else_branch: Option<&[QLangCommand]>,
+    ) {
+        let initial_errors = self.errors.len();
+        let mut then_checker = self.clone();
+        then_checker.errors.clear();
+        for command in then_branch {
+            then_checker.check_command(command);
+        }
+        let mut else_checker = self.clone();
+        else_checker.errors.clear();
+        if let Some(branch) = else_branch {
+            for command in branch {
+                else_checker.check_command(command);
+            }
+        }
+        self.errors.truncate(initial_errors);
+        self.errors.extend(then_checker.errors);
+        self.errors.extend(else_checker.errors);
+        self.consumed_slots.extend(then_checker.consumed_slots);
+        self.consumed_slots.extend(else_checker.consumed_slots);
+        self.moved_vars.extend(then_checker.moved_vars);
+        self.moved_vars.extend(else_checker.moved_vars);
+        self.consumed_vars.extend(then_checker.consumed_vars);
+        self.consumed_vars.extend(else_checker.consumed_vars);
+    }
+
+    fn check_loop(&mut self, body: &[QLangCommand]) {
+        let before_consumed = self.consumed_slots.clone();
+        self.loop_depth += 1;
+        for command in body {
+            self.check_command(command);
+        }
+        self.loop_depth -= 1;
+        let newly_consumed: Vec<_> = self
+            .consumed_slots
+            .difference(&before_consumed)
+            .copied()
+            .collect();
+        for slot in newly_consumed {
+            self.type_error(format!(
+                "loop body consumes qubit {slot}; a later iteration could reuse a measured qubit"
+            ));
+        }
+    }
+
+    fn check_return(&mut self, expression: &Expression) {
+        let actual = self.check_expression(expression);
+        let Some(expected) = self.expected_return.clone() else {
+            self.type_error("return may only be used inside a function".into());
+            return;
+        };
+        if expected == QLangType::Void {
+            self.type_error("a void function cannot return a value".into());
+        } else if !types_compatible(&expected, &actual) {
+            self.type_error(format!("function must return {expected}, found {actual}"));
+        }
+    }
+
+    fn expect_type(&mut self, expression: &Expression, expected: &QLangType, context: &str) {
+        let actual = self.check_expression(expression);
+        if !types_compatible(expected, &actual) {
+            self.type_error(format!("{context} expects {expected}, found {actual}"));
+        }
+    }
+
+    fn check_qubit_argument(&mut self, expression: &Expression) {
+        if let Expression::Variable(name) = expression {
+            if self.consumed_vars.contains(name) {
+                self.type_error(format!("qubit variable '{name}' has already been measured"));
+            }
+        }
+        if let Some(slot) = self.resolve_qubit_slot(expression) {
+            self.check_qubit_slot(slot, false);
+        }
+    }
+
+    fn consume_qubit_argument(&mut self, expression: &Expression) {
+        if let Expression::Variable(name) = expression {
+            if !self.consumed_vars.insert(name.clone()) {
+                self.type_error(format!("qubit variable '{name}' has already been measured"));
+            }
+        }
+        if let Some(slot) = self.resolve_qubit_slot(expression) {
+            self.check_qubit_slot(slot, true);
+        }
+    }
+
+    fn resolve_qubit_slot(&self, expression: &Expression) -> Option<usize> {
+        match expression {
+            Expression::Number(number) if number.is_finite() && *number >= 0.0 => {
+                Some(*number as usize)
+            }
+            Expression::Variable(name) => self.qubit_vars.get(name).copied(),
+            Expression::Call(name, _) if name == "alloc" => extract_qubit_slot(expression),
+            _ => None,
         }
     }
 
     fn check_qubit_slot(&mut self, slot: usize, consuming: bool) {
-        if slot >= self.num_qubits { self.errors.push(QLangError::QubitOutOfRange(slot)); return; }
-        if self.consumed_slots.contains(&slot) { self.errors.push(QLangError::QubitAlreadyMeasured(slot)); }
-        else if consuming { self.consumed_slots.insert(slot); }
+        if slot >= self.num_qubits {
+            self.errors.push(QLangError::QubitOutOfRange(slot));
+        } else if self.consumed_slots.contains(&slot) {
+            self.errors.push(QLangError::QubitAlreadyMeasured(slot));
+        } else if consuming {
+            self.consumed_slots.insert(slot);
+        }
     }
 
-    pub fn infer_type(&self, expr: &Expression) -> QLangType {
-        match expr {
-            Expression::Number(n) => { if *n == n.floor() { QLangType::Int } else { QLangType::Float } }
-            Expression::Variable(name) => { self.env.get(name).cloned().unwrap_or(QLangType::Unknown) }
+    pub fn infer_type(&self, expression: &Expression) -> QLangType {
+        match expression {
+            Expression::Number(number) if *number == number.floor() => QLangType::Int,
+            Expression::Number(_) => QLangType::Float,
+            Expression::Variable(name) => self.env.get(name).cloned().unwrap_or(QLangType::Unknown),
             Expression::Measure(_) => QLangType::Bit,
-            Expression::Array(es) => {
-                let elem = if es.is_empty() { QLangType::Unknown } else { self.infer_type(&es[0]) };
-                QLangType::Array(Box::new(elem))
-            }
-            Expression::Index(arr, _) => {
-                if let QLangType::Array(elem) = self.infer_type(arr) { *elem } else { QLangType::Unknown }
-            }
-            Expression::BinaryOp { left, op, right } => match op {
-                Operator::Eq | Operator::Neq | Operator::Lt | Operator::Gt
-                | Operator::Le | Operator::Ge | Operator::And | Operator::Or => QLangType::Bool,
-                _ => match (self.infer_type(left), self.infer_type(right)) {
-                    (QLangType::Float, _) | (_, QLangType::Float) => QLangType::Float,
-                    (QLangType::Int, QLangType::Int) => QLangType::Int,
-                    _ => QLangType::Unknown,
-                },
+            Expression::Array(elements) => QLangType::Array(Box::new(
+                elements
+                    .first()
+                    .map(|element| self.infer_type(element))
+                    .unwrap_or(QLangType::Unknown),
+            )),
+            Expression::Index(array, _) => match self.infer_type(array) {
+                QLangType::Array(element) => *element,
+                _ => QLangType::Unknown,
             },
-            Expression::Call(name, _) => {
-                if name == "alloc" { return QLangType::Qubit; }
-                self.functions.get(name).map(|(_, _, ret)| ret.clone()).unwrap_or(QLangType::Unknown)
-            }
+            Expression::BinaryOp { left, op, right } => match op {
+                Operator::Eq
+                | Operator::Neq
+                | Operator::Lt
+                | Operator::Gt
+                | Operator::Le
+                | Operator::Ge
+                | Operator::And
+                | Operator::Or => QLangType::Bool,
+                _ if self.infer_type(left) == QLangType::Float
+                    || self.infer_type(right) == QLangType::Float =>
+                {
+                    QLangType::Float
+                }
+                _ => QLangType::Int,
+            },
+            Expression::Call(name, _) if name == "alloc" => QLangType::Qubit,
+            Expression::Call(name, _) => self
+                .functions
+                .get(name)
+                .map(|signature| signature.return_type.clone())
+                .unwrap_or(QLangType::Unknown),
         }
     }
+
+    fn type_error(&mut self, message: String) { self.errors.push(QLangError::TypeError(message)); }
 }
 
-fn types_compatible(a: &QLangType, b: &QLangType) -> bool {
-    a == b || matches!(a, QLangType::Unknown) || matches!(b, QLangType::Unknown)
+fn guarantees_return(commands: &[QLangCommand]) -> bool {
+    commands.iter().any(|command| match command {
+        QLangCommand::Return(_) => true,
+        QLangCommand::If {
+            then_branch,
+            else_branch: Some(else_branch),
+            ..
+        } => guarantees_return(then_branch) && guarantees_return(else_branch),
+        _ => false,
+    })
 }
 
-fn extract_qubit_slot(expr: &Expression) -> Option<usize> {
-    match expr {
-        Expression::Number(n) => Some(*n as usize),
-        Expression::Call(name, args) if name == "alloc" => {
-            args.first().and_then(|a| { if let Expression::Number(n) = a { Some(*n as usize) } else { None } })
+fn types_compatible(expected: &QLangType, actual: &QLangType) -> bool {
+    expected == actual
+        || expected == &QLangType::Unknown
+        || actual == &QLangType::Unknown
+        || (expected == &QLangType::Float && actual == &QLangType::Int)
+}
+
+fn gate_argument_compatible(expected: &QLangType, actual: &QLangType) -> bool {
+    types_compatible(expected, actual)
+        || (expected == &QLangType::Qubit && actual == &QLangType::Int)
+}
+
+fn is_numeric(value_type: &QLangType) -> bool {
+    matches!(
+        value_type,
+        QLangType::Int | QLangType::Float | QLangType::Unknown
+    )
+}
+
+fn is_condition_type(value_type: &QLangType) -> bool {
+    matches!(
+        value_type,
+        QLangType::Bool | QLangType::Bit | QLangType::Int | QLangType::Float | QLangType::Unknown
+    )
+}
+
+fn extract_qubit_slot(expression: &Expression) -> Option<usize> {
+    match expression {
+        Expression::Number(number) if number.is_finite() && *number >= 0.0 => {
+            Some(*number as usize)
         }
+        Expression::Call(name, args) if name == "alloc" => args.first().and_then(|argument| {
+            if let Expression::Number(number) = argument {
+                Some(*number as usize)
+            } else {
+                None
+            }
+        }),
         _ => None,
     }
+}
+
+fn is_native_gate(name: &str) -> bool { native_gate_signature(name).is_some() }
+
+fn native_gate_signature(name: &str) -> Option<Vec<QLangType>> {
+    let qubits = match name {
+        "hadamard" | "paulix" | "pauliy" | "pauliz" | "identity" | "s" | "sdagger" | "t"
+        | "tdagger" => vec![QLangType::Qubit],
+        "rx" | "ry" | "rz" | "phase" | "u1" => {
+            vec![QLangType::Qubit, QLangType::Float]
+        }
+        "u2" => vec![QLangType::Qubit, QLangType::Float, QLangType::Float],
+        "u3" => vec![
+            QLangType::Qubit,
+            QLangType::Float,
+            QLangType::Float,
+            QLangType::Float,
+        ],
+        "cnot" | "cy" | "cz" | "swap" | "iswap" => {
+            vec![QLangType::Qubit, QLangType::Qubit]
+        }
+        "toffoli" | "fredkin" => vec![QLangType::Qubit, QLangType::Qubit, QLangType::Qubit],
+        "controlled_u" | "cu" => vec![
+            QLangType::Qubit,
+            QLangType::Qubit,
+            QLangType::Float,
+            QLangType::Float,
+            QLangType::Float,
+            QLangType::Float,
+        ],
+        _ => return None,
+    };
+    Some(qubits)
 }

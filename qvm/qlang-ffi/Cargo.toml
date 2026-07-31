@@ -1,0 +1,19 @@
+[package]
+name = "qlang-ffi"
+version = "0.3.0"
+edition = "2021"
+
+[lib]
+name = "qlang_ffi"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+qlang = { path = "../qlang", default-features = false }
+qvm = { path = "../qvm", default-features = false }
+serde_json = "1"
+
+[features]
+default = ["cpu"]
+cpu = ["qlang/cpu", "qvm/cpu"]
+cuda = ["qlang/cuda", "qvm/cuda"]
+tensor = ["qlang/tensor", "qvm/tensor"]

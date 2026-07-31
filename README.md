@@ -1,107 +1,125 @@
-# 🧠 QLang — Modern Quantum Simulator in Rust (CPU + GPU)
+# QLang
 
-**QLang** is a quantum language and simulator designed to be lightweight, accessible, and incredibly powerful. Written in Rust, it combines high performance with a simple interface using `.ql` scripts, supports multiple programming languages (Python, C, JavaScript...), and features true CPU and CUDA backends.
+QLang is an experimental typed quantum language and simulator written in Rust. The active implementation is a Cargo workspace under `qvm/` with a shared syntax crate, CPU/CUDA/tensor backends, a command-line interface, C ABI, Python wrapper, and a React viewer powered by WebAssembly.
 
-> "Simulate 30+ qubits effortlessly — with clean and modular code."
+## Current status
 
----
+- CPU is the default backend and is covered by amplitude-level Bell, GHZ, Toffoli, and Fredkin tests.
+- Tensor uses an exact MPS decomposition without truncation. It prioritizes correctness; optimization and bond-dimension limits remain future work.
+- CUDA uses a correctness-first host/device fallback by default. Existing PTX kernels are available through the experimental `cuda-kernels` feature and are not yet part of the trusted path.
+- The type checker validates annotations, assignments, arrays, function signatures and returns, control-flow context, and conservative linear ownership of qubits.
+- The viewer uses the same `qlang-syntax` parser as the native runtime through WASM.
 
-## ⚡ Key Features
+This is still a pre-1.0 project. Noise modeling, an optimizer, a complete module system, and validated accelerated CUDA kernels are not implemented.
 
-- 🧩 **Custom language (QLang)**: intuitive and minimal syntax
-- 🧠 **Full state vector simulator**
-- 🚀 **Parallel backends**: `CPU (rayon)` and `GPU (CUDA)`
-- 🔁 **Batch execution** with `BatchRunner`
-- 🔧 **Complete quantum gates** (Hadamard, Pauli, U3, Toffoli...)
-- 📦 **Bindings for Python, C, JavaScript, Ruby, and more**
-- 🛠️ **Gate-specific automated tests**
-- 🔭 **Structured roadmap up to version 0.6** (Tensor, WASM, Qiskit, REPL...)
+## Workspace
 
----
+| Crate | Purpose |
+| --- | --- |
+| `qlang_core` | Complex numbers, states, tensor networks, and gate matrices |
+| `qvm` | CPU, CUDA, and tensor execution backends |
+| `qlang-syntax` | Shared lexer, parser, AST, aliases, and syntax errors |
+| `qlang` | Interpreter, type checker, batch execution, and CLI |
+| `qlang-ffi` | Stable C ABI built as a `cdylib` |
+| `qlang-wasm` | WASM projection of the shared parser for the viewer |
 
-## 🛠️ Quick Installation
+## CLI
 
-### 🐍 Via Python (pip)
+From the repository root:
 
 ```bash
-pip install qlang
+cd qvm
+cargo run -p qlang -- check examples/teleportation.ql
+cargo run -p qlang -- run examples/teleportation.ql
 ```
 
-## 💻 Binaries
+QLang source example:
 
-### You can also download prebuilt binaries (`.so` / `.dll`) to use with:
+```qlang
+create(2)
 
-- C/C++
-- Ruby
-- JavaScript (via `ffi-napi`)
-- Java (via JNI)
+fn bell(q0: qubit, q1: qubit) -> void {
+    h(q0)
+    cnot(q0, q1)
+}
 
-Binaries available for: **Linux, Windows, macOS, and CUDA**.
+let q0: qubit = alloc(0)
+let q1: qubit = alloc(1)
+bell(q0, q1)
+```
 
-## Exemples
+## Backends
 
-### Python (.py)
+```bash
+cd qvm
+
+# CPU
+cargo test --workspace
+
+# Exact tensor/MPS backend
+cargo test --workspace --features tensor
+
+# CUDA compile check
+cargo check -p qvm --features cuda
+
+# CUDA runtime tests require an NVIDIA GPU
+cargo test -p qvm --features cuda --test quantum_circuits -- --test-threads=1
+```
+
+Do not enable `cuda-kernels` for correctness-sensitive work yet. That feature exists to validate and repair individual PTX kernels.
+
+## Python and C ABI
+
+Build and install the CPU binding:
+
+```bash
+cd qvm
+cargo build -p qlang-ffi --release
+cd ..
+python -m pip install -e .
+```
 
 ```python
-from qlang import QLangScript
-from math import pi
+from qlang import QLang
 
-q = QLangScript("cpu")
-q.create(2)
-q.h(0)
-q.cnot(0, 1)
-q.m()
-q.run()
-print("Resultado:", q.get_measurement_result())
+runtime = QLang(2)
+runtime.run("h(0)\ncnot(0, 1)")
+print(runtime.state())
+print(runtime.measure_all())
 ```
 
-### Qlang (.ql)
+Set `QLANG_LIBRARY` when the shared library is outside `qvm/target/{debug,release}`. The ABI uses caller-owned measurement buffers and provides `qlang_last_error()` for diagnostics.
 
+## Viewer/WASM
+
+```bash
+cd qvm
+wasm-pack build qlang-wasm --target web \
+  --out-dir ../../qlang-viewer/src/wasm --out-name qlang_wasm
+cd ../qlang-viewer
+pnpm install
+pnpm dev
 ```
-create(2)
-h(0)
-cnot(0,1)
-m()
+
+The viewer is a static circuit projection, not a browser simulator. Dynamic variables and control flow produce explicit diagnostics rather than being silently interpreted by a regex parser.
+
+## Verification
+
+```bash
+cd qvm
+cargo fmt --all --check
+cargo clippy --workspace --all-targets
+cargo test --workspace
+cargo test --workspace --features tensor
+
+cd ../qlang-viewer
+pnpm build
+pnpm lint
+
+cd ..
+PYTHONPATH=python python -m pytest tests/python/test_ffi_runtime.py -q
 ```
 
-`bash cargo run -- my_circuit.ql`
+GitHub Actions runs the CPU workspace on Linux, macOS, and Windows; tensor, CUDA compilation, WASM/viewer, and Python/FFI have dedicated jobs. CUDA runtime tests are available as a manually triggered workflow for a self-hosted GPU runner.
 
-## 🧭 Roadmap
-
-QLang is evolving through well-defined versions:
-
-- ✅ v0.1 — Gates, batching, CUDA, CLI, Python bindings
-- 🔜 v0.2 — Optimizations, benchmarking, QASM export
-- 🔜 v0.3 — Tensor Networks and slicing
-- 🔜 v0.4 — Noise modeling, Qiskit integration
-- 🔜 v0.5 — REPL, visualization, automatic simplifications
-- 🔜 v0.6 — Web support via WASM
-
-See the full `ROADMAP.md` for details.
-
----
-
-## 🤝 Contribute
-
-We welcome contributions in areas such as:
-
-- New gates
-- Test coverage
-- Alternative backends
-- Visualization tools
-- Web interface
-- Translations and documentation
-
----
-
-## 📜 License
-
-Open-source under the MIT or Apache 2.0 license.
-
----
-
-## Author
-
-Developed with curiosity and care by **Bruno Oliveira**.
-
-> "Simulating the future is easier than it seems. All you need is a bit of QLang."
+See [ROADMAP.md](ROADMAP.md) for planned work.

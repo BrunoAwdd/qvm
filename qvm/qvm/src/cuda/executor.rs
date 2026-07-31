@@ -2,7 +2,7 @@
 
 use cust::{context::Context, memory::DevicePointer, module::Module, prelude::*, stream::Stream};
 
-use crate::types::qlang_complex::QLangComplex;
+use qlang_core::types::qlang_complex::QLangComplex;
 
 /// Representa um argumento possível para um kernel CUDA
 pub enum KernelArg {
@@ -36,99 +36,99 @@ fn load_ptx(ptx_filename: &str) -> &'static str {
         // General Gates
         "contolled_u.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/general/controlled_u/controlled_u.ptx"
+            "/../core/src/gates/general/controlled_u/controlled_u.ptx"
         )),
         // One-Qubit Gates
         "hadamard.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/one_q/hadamard/hadamard.ptx"
+            "/../core/src/gates/one_q/hadamard/hadamard.ptx"
         )),
         "pauli_x.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/one_q/pauli_x/pauli_x.ptx"
+            "/../core/src/gates/one_q/pauli_x/pauli_x.ptx"
         )),
         "pauli_y.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/one_q/pauli_y/pauli_y.ptx"
+            "/../core/src/gates/one_q/pauli_y/pauli_y.ptx"
         )),
         "pauli_z.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/one_q/pauli_z/pauli_z.ptx"
+            "/../core/src/gates/one_q/pauli_z/pauli_z.ptx"
         )),
         "s.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/one_q/s/s.ptx"
+            "/../core/src/gates/one_q/s/s.ptx"
         )),
         "s_dagger.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/one_q/s_dagger/s_dagger.ptx"
+            "/../core/src/gates/one_q/s_dagger/s_dagger.ptx"
         )),
         "t.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/one_q/t/t.ptx"
+            "/../core/src/gates/one_q/t/t.ptx"
         )),
         "t_dagger.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/one_q/t_dagger/t_dagger.ptx"
+            "/../core/src/gates/one_q/t_dagger/t_dagger.ptx"
         )),
         // Rotation Gates
         "rx.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/rotation_q/rx/rx.ptx"
+            "/../core/src/gates/rotation_q/rx/rx.ptx"
         )),
         "ry.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/rotation_q/ry/ry.ptx"
+            "/../core/src/gates/rotation_q/ry/ry.ptx"
         )),
         "rz.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/rotation_q/rz/rz.ptx"
+            "/../core/src/gates/rotation_q/rz/rz.ptx"
         )),
         "phase.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/rotation_q/phase/phase.ptx"
+            "/../core/src/gates/rotation_q/phase/phase.ptx"
         )),
         "u1.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/rotation_q/u1/u1.ptx"
+            "/../core/src/gates/rotation_q/u1/u1.ptx"
         )),
         "u2.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/rotation_q/u2/u2.ptx"
+            "/../core/src/gates/rotation_q/u2/u2.ptx"
         )),
         "u3.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/rotation_q/u3/u3.ptx"
+            "/../core/src/gates/rotation_q/u3/u3.ptx"
         )),
         // Two-Qubit Gates
         "cnot.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/two_q/cnot/cnot.ptx"
+            "/../core/src/gates/two_q/cnot/cnot.ptx"
         )),
         "cy.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/two_q/cy/cy.ptx"
+            "/../core/src/gates/two_q/cy/cy.ptx"
         )),
         "cz.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/two_q/cz/cz.ptx"
+            "/../core/src/gates/two_q/cz/cz.ptx"
         )),
         "swap.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/two_q/swap/swap.ptx"
+            "/../core/src/gates/two_q/swap/swap.ptx"
         )),
         "iswap.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/two_q/iswap/iswap.ptx"
+            "/../core/src/gates/two_q/iswap/iswap.ptx"
         )),
         // Three-Qubit Gates
         "fredkin.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/three_q/fredkin/fredkin.ptx"
+            "/../core/src/gates/three_q/fredkin/fredkin.ptx"
         )),
         "toffoli.ptx" => include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/src/gates/three_q/toffoli/toffoli.ptx"
+            "/../core/src/gates/three_q/toffoli/toffoli.ptx"
         )),
         _ => panic!("PTX desconhecido: {}", ptx_filename),
     }

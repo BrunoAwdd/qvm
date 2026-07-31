@@ -75,6 +75,4 @@ mod tests {
         let h = Hadamard::new();
         assert_eq!(h.name(), "Hadamard");
     }
-
-
 }
