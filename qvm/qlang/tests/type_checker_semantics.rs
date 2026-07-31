@@ -171,9 +171,129 @@ fn moving_a_qubit_invalidates_the_source_variable() {
         QLangCommand::ApplyGate("hadamard".into(), vec![variable("source")]),
     ];
 
+    let errors = messages(&commands);
+    assert!(
+        errors.iter().any(|error| error.contains("has been moved")),
+        "{errors:?}"
+    );
+}
+
+#[test]
+fn propagates_measurement_effects_from_function_calls() {
+    let commands = vec![
+        QLangCommand::FunctionDef {
+            name: "observe".into(),
+            params: vec!["q".into()],
+            param_types: vec![Some(TypeAnnotation::Qubit)],
+            return_type: Some(TypeAnnotation::Void),
+            body: vec![QLangCommand::Let {
+                name: "result".into(),
+                type_ann: Some(TypeAnnotation::Bit),
+                value: Expression::Measure(Box::new(variable("q"))),
+            }],
+        },
+        QLangCommand::Let {
+            name: "source".into(),
+            type_ann: Some(TypeAnnotation::Qubit),
+            value: alloc(0),
+        },
+        QLangCommand::ApplyGate("observe".into(), vec![variable("source")]),
+        QLangCommand::ApplyGate("hadamard".into(), vec![variable("source")]),
+    ];
+
     assert!(messages(&commands)
         .iter()
-        .any(|error| error.contains("has been moved")));
+        .any(|error| error.contains("already been measured")));
+}
+
+#[test]
+fn propagates_measurement_effects_through_forward_function_calls() {
+    let commands = vec![
+        QLangCommand::FunctionDef {
+            name: "outer".into(),
+            params: vec!["q".into()],
+            param_types: vec![Some(TypeAnnotation::Qubit)],
+            return_type: Some(TypeAnnotation::Void),
+            body: vec![QLangCommand::ApplyGate("inner".into(), vec![variable("q")])],
+        },
+        QLangCommand::FunctionDef {
+            name: "inner".into(),
+            params: vec!["q".into()],
+            param_types: vec![Some(TypeAnnotation::Qubit)],
+            return_type: Some(TypeAnnotation::Void),
+            body: vec![QLangCommand::Let {
+                name: "result".into(),
+                type_ann: Some(TypeAnnotation::Bit),
+                value: Expression::Measure(Box::new(variable("q"))),
+            }],
+        },
+        QLangCommand::Let {
+            name: "source".into(),
+            type_ann: Some(TypeAnnotation::Qubit),
+            value: alloc(0),
+        },
+        QLangCommand::ApplyGate("outer".into(), vec![variable("source")]),
+        QLangCommand::ApplyGate("hadamard".into(), vec![variable("source")]),
+    ];
+
+    assert!(messages(&commands)
+        .iter()
+        .any(|error| error.contains("already been measured")));
+}
+
+#[test]
+fn propagates_move_effects_from_function_calls() {
+    let commands = vec![
+        QLangCommand::FunctionDef {
+            name: "take".into(),
+            params: vec!["q".into()],
+            param_types: vec![Some(TypeAnnotation::Qubit)],
+            return_type: Some(TypeAnnotation::Void),
+            body: vec![QLangCommand::Let {
+                name: "owned".into(),
+                type_ann: Some(TypeAnnotation::Qubit),
+                value: variable("q"),
+            }],
+        },
+        QLangCommand::Let {
+            name: "source".into(),
+            type_ann: Some(TypeAnnotation::Qubit),
+            value: alloc(0),
+        },
+        QLangCommand::ApplyGate("take".into(), vec![variable("source")]),
+        QLangCommand::ApplyGate("hadamard".into(), vec![variable("source")]),
+    ];
+
+    let errors = messages(&commands);
+    assert!(
+        errors.iter().any(|error| error.contains("has been moved")),
+        "{errors:?}"
+    );
+}
+
+#[test]
+fn unitary_function_parameters_are_borrowed() {
+    let commands = vec![
+        QLangCommand::FunctionDef {
+            name: "rotate".into(),
+            params: vec!["q".into()],
+            param_types: vec![Some(TypeAnnotation::Qubit)],
+            return_type: Some(TypeAnnotation::Void),
+            body: vec![QLangCommand::ApplyGate(
+                "hadamard".into(),
+                vec![variable("q")],
+            )],
+        },
+        QLangCommand::Let {
+            name: "source".into(),
+            type_ann: Some(TypeAnnotation::Qubit),
+            value: alloc(0),
+        },
+        QLangCommand::ApplyGate("rotate".into(), vec![variable("source")]),
+        QLangCommand::ApplyGate("paulix".into(), vec![variable("source")]),
+    ];
+
+    assert!(messages(&commands).is_empty());
 }
 
 #[test]

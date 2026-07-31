@@ -13,7 +13,7 @@ jobs:
       run:
         working-directory: qvm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - run: nvidia-smi
       - run: cargo test -p qvm --features cuda --test quantum_circuits -- --test-threads=1

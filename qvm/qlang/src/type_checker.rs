@@ -44,9 +44,18 @@ impl std::fmt::Display for QLangType {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+enum ParameterEffect {
+    #[default]
+    Borrow,
+    Move,
+    Measure,
+}
+
 #[derive(Clone)]
 struct FunctionSignature {
     params: Vec<QLangType>,
+    param_effects: Vec<ParameterEffect>,
     return_type: QLangType,
 }
 
@@ -96,6 +105,7 @@ impl TypeChecker {
         self.consumed_vars.clear();
         self.functions.clear();
         self.predeclare_functions(ast);
+        self.infer_function_effects(ast);
         for command in ast {
             self.check_command(command);
         }
@@ -112,7 +122,7 @@ impl TypeChecker {
                 ..
             } = command
             {
-                let types = params
+                let types: Vec<_> = params
                     .iter()
                     .enumerate()
                     .map(|(index, _)| {
@@ -130,10 +140,69 @@ impl TypeChecker {
                 self.functions.insert(
                     name.clone(),
                     FunctionSignature {
+                        param_effects: vec![ParameterEffect::Borrow; types.len()],
                         params: types,
                         return_type,
                     },
                 );
+            }
+        }
+    }
+
+    fn infer_function_effects(&mut self, ast: &[QLangCommand]) {
+        let definitions: Vec<_> = ast
+            .iter()
+            .filter_map(|command| match command {
+                QLangCommand::FunctionDef {
+                    name, params, body, ..
+                } => Some((name, params, body)),
+                _ => None,
+            })
+            .collect();
+
+        // Effects form a small monotone lattice (borrow < move < measure), so
+        // at most two promotions per parameter are needed, including through
+        // forward calls and recursive call graphs.
+        let max_iterations = definitions
+            .iter()
+            .map(|(_, params, _)| params.len() * 2)
+            .sum::<usize>()
+            + 1;
+        for _ in 0..max_iterations {
+            let mut changed = false;
+            for (name, params, body) in &definitions {
+                let Some(signature) = self.functions.get(*name).cloned() else {
+                    continue;
+                };
+                let mut inner = Self::new(self.num_qubits);
+                inner.functions = self.functions.clone();
+                inner.expected_return = Some(signature.return_type.clone());
+                for (param, param_type) in params.iter().zip(&signature.params) {
+                    inner.env.insert(param.clone(), param_type.clone());
+                }
+                for command in *body {
+                    inner.check_command(command);
+                }
+                let effects = params
+                    .iter()
+                    .map(|param| {
+                        if inner.consumed_vars.contains(param) {
+                            ParameterEffect::Measure
+                        } else if inner.moved_vars.contains(param) {
+                            ParameterEffect::Move
+                        } else {
+                            ParameterEffect::Borrow
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                let function = self.functions.get_mut(*name).expect("predeclared function");
+                if function.param_effects != effects {
+                    function.param_effects = effects;
+                    changed = true;
+                }
+            }
+            if !changed {
+                break;
             }
         }
     }
@@ -276,10 +345,8 @@ impl TypeChecker {
         let slot = match value {
             Expression::Variable(source) => {
                 let slot = self.qubit_vars.get(source).copied();
-                if slot.is_some() {
-                    self.moved_vars.insert(source.clone());
-                    self.qubit_vars.remove(source);
-                }
+                self.moved_vars.insert(source.clone());
+                self.qubit_vars.remove(source);
                 if self.consumed_vars.contains(source) {
                     self.consumed_vars.insert(name.to_string());
                 }
@@ -360,6 +427,9 @@ impl TypeChecker {
                             index + 1
                         ));
                     }
+                }
+                if let Some(effect) = signature.param_effects.get(index) {
+                    self.apply_parameter_effect(argument, *effect);
                 }
             }
             return signature.return_type;
@@ -591,7 +661,28 @@ impl TypeChecker {
             self.type_error("a void function cannot return a value".into());
         } else if !types_compatible(&expected, &actual) {
             self.type_error(format!("function must return {expected}, found {actual}"));
+        } else if expected == QLangType::Qubit {
+            self.move_qubit_argument(expression);
         }
+    }
+
+    fn apply_parameter_effect(&mut self, argument: &Expression, effect: ParameterEffect) {
+        match effect {
+            ParameterEffect::Borrow => {}
+            ParameterEffect::Move => self.move_qubit_argument(argument),
+            ParameterEffect::Measure => self.consume_qubit_argument(argument),
+        }
+    }
+
+    fn move_qubit_argument(&mut self, expression: &Expression) {
+        let Expression::Variable(name) = expression else {
+            return;
+        };
+        if self.consumed_vars.contains(name) || self.moved_vars.contains(name) {
+            return;
+        }
+        self.release_qubit_binding(name);
+        self.moved_vars.insert(name.clone());
     }
 
     fn expect_type(&mut self, expression: &Expression, expected: &QLangType, context: &str) {

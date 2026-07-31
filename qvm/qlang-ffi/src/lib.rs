@@ -8,21 +8,20 @@ use std::{
     ffi::{c_char, CStr, CString},
     panic::{catch_unwind, AssertUnwindSafe},
     ptr,
-    sync::{Mutex, OnceLock},
+    sync::Mutex,
 };
 
 use qlang::QLang;
 use qvm::backend::QuantumBackend;
 use serde_json::json;
 
-static INSTANCE: OnceLock<Mutex<Option<QLang>>> = OnceLock::new();
+#[repr(C)]
+pub struct QLangHandle {
+    runtime: Mutex<QLang>,
+}
 
 thread_local! {
     static LAST_ERROR: RefCell<Option<CString>> = const { RefCell::new(None) };
-}
-
-fn instance() -> &'static Mutex<Option<QLang>> {
-    INSTANCE.get_or_init(|| Mutex::new(None))
 }
 
 fn set_error(message: impl Into<String>) {
@@ -56,25 +55,54 @@ unsafe fn source_from_ptr<'a>(source: *const c_char) -> Result<&'a str, String> 
         .map_err(|error| format!("source is not valid UTF-8: {error}"))
 }
 
-#[no_mangle]
-pub extern "C" fn qlang_create(num_qubits: usize) -> i32 {
-    status(|| {
-        if num_qubits >= usize::BITS as usize {
-            return Err(format!("num_qubits must be less than {}", usize::BITS));
-        }
-        *instance().lock().map_err(|_| "QLang mutex is poisoned")? = Some(QLang::new(num_qubits));
-        Ok(())
-    })
+unsafe fn handle_from_ptr<'a>(handle: *mut QLangHandle) -> Result<&'a QLangHandle, String> {
+    handle
+        .as_ref()
+        .ok_or_else(|| "QLang handle is null or has been closed".into())
 }
 
 #[no_mangle]
-pub extern "C" fn qlang_run_source(source: *const c_char) -> i32 {
+pub extern "C" fn qlang_create(num_qubits: usize) -> *mut QLangHandle {
+    let result = catch_unwind(AssertUnwindSafe(|| -> Result<QLangHandle, String> {
+        if num_qubits >= usize::BITS as usize {
+            return Err(format!("num_qubits must be less than {}", usize::BITS));
+        }
+        Ok(QLangHandle {
+            runtime: Mutex::new(QLang::new(num_qubits)),
+        })
+    }));
+    match result {
+        Ok(Ok(handle)) => {
+            LAST_ERROR.with(|slot| *slot.borrow_mut() = None);
+            Box::into_raw(Box::new(handle))
+        }
+        Ok(Err(error)) => {
+            set_error(error);
+            ptr::null_mut()
+        }
+        Err(_) => {
+            set_error("QLang panicked while creating an FFI handle");
+            ptr::null_mut()
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn qlang_destroy(handle: *mut QLangHandle) {
+    if !handle.is_null() {
+        unsafe { drop(Box::from_raw(handle)) };
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn qlang_run_source(handle: *mut QLangHandle, source: *const c_char) -> i32 {
     status(|| {
         let source = unsafe { source_from_ptr(source)? };
-        let mut guard = instance().lock().map_err(|_| "QLang mutex is poisoned")?;
-        let qlang = guard
-            .as_mut()
-            .ok_or("QLang is not initialized; call qlang_create first")?;
+        let handle = unsafe { handle_from_ptr(handle)? };
+        let mut qlang = handle
+            .runtime
+            .lock()
+            .map_err(|_| "QLang handle mutex is poisoned")?;
         qlang.clear_program();
         qlang.append_from_lines(source.lines());
         qlang.run_parsed_commands()?;
@@ -83,30 +111,40 @@ pub extern "C" fn qlang_run_source(source: *const c_char) -> i32 {
 }
 
 #[no_mangle]
-pub extern "C" fn qlang_reset() -> i32 {
+pub extern "C" fn qlang_reset(handle: *mut QLangHandle) -> i32 {
     status(|| {
-        let mut guard = instance().lock().map_err(|_| "QLang mutex is poisoned")?;
-        let qlang = guard.as_mut().ok_or("QLang is not initialized")?;
+        let handle = unsafe { handle_from_ptr(handle)? };
+        let mut qlang = handle
+            .runtime
+            .lock()
+            .map_err(|_| "QLang handle mutex is poisoned")?;
         qlang.reset();
         Ok(())
     })
 }
 
 #[no_mangle]
-pub extern "C" fn qlang_num_qubits() -> usize {
-    instance()
-        .lock()
+pub extern "C" fn qlang_num_qubits(handle: *mut QLangHandle) -> usize {
+    unsafe { handle_from_ptr(handle) }
         .ok()
-        .and_then(|guard| guard.as_ref().map(|qlang| qlang.qvm.num_qubits()))
+        .and_then(|handle| handle.runtime.lock().ok())
+        .map(|qlang| qlang.qvm.num_qubits())
         .unwrap_or(0)
 }
 
 #[no_mangle]
-pub extern "C" fn qlang_measure_all(output: *mut u8, capacity: usize) -> isize {
+pub extern "C" fn qlang_measure_all(
+    handle: *mut QLangHandle,
+    output: *mut u8,
+    capacity: usize,
+) -> isize {
     let mut written = -1;
     let result = status(|| {
-        let mut guard = instance().lock().map_err(|_| "QLang mutex is poisoned")?;
-        let qlang = guard.as_mut().ok_or("QLang is not initialized")?;
+        let handle = unsafe { handle_from_ptr(handle)? };
+        let mut qlang = handle
+            .runtime
+            .lock()
+            .map_err(|_| "QLang handle mutex is poisoned")?;
         let required = qlang.qvm.num_qubits();
         if output.is_null() {
             return Err("measurement output pointer is null".into());
@@ -129,10 +167,13 @@ pub extern "C" fn qlang_measure_all(output: *mut u8, capacity: usize) -> isize {
 }
 
 #[no_mangle]
-pub extern "C" fn qlang_state_json() -> *mut c_char {
+pub extern "C" fn qlang_state_json(handle: *mut QLangHandle) -> *mut c_char {
     let result = catch_unwind(AssertUnwindSafe(|| -> Result<CString, String> {
-        let guard = instance().lock().map_err(|_| "QLang mutex is poisoned")?;
-        let qlang = guard.as_ref().ok_or("QLang is not initialized")?;
+        let handle = unsafe { handle_from_ptr(handle)? };
+        let qlang = handle
+            .runtime
+            .lock()
+            .map_err(|_| "QLang handle mutex is poisoned")?;
         let amplitudes: Vec<_> = qlang
             .qvm
             .state_vector()
@@ -181,45 +222,72 @@ pub extern "C" fn qlang_string_free(value: *mut c_char) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    static TEST_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn ffi_executes_and_serializes_state() {
-        let _guard = TEST_LOCK.lock().unwrap();
-        assert_eq!(qlang_create(1), 0);
+        let handle = qlang_create(1);
+        assert!(!handle.is_null());
         let source = CString::new("x(0)").unwrap();
-        assert_eq!(qlang_run_source(source.as_ptr()), 0);
-        let json = qlang_state_json();
+        assert_eq!(qlang_run_source(handle, source.as_ptr()), 0);
+        let json = qlang_state_json(handle);
         assert!(!json.is_null());
         let value: serde_json::Value =
             serde_json::from_str(unsafe { CStr::from_ptr(json) }.to_str().unwrap()).unwrap();
         assert_eq!(value["num_qubits"], 1);
         assert_eq!(value["amplitudes"][1]["re"], 1.0);
         qlang_string_free(json);
+        qlang_destroy(handle);
     }
 
     #[test]
     fn ffi_does_not_replay_previous_source() {
-        let _guard = TEST_LOCK.lock().unwrap();
-        assert_eq!(qlang_create(1), 0);
+        let handle = qlang_create(1);
+        assert!(!handle.is_null());
         let source = CString::new("x(0)").unwrap();
-        assert_eq!(qlang_run_source(source.as_ptr()), 0);
-        assert_eq!(qlang_run_source(source.as_ptr()), 0);
+        assert_eq!(qlang_run_source(handle, source.as_ptr()), 0);
+        assert_eq!(qlang_run_source(handle, source.as_ptr()), 0);
 
-        let json = qlang_state_json();
+        let json = qlang_state_json(handle);
         let value: serde_json::Value =
             serde_json::from_str(unsafe { CStr::from_ptr(json) }.to_str().unwrap()).unwrap();
         assert_eq!(value["amplitudes"][0]["re"], 1.0);
         assert_eq!(value["amplitudes"][1]["re"], 0.0);
         qlang_string_free(json);
+        qlang_destroy(handle);
     }
 
     #[test]
     fn ffi_reports_invalid_source() {
-        let _guard = TEST_LOCK.lock().unwrap();
-        assert_eq!(qlang_create(1), 0);
+        let handle = qlang_create(1);
+        assert!(!handle.is_null());
         let source = CString::new("h(").unwrap();
-        assert_ne!(qlang_run_source(source.as_ptr()), 0);
+        assert_ne!(qlang_run_source(handle, source.as_ptr()), 0);
         assert!(!qlang_last_error().is_null());
+        qlang_destroy(handle);
+    }
+
+    #[test]
+    fn ffi_handles_keep_independent_states() {
+        let first = qlang_create(1);
+        let second = qlang_create(2);
+        assert!(!first.is_null());
+        assert!(!second.is_null());
+        let source = CString::new("x(0)").unwrap();
+        assert_eq!(qlang_run_source(first, source.as_ptr()), 0);
+
+        assert_eq!(qlang_num_qubits(first), 1);
+        assert_eq!(qlang_num_qubits(second), 2);
+        let first_json = qlang_state_json(first);
+        let second_json = qlang_state_json(second);
+        let first_state: serde_json::Value =
+            serde_json::from_str(unsafe { CStr::from_ptr(first_json) }.to_str().unwrap()).unwrap();
+        let second_state: serde_json::Value =
+            serde_json::from_str(unsafe { CStr::from_ptr(second_json) }.to_str().unwrap()).unwrap();
+        assert_eq!(first_state["amplitudes"][1]["re"], 1.0);
+        assert_eq!(second_state["amplitudes"][0]["re"], 1.0);
+        qlang_string_free(first_json);
+        qlang_string_free(second_json);
+        qlang_destroy(first);
+        qlang_destroy(second);
     }
 }
