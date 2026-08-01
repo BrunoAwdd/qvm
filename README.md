@@ -38,6 +38,8 @@ cargo run -p qlang -- run examples/teleportation.ql
 
 Additional tracked examples include `bell.ql`, `ghz.ql`, and an intentionally invalid `type_error.ql` for demonstrating static diagnostics.
 
+`portfolio_hedge.ql` sketches a finance-shaped use case for `qif`: a hedge decision that reacts to a market-regime qubit before it is measured, so the branch stays coherent instead of collapsing early. `portfolio_hedge_reuse_error.ql` is the intentionally invalid counterpart — it reuses a qubit after `measure`, which the linear type checker rejects at compile time.
+
 QLang source example:
 
 ```qlang

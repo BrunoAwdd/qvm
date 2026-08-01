@@ -6,3 +6,5 @@ zip.sh
 !/examples/ghz.ql
 !/examples/teleportation.ql
 !/examples/type_error.ql
+!/examples/portfolio_hedge.ql
+!/examples/portfolio_hedge_reuse_error.ql
